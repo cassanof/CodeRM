@@ -76,7 +76,7 @@ def compare_io(actual, expected, debug=False) -> bool:
 
 def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     instrus = [SOL_DEPS + code for _ in inps]
-    res = exec_test_batched(executor, instrus, [""] * len(instrus), timeout=timeout, stdins=inps)
+    res = exec_test_batched(executor, instrus, [""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=True)
     feedback = ""
     good = True
     for inp, out, (passing, outs) in zip(inps, outs, res):
@@ -109,7 +109,7 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         args = args.rstrip(", ")
         tests += f"assert is_eq({entrypoint}({args}), {out!r}), f\"\"\"expected {out!r} but got {{ {entrypoint}({args}) }}\"\"\"\n"
 
-    passing, outs = exec_test(executor, instru, tests, timeout=timeout)
+    passing, outs = exec_test(executor, instru, tests, timeout=timeout, timeout_on_client=True)
     return passing, outs
     
         
