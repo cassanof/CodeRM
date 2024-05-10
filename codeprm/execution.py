@@ -21,7 +21,7 @@ from heapq import *
 
 
 def compare_io(actual, expected, debug=False) -> bool:
-    if isinstance(expected, list): # this can happen apparently
+    if isinstance(expected, list):  # this can happen apparently
         expected = "\n".join(expected)
 
     if actual == expected:
@@ -50,7 +50,7 @@ def compare_io(actual, expected, debug=False) -> bool:
             if len(actual_lines) != len(expected_lines):
                 if debug:
                     print("line count mismatch")
-                return False # nevermind
+                return False  # nevermind
 
         # compare each line
         for aline, eline in zip(actual_lines, expected_lines):
@@ -74,9 +74,11 @@ def compare_io(actual, expected, debug=False) -> bool:
 
     return False
 
-def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+
+def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     instrus = [SOL_DEPS + code for _ in inps]
-    res = exec_test_batched(executor, instrus, [""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=True)
+    res = exec_test_batched(executor, instrus, [
+                            ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=True)
     feedback = ""
     good = True
     for inp, out, (passing, outs) in zip(inps, outs, res):
@@ -90,14 +92,35 @@ def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30)
     return good, feedback
 
 
+def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    instrus = [SOL_DEPS + code for _ in inps]
+    for (instru, inp, out) in zip(instrus, inps, outs):
+        passing, outputs = exec_test(
+            executor, instru, "", timeout=timeout, stdin=inp, timeout_on_client=True)
+        if not passing:
+            return False,  f"[{inp!r}] errored with {outputs!r}\n"
+        elif not compare_io(outputs, out):
+            return False, f"[{inp!r}] expected {out!r} but got {outputs!r}\n"
+
+    return True, ""
+
+
 EQ_INSTRUMENTATION = """
 def is_eq(a, b):
     if a == b:
         return True
     elif isinstance(a, (int, float)) and isinstance(b, (int, float)):
         return abs(a - b) < 1e-4
+    elif isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return False
+        for x, y in zip(a, b):
+            if not is_eq(x, y):
+                return False
+        return True
     return False
 """
+
 
 def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     instru = SOL_DEPS + code + EQ_INSTRUMENTATION
@@ -109,15 +132,22 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         args = args.rstrip(", ")
         tests += f"assert is_eq({entrypoint}({args}), {out!r}), f\"\"\"expected {out!r} but got {{ {entrypoint}({args}) }}\"\"\"\n"
 
-    passing, outs = exec_test(executor, instru, tests, timeout=timeout, timeout_on_client=True)
+    passing, outs = exec_test(executor, instru, tests,
+                              timeout=timeout, timeout_on_client=True)
     return passing, outs
-    
-        
-def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+
+
+def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, batched_io=False) -> Tuple[bool, str]:
     inputs = tests["inputs"]
     outputs = tests["outputs"]
+
+    if batched_io:
+        exec_io_test_fn = exec_io_test_batched
+    else:
+        exec_io_test_fn = exec_io_test
+
     if "fn_name" in tests:
         name = tests["fn_name"]
         return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
     else:
-        return exec_io_test(code, inputs, outputs, executor=executor, timeout=timeout)
+        return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
