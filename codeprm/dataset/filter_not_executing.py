@@ -30,7 +30,7 @@ def filter_not_executing(ex):
         if passing:
             passing_solns.append(sol)
         else:
-            print(e.strip().split("\n")[0])
+            print((e + "\n").split("\n")[0])
         
 
     return {
