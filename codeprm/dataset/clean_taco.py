@@ -34,6 +34,20 @@ ds = ds.map(lambda x: {"solutions": [s for s in x["solutions"] if does_parse(s)]
 ds = ds.filter(lambda x: len(x["solutions"]) > 0)
 print("Has at least one solution: ", len(ds))
 
+# patch up solutions with fn_name to have single output, idk why output is a list
+def patch(ex):
+    tests = json.loads(ex["input_output"])
+    if "fn_name" not in tests:
+        return ex
+    
+    outputs = []
+    for o in tests["outputs"]:
+        outputs.append(o[0])
+    tests["outputs"] = outputs
+    return {"input_output": json.dumps(tests)}
+
+ds = ds.map(patch, num_proc=os.cpu_count())
+
 total_size = 0
 for ex in ds:
     total_size += len(ex["solutions"])
