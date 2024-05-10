@@ -78,7 +78,7 @@ def compare_io(actual, expected, debug=False) -> bool:
 def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     instrus = [SOL_DEPS + code for _ in inps]
     res = exec_test_batched(executor, instrus, [
-                            ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=True)
+                            ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=False)
     feedback = ""
     good = True
     for inp, out, (passing, outs) in zip(inps, outs, res):
@@ -96,7 +96,7 @@ def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30)
     instrus = [SOL_DEPS + code for _ in inps]
     for (instru, inp, out) in zip(instrus, inps, outs):
         passing, outputs = exec_test(
-            executor, instru, "", timeout=timeout, stdin=inp, timeout_on_client=True)
+            executor, instru, "", timeout=timeout, stdin=inp, timeout_on_client=False)
         if not passing:
             return False,  f"[{inp!r}] errored with {outputs!r}\n"
         elif not compare_io(outputs, out):
