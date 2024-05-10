@@ -26,7 +26,7 @@ def filter_not_executing(ex):
         if i >= args.max_attempts:
             break
         passing, e = smart_exec_tests(
-            sol, json.loads(ex["input_output"]), executor=args.executor, timeout=60)
+            sol, json.loads(ex["input_output"]), executor=args.executor, timeout=30)
         if passing:
             passing_solns.append(sol)
         else:
