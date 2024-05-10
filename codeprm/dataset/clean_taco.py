@@ -4,7 +4,10 @@ import os
 import json
 import sys
 import ast
-sys.set_int_max_str_digits(0)
+
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
+
 
 def does_parse(code):
     try:
