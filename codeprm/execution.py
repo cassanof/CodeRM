@@ -21,6 +21,9 @@ from heapq import *
 
 
 def compare_io(actual, expected, debug=False) -> bool:
+    if isinstance(expected, list): # this can happen apparently
+        expected = "\n".join(expected)
+
     if actual == expected:
         return True
     actual = actual.strip()
