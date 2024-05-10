@@ -80,10 +80,36 @@ def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30)
             feedback += f"[{inp!r}] expected {out!r} but got {outs!r}\n"
 
     return good, feedback
+
+
+EQ_INSTRUMENTATION = """
+def is_eq(a, b):
+    if a == b:
+        return True
+    elif isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return abs(a - b) < 1e-4
+    return False
+"""
+
+def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    instru = SOL_DEPS + code + EQ_INSTRUMENTATION
+    tests = ""
+    for inp, out in zip(inps, outs):
+        args = ""
+        for arg in inp:
+            args += f"{arg!r}, "
+        args = args.rstrip(", ")
+        tests += f"assert is_eq({entrypoint}({args}), {out!r}), f\"\"\"expected {out!r} but got {{ {entrypoint}({args}) }}\"\"\"\n"
+
+    passing, outs = exec_test(executor, instru, tests, timeout=timeout)
+    return passing, outs
+    
         
-
-
-if __name__ == "__main__":
-    e = "0.5\n0.58333333\n0.70833333\n0.625\n0.578125\n0.525\n0.5\n0.83333333\n0.75\n0.56944444\n"
-    a = "0.5\n0.5833333333\n0.7083333333\n0.6250000000\n0.5781250000\n0.5250000000\n0.5\n0.8333333333\n0.7500000000\n0.5694444444\n"
-    print(compare_io(e, a, debug=True))
+def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    inputs = tests["inputs"]
+    outputs = tests["outputs"]
+    if "fn_name" in tests:
+        name = tests["fn_name"]
+        return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
+    else:
+        return exec_io_test(code, inputs, outputs, executor=executor, timeout=timeout)
