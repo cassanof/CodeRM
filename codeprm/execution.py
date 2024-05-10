@@ -133,7 +133,7 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         tests += f"assert is_eq({entrypoint}({args}), {out!r}), f\"\"\"expected {out!r} but got {{ {entrypoint}({args}) }}\"\"\"\n"
 
     passing, outs = exec_test(executor, instru, tests,
-                              timeout=timeout, timeout_on_client=True)
+                              timeout=timeout, timeout_on_client=False)
     return passing, outs
 
 
