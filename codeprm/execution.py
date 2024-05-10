@@ -20,32 +20,55 @@ from heapq import *
 """
 
 
-def instrument_input(inp):
-    return f"""from io import StringIO
-import sys
-sys.stdin = StringIO({inp!r})
-"""
-
-
-def compare_io(actual, expected) -> bool:
+def compare_io(actual, expected, debug=False) -> bool:
     if actual == expected:
         return True
     if actual.strip() == expected.strip():
         return True
 
     try:
-        # try float comparison
-        actual = float(actual)
-        expected = float(expected)
-        return abs(actual - expected) < 1e-6
+        actual = actual.strip()
+        expected = expected.strip()
+        # split into lines
+        actual_lines = actual.splitlines()
+        expected_lines = expected.splitlines()
+        # strip each line
+        actual_lines = [line.strip() for line in actual_lines]
+        expected_lines = [line.strip() for line in expected_lines]
+
+        if len(actual_lines) != len(expected_lines):
+            # attempt to remove empty lines
+            actual_lines = [line for line in actual_lines if line]
+            expected_lines = [line for line in expected_lines if line]
+
+            if len(actual_lines) != len(expected_lines):
+                if debug:
+                    print("line count mismatch")
+                return False # nevermind
+
+        # compare each line
+        for aline, eline in zip(actual_lines, expected_lines):
+            if aline == eline:
+                continue
+            # try float comparison, with some tolerance
+            a = float(aline)
+            e = float(eline)
+            diff = abs(a - e)
+            if diff < 1e-4:
+                continue
+            if debug:
+                print(f"mismatch: {a} != {e} (diff: {diff})")
+            return False
+
+        return True
     except ValueError:
         pass
 
     return False
 
 def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    instrus = [SOL_DEPS + instrument_input(inp) + code for inp in inps]
-    res = exec_test_batched(executor, instrus, [""] * len(instrus), timeout=timeout)
+    instrus = [SOL_DEPS + code for _ in inps]
+    res = exec_test_batched(executor, instrus, [""] * len(instrus), timeout=timeout, stdins=inps)
     feedback = ""
     good = True
     for inp, out, (passing, outs) in zip(inps, outs, res):
@@ -59,3 +82,8 @@ def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30)
     return good, feedback
         
 
+
+if __name__ == "__main__":
+    e = "0.5\n0.58333333\n0.70833333\n0.625\n0.578125\n0.525\n0.5\n0.83333333\n0.75\n0.56944444\n"
+    a = "0.5\n0.5833333333\n0.7083333333\n0.6250000000\n0.5781250000\n0.5250000000\n0.5\n0.8333333333\n0.7500000000\n0.5694444444\n"
+    print(compare_io(e, a, debug=True))
