@@ -23,12 +23,15 @@ from heapq import *
 def compare_io(actual, expected, debug=False) -> bool:
     if actual == expected:
         return True
-    if actual.strip() == expected.strip():
+    actual = actual.strip()
+    expected = expected.strip()
+    if actual == expected:
+        return True
+
+    if actual.lower() == expected.lower():
         return True
 
     try:
-        actual = actual.strip()
-        expected = expected.strip()
         # split into lines
         actual_lines = actual.splitlines()
         expected_lines = expected.splitlines()
@@ -49,6 +52,8 @@ def compare_io(actual, expected, debug=False) -> bool:
         # compare each line
         for aline, eline in zip(actual_lines, expected_lines):
             if aline == eline:
+                continue
+            if aline.lower() == eline.lower():
                 continue
             # try float comparison, with some tolerance
             a = float(aline)
