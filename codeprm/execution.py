@@ -1,4 +1,5 @@
 from typing import List, Tuple
+import re
 from codeprm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
 
 
@@ -97,9 +98,18 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
     return good, feedback
 
 
+FROM_IMPORT_RE = re.compile(r"from\s+\S+\s+import\s+\S+")
+
+
 def instrument_io_code(code: str, inputs: List[str]) -> str:
+    imports = re.findall(FROM_IMPORT_RE, code)
+    code = re.sub(FROM_IMPORT_RE, "", code)
     code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
     code_closed = "def __run_prog__():\n" + code_indented
+
+    for imp in imports:
+        code_closed = imp + "\n" + code_closed
+
     instru = SOL_DEPS + IGNORE_WARNINGS + code_closed + "\n\n"
     inputs_str = "__inputs__ = " + str(inputs) + "\n"
     instru += inputs_str
