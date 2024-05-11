@@ -19,6 +19,11 @@ import heapq
 from heapq import *
 """
 
+IGNORE_WARNINGS = """
+import warnings
+warnings.filterwarnings("ignore")
+"""
+
 
 def compare_io(actual, expected, debug=False) -> bool:
     if isinstance(expected, list):  # this can happen apparently
@@ -76,7 +81,7 @@ def compare_io(actual, expected, debug=False) -> bool:
 
 
 def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    instrus = [SOL_DEPS + code for _ in inps]
+    instrus = [SOL_DEPS + IGNORE_WARNINGS + code for _ in inps]
     res = exec_test_batched(executor, instrus, [
                             ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=False)
     feedback = ""
