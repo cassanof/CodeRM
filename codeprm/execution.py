@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 from codeprm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
 
 
@@ -97,7 +97,37 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
     return good, feedback
 
 
-def exec_io_test(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def instrument_io_code(code: str, inputs: List[str]) -> str:
+    code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
+    code_closed = "def __run_prog__():\n" + code_indented
+    instru = SOL_DEPS + IGNORE_WARNINGS + code_closed + "\n\n"
+    inputs_str = "__inputs__ = " + str(inputs) + "\n"
+    instru += inputs_str
+    instru += "for __inp__ in __inputs__:\n"  # NOTE: sys is imported in SOL_DEPS
+    instru += "    import io\n"
+    instru += "    sys.stdin = io.TextIOWrapper(io.BytesIO(__inp__.encode()), encoding='utf8')\n"
+    instru += "    __run_prog__()\n"
+    instru += "    print(\"___SENTINEL___\")\n"
+    return instru
+
+
+def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    instru = instrument_io_code(code, inps)
+    passing, outputs = exec_test(
+        executor, instru, "", timeout=timeout, timeout_on_client=False)
+    if not passing:
+        return False, f"errored with {outputs!r}\n"
+
+    outputs = outputs.split("___SENTINEL___")[:-1]
+    feedback = ""
+    for inp, out, actual in zip(inps, outs, outputs):
+        if not compare_io(actual, out):
+            feedback += f"[{inp!r}] expected {out!r} but got {actual!r}\n"
+
+    return not bool(feedback), feedback
+
+
+def exec_io_test_vanilla(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     instrus = [SOL_DEPS + code for _ in inps]
     for (instru, inp, out) in zip(instrus, inps, outs):
         passing, outputs = exec_test(
@@ -135,7 +165,7 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         for arg in inp:
             args += f"{arg!r}, "
         args = args.rstrip(", ")
-        tests += f"assert is_eq({entrypoint}({args}), {out!r}), f\"\"\"expected {out!r} but got {{ {entrypoint}({args}) }}\"\"\"\n"
+        tests += f"assert is_eq({entrypoint}({args}), {out!r})\n"
 
     passing, outs = exec_test(executor, instru, tests,
                               timeout=timeout, timeout_on_client=False)
@@ -149,7 +179,7 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
     if batched_io:
         exec_io_test_fn = exec_io_test_batched
     else:
-        exec_io_test_fn = exec_io_test
+        exec_io_test_fn = exec_io_test_instrumented
 
     if "fn_name" in tests:
         name = tests["fn_name"]
