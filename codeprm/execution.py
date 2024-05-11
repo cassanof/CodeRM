@@ -102,8 +102,8 @@ FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
 
 
 def instrument_io_code(code: str, inputs: List[str]) -> str:
-    imports = re.findall(FROM_IMPORT_RE, code)
-    code = re.sub(FROM_IMPORT_RE, "", code)
+    imports = re.findall(FROM_IMPORT_ALL_RE, code)
+    code = re.sub(FROM_IMPORT_ALL_RE, "", code)
     code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
     code_closed = "def __run_prog__():\n" + code_indented
 
