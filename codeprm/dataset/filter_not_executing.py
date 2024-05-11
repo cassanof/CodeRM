@@ -30,8 +30,7 @@ def filter_not_executing(ex):
         if passing:
             passing_solns.append(sol)
         else:
-            print((e + "\n").split("\n")[0])
-        
+            print("\n".join(e.split("\n")[:10]))
 
     return {
         "solutions": passing_solns,
