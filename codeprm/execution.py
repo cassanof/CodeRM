@@ -98,7 +98,7 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
     return good, feedback
 
 
-FROM_IMPORT_RE = re.compile(r"from\s+\S+\s+import\s+\S+")
+FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
 
 
 def instrument_io_code(code: str, inputs: List[str]) -> str:
