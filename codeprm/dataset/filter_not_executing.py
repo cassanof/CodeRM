@@ -1,5 +1,5 @@
 import datasets
-from codeprm.utils import chunkify
+from codeprm.utils import chunkify, container_restart
 from tqdm import tqdm
 import json
 from codeprm.execution import smart_exec_tests
@@ -52,14 +52,6 @@ def filter_not_executing(ex):
     }
 
 
-def docker_restart():
-    import subprocess
-    p = subprocess.Popen(
-        ["docker", "restart", args.container_name], stdout=subprocess.PIPE)
-    p.communicate()
-    return p.returncode
-
-
 final_ds = []
 
 for ds in tqdm(dses, desc="Filtering all datasets"):
@@ -68,7 +60,7 @@ for ds in tqdm(dses, desc="Filtering all datasets"):
     final_ds.extend(ds.to_list())
     # restart docker container
     print("Done with a batch, restarting docker container for stability...")
-    docker_restart()
+    container_restart(name=args.container_name)
 
 final_ds = datasets.Dataset.from_list(final_ds)
 final_ds.save_to_disk(args.input_dir + "_exec_filtered")
