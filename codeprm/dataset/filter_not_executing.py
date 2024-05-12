@@ -1,14 +1,15 @@
 import datasets
 import json
 from codeprm.execution import smart_exec_tests
+import os
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_dir", type=str, default="./taco_cleaned")
 parser.add_argument("--executor", type=str, default="http://127.0.0.1:8000")
-parser.add_argument("--max-solns", type=int, default=20)
-parser.add_argument("--max-attempts", type=int, default=40)
-parser.add_argument("--workers", type=int, default=1)
+parser.add_argument("--max-solns", type=int, default=75)
+parser.add_argument("--max-attempts", type=int, default=100)
+parser.add_argument("--workers", type=int, default=os.cpu_count() - 1)
 parser.add_argument("--sample", type=int, default=None)
 args = parser.parse_args()
 
