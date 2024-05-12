@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+import threading
 import re
 from codeprm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
 
@@ -196,3 +197,30 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
         return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
     else:
         return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
+
+
+def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8000", timeout=30) -> List[Tuple[bool, str]]:
+    results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
+    threads = []
+
+    def exec_test_fn(i, code, tests):
+        results[i] = smart_exec_tests(
+            code, tests, executor=executor, timeout=timeout)
+
+    for i, (code, tests) in enumerate(zip(codes, tests_per_code)):
+        t = threading.Thread(target=exec_test_fn, args=(i, code, tests))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    results_new = []
+    for r in results:
+        if r is None:
+            results_new.append(
+                (False, "Failed to execute program. Thread error."))
+        else:
+            results_new.append(r)
+
+    return results_new
