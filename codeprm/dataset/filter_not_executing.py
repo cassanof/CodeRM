@@ -26,19 +26,12 @@ def filter_not_executing(ex):
             break
         if i >= args.max_attempts:
             break
-        retries = 0
-        while retries < 3:
-            retries += 1
-            passing, e = smart_exec_tests(
-                sol, json.loads(ex["input_output"]), executor=args.executor, timeout=90)
-            if passing:
-                passing_solns.append(sol)
-            else:
-                if "BrokenPipeError" in e:
-                    print("Retrying due to BrokenPipeError")
-                    continue
-                print("\n".join(e.split("\n")[:10]))
-            break
+        passing, e = smart_exec_tests(
+            sol, json.loads(ex["input_output"]), executor=args.executor, timeout=90)
+        if passing:
+            passing_solns.append(sol)
+        else:
+            print("\n".join(e.split("\n")[:10]))
 
     return {
         "solutions": passing_solns,
