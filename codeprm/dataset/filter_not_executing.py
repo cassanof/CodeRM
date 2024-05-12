@@ -14,7 +14,7 @@ parser.add_argument("--max-solns", type=int, default=75)
 parser.add_argument("--max-attempts", type=int, default=100)
 parser.add_argument("--workers", type=int, default=os.cpu_count() - 1)
 parser.add_argument("--batch-size", type=int, default=os.cpu_count() * 2)
-parser.add_argument("--timeout", type=int, default=45)
+parser.add_argument("--timeout", type=int, default=30)
 parser.add_argument("--sample", type=int, default=None)
 args = parser.parse_args()
 
