@@ -1,5 +1,5 @@
 import datasets
-from codeprm.utils import chunkify, container_restart
+from codeprm.utils import chunkify
 from tqdm import tqdm
 import json
 from codeprm.execution import smart_exec_tests
@@ -23,16 +23,6 @@ ds = datasets.load_from_disk("./taco_cleaned")
 if args.sample is not None:
     ds = ds.select(range(args.sample))
 
-ds = ds.to_list()
-print("Loaded dataset: ", len(ds))
-chunks = chunkify(ds, args.batch_size)
-
-dses = []
-for chunk in chunks:
-    dses.append(datasets.Dataset.from_list(chunk))
-
-print(f"Loaded dataset chunks (batch size: {args.batch_size}): {len(dses)}")
-
 
 def filter_not_executing(ex):
     passing_solns = []
@@ -53,15 +43,7 @@ def filter_not_executing(ex):
     }
 
 
-final_ds = []
+ds = ds.map(filter_not_executing, num_proc=args.workers)
+ds = ds.filter(lambda x: len(x["solutions"]) > 0)
 
-for ds in tqdm(dses, desc="Filtering all datasets"):
-    ds = ds.map(filter_not_executing, num_proc=args.workers)
-    ds = ds.filter(lambda x: len(x["solutions"]) > 0)
-    final_ds.extend(ds.to_list())
-    # restart docker container
-    print("Done with a batch, restarting docker container for stability...")
-    container_restart(name=args.container_name)
-
-final_ds = datasets.Dataset.from_list(final_ds)
-final_ds.save_to_disk(args.input_dir + "_exec_filtered")
+ds.save_to_disk(args.input_dir + "_exec_filtered")
