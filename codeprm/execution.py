@@ -224,3 +224,15 @@ def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8
             results_new.append(r)
 
     return results_new
+
+
+def parse_time_limit(limit: str, default=30, scaling_factor=2) -> int:
+    if limit is None or not isinstance(limit, str):
+        return default
+    if "-" in limit:
+        # get the second number after the dash
+        limit = limit.split("-")[1].strip().split()[0]
+        return int(limit) * scaling_factor
+    split = limit.split()
+    num = float(split[0])
+    return (int(num) + 1) * scaling_factor  # add 1 second to be safe
