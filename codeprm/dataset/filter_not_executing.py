@@ -29,7 +29,7 @@ def filter_not_executing(ex):
         while retries < 3:
             retries += 1
             passing, e = smart_exec_tests(
-                sol, json.loads(ex["input_output"]), executor=args.executor, timeout=30)
+                sol, json.loads(ex["input_output"]), executor=args.executor, timeout=90)
             if passing:
                 passing_solns.append(sol)
             else:
