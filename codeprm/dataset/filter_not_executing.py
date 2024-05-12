@@ -2,7 +2,7 @@ import datasets
 from codeprm.utils import chunkify
 from tqdm import tqdm
 import json
-from codeprm.execution import smart_exec_tests
+from codeprm.execution import parse_time_limit, smart_exec_tests
 import os
 import argparse
 
@@ -25,6 +25,7 @@ if args.sample is not None:
 
 
 def filter_not_executing(ex):
+    time_limit = parse_time_limit(ex["time_limit"], default=args.timeout)
     passing_solns = []
     for i, sol in enumerate(ex["solutions"]):
         if len(passing_solns) >= args.max_solns:
@@ -32,7 +33,7 @@ def filter_not_executing(ex):
         if i >= args.max_attempts:
             break
         passing, e = smart_exec_tests(
-            sol, json.loads(ex["input_output"]), executor=args.executor, timeout=args.timeout)
+            sol, json.loads(ex["input_output"]), executor=args.executor, timeout=time_limit)
         if passing:
             passing_solns.append(sol)
         else:
