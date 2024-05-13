@@ -1,3 +1,9 @@
 [submodule "code_exec_server"]
 	path = codeprm/code_exec_server
 	url = git@github.com:cassanof/code_exec_server
+[submodule "codeprm/dataset/code-dedup"]
+	path = codeprm/dataset/code-dedup
+	url = git@github.com:cassanof/code-dedup
+[submodule "training/finetuning-harness"]
+	path = training/finetuning-harness
+	url = git@github.com:cassanof/finetuning-harness
