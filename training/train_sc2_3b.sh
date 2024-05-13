@@ -11,13 +11,13 @@ python3 -m torch.distributed.launch \
         --nproc_per_node 4 \
         main.py \
         --deepspeed="$DS" \
-        --model_path="bigcode/starcoder2-15b" \
+        --model_path="bigcode/starcoder2-3b" \
         --dataset_name="cassanof/taco_cleaned_train_sc2" \
         --dataset_loader="padded" \
         --mask_loss_till_token_id 7 \
         --trim_longer \
         --no_approx_tokens \
-        --output_dir="/scratch/federicoc/model_starcoder2_15b_taco" \
+        --output_dir="/scratch/federicoc/model_starcoder2_3b_taco" \
         --seq_length 4096 \
         --epochs 5 \
         --fa2 \
@@ -32,4 +32,4 @@ python3 -m torch.distributed.launch \
         --perc_valid_set 0.0 \
         --save_total_limit 20
 popd
-rm -fr /scratch/federicoc/model_starcoder2_15b_taco/*/*global_steps*
+rm -fr /scratch/federicoc/model_starcoder2_3b_taco/*/*global_steps*
