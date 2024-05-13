@@ -70,6 +70,7 @@ class CompletionGenerator:
                 max_tokens=self.max_tokens,
                 top_p=self.top_p,
                 temperature=self.temperature,
+                use_tqdm=use_tqdm,
             )
             for i, completion in zip(indices, completions):
                 items[i].completions.append(completion)
