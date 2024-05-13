@@ -36,11 +36,16 @@ class BaseModel(ABC):
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
         pass
 
+    @abstractmethod
+    def format_prompt(self, question: str, code=""):
+        pass
+
 
 class HFModel(BaseModel):
-    def __init__(self, model_name: str, num_gpus=1):
+    def __init__(self, model_name: str, num_gpus=1, prompt_fn=py_prompt):
         from vllm import LLM
         self.model = LLM(model_name, tensor_parallel_size=num_gpus)
+        self.prompt_fn = prompt_fn
 
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
         from vllm import SamplingParams
@@ -55,3 +60,6 @@ class HFModel(BaseModel):
             use_tqdm=kwargs.pop("use_tqdm", False),
         )
         return [gen.outputs[0].text for gen in gens]
+
+    def format_prompt(self, question: str, code=""):
+        return self.prompt_fn(question, code)

@@ -7,17 +7,19 @@ from codeprm.model import BaseModel
 class CompletionItem:
     def __init__(self, prompt_col: str, item: Dict[str, Any], starter_code_col: Optional[str] = None):
         self.prompt_col = prompt_col
-        self.starter_code = starter_code_col
+        self.starter_code_col = starter_code_col
         self.item = item
         self.completions = []
 
     def get_prompt(self) -> str:
         return self.item[self.prompt_col]
 
-    def get_starter_code(self) -> Optional[str]:
-        if self.starter_code is not None:
-            return self.item[self.starter_code]
-        return None
+    def get_starter_code(self) -> str:
+        if self.starter_code_col is not None:
+            starter = self.item[self.starter_code_col]
+            starter = starter if starter is not None else ""
+            return starter
+        return ""
 
 
 def make_items_from_ds(dataset, prompt_col: str, starter_code_col: Optional[str] = None) -> List[CompletionItem]:
@@ -55,13 +57,16 @@ class CompletionGenerator:
 
         for i, example in enumerate(items):
             indexed_prompts.extend(
-                [(i, example.get_prompt())] * self.completion_limit)
+                [(i, self.model.format_prompt(example.get_prompt(), example.get_starter_code()))] * self.completion_limit)
 
         chunks = chunkify(indexed_prompts, self.batch_size)
 
         if use_tqdm:
-            chunks = tqdm(chunks, total=len(chunks),
-                          desc="Generating batches of completions")
+            chunks = tqdm(
+                chunks,
+                total=len(chunks),
+                desc="Generating batches of completions",
+            )
 
         for chunk in chunks:
             indices, prompts = zip(*chunk)
