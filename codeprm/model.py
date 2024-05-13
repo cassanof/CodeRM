@@ -11,6 +11,15 @@ def autodetect_dtype() -> str:
         return "auto"
 
 
+def py_prompt(question: str, code=""):
+    # escape any triple quotes in the question
+    question = question.replace('"""', r'\"""')
+    return f'''"""
+{question}
+"""
+{code}'''
+
+
 class BaseModel(ABC):
     @abstractmethod
     def generate(self, prompts: List[str], **kwargs) -> List[str]:

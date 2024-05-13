@@ -19,8 +19,10 @@ import numpy as np
 import random
 import heapq
 from heapq import *
-sys.setrecursionlimit(10**6)
-sys.set_int_max_str_digits(10**6)
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
+if hasattr(sys, "setrecursionlimit"):
+    sys.setrecursionlimit(10**6)
 """
 
 IGNORE_WARNINGS = """
