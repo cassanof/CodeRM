@@ -20,6 +20,17 @@ def py_prompt(question: str, code=""):
 {code}'''
 
 
+def model_factory(
+        kind: str,
+        name: str,
+        num_gpus=1,
+):
+    if kind == "base":
+        return HFModel(name, num_gpus=num_gpus)
+    else:
+        raise ValueError(f"Unknown model kind: {kind}")
+
+
 class BaseModel(ABC):
     @abstractmethod
     def generate(self, prompts: List[str], **kwargs) -> List[str]:

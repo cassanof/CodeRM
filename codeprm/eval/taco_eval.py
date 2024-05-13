@@ -1,10 +1,14 @@
 from codeprm.eval.generic import CompletionGenerator, make_items_from_ds
-from codeprm.model import HFModel
+from codeprm.model import model_factory
 import datasets
 
 
 def main(args):
-    model = HFModel(args.model, num_gpus=args.num_gpus)
+    model = model_factory(
+        args.model_kind,
+        args.model,
+        num_gpus=args.num_gpus,
+    )
     dataset = datasets.load_dataset(args.dataset, split="test")
 
     items = make_items_from_ds(
@@ -54,6 +58,13 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="Model to use"
+    )
+    parser.add_argument(
+        "--model-kind",
+        type=str,
+        default="base",
+        help="Model kind",
+        choices=["base"]
     )
     parser.add_argument(
         "--num-gpus",
