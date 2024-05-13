@@ -18,6 +18,7 @@ def main(args):
     print("Printing one example:")
     print(ds[0]["content"])
     ds.push_to_hub(args.push, private=True)
+    print("IMPORTANT: Remember to MinHash-dedup the dataset before training!")
 
 
 if __name__ == "__main__":
