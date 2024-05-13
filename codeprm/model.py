@@ -42,9 +42,19 @@ class BaseModel(ABC):
 
 
 class HFModel(BaseModel):
-    def __init__(self, model_name: str, num_gpus=1, prompt_fn=py_prompt):
+    def __init__(
+            self,
+            model_name: str,
+            num_gpus=1,
+            prompt_fn=py_prompt,
+    ):
         from vllm import LLM
-        self.model = LLM(model_name, tensor_parallel_size=num_gpus)
+        self.model = LLM(
+            model_name,
+            tensor_parallel_size=num_gpus,
+            enable_prefix_caching=True,
+            max_model_len=4096,
+        )
         self.prompt_fn = prompt_fn
 
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
