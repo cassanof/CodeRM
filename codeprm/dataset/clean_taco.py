@@ -74,6 +74,14 @@ def main(args):
     ds = ds.map(lambda x: {"solutions": [
                 s for s in x["solutions"] if does_parse(s) and len(tokenizer.encode(s)) <= args.max_tokens]}, num_proc=os.cpu_count())
 
+    # remove any question over the max tokens
+    ds = ds.filter(lambda x: len(
+        tokenizer.encode(x["question"])) <= args.max_tokens)
+
+    # remove any solution that is too short
+    ds = ds.filter(lambda x: np.mean([len(s.strip().split("\n"))
+                   for s in x["solutions"]]) >= args.min_lines_in_solution)
+
     # filter to have at least 1 solution
     ds = ds.filter(lambda x: len(x["solutions"]) >= args.min_solutions)
     print("Has at least one solution: ", len(ds))
@@ -97,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_solution_line_length", type=int, default=3)
     parser.add_argument("--min_tests", type=int, default=10)
     parser.add_argument("--min_solutions", type=int, default=1)
+    parser.add_argument("--min_lines_in_solution", type=int, default=3)
     parser.add_argument("--max_tokens", type=int, default=2048)
     parser.add_argument("--split", type=str, default="train")
     args = parser.parse_args()
