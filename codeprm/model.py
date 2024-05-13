@@ -40,7 +40,7 @@ class HFModel(BaseModel):
                 top_p=kwargs.pop("top_p", 0.9),
                 temperature=kwargs.pop("temperature", 0.2),
                 max_tokens=kwargs.pop("max_tokens", 2048),
-            )
+            ),
             use_tqdm=kwargs.pop("use_tqdm", False),
         )
         return [gen.outputs[0].text for gen in gens]
