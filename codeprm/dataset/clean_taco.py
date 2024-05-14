@@ -56,9 +56,6 @@ def main(args):
         x["solutions"])}, num_proc=os.cpu_count())
     print("Original dataset size: ", len(ds))
 
-    # mean solution line length needs to be >= 3
-    ds = ds.filter(lambda x: np.mean([len(s.strip().split("\n"))
-                   for s in x["solutions"]]) >= args.min_solution_line_length, num_proc=os.cpu_count())
     print("After mean solution line length >= 3: ", len(ds))
 
     # need to have enough tests, at least 10
@@ -70,17 +67,13 @@ def main(args):
     ds = ds.map(lambda x: {"solutions": [s.strip()
                 for s in x["solutions"]]}, num_proc=os.cpu_count())
 
-    # remove any solution that is not parsable or is too long
+    # remove any solution that is not parsable is too long, or too short
     ds = ds.map(lambda x: {"solutions": [
-                s for s in x["solutions"] if does_parse(s) and len(tokenizer.encode(s)) <= args.max_tokens]}, num_proc=os.cpu_count())
+                s for s in x["solutions"] if does_parse(s) and len(tokenizer.encode(s)) <= args.max_tokens and (s.count("\n") + 1) >= args.min_lines_in_solution]}, num_proc=os.cpu_count())
 
     # remove any question over the max tokens
     ds = ds.filter(lambda x: len(
         tokenizer.encode(x["question"])) <= args.max_tokens)
-
-    # remove any solution that is too short
-    ds = ds.filter(lambda x: np.mean([len(s.strip().split("\n"))
-                   for s in x["solutions"]]) >= args.min_lines_in_solution)
 
     # filter to have at least 1 solution
     ds = ds.filter(lambda x: len(x["solutions"]) >= args.min_solutions)
