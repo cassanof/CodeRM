@@ -17,7 +17,7 @@ def main(args):
         "question",
         "input_output",
         starter_code_col="starter_code",
-        unique_name_col="url",
+        unique_name_col=None,
     )
     manager = EvaluationManager(
         model,
