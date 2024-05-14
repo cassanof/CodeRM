@@ -1,5 +1,4 @@
 from codeprm.eval.generic import EvaluationManager, get_generic_argparser, make_items_from_ds
-from codeprm.execution import smart_exec_tests_batched
 from codeprm.model import model_factory
 import datasets
 
@@ -18,6 +17,7 @@ def main(args):
         "input_output",
         starter_code_col="starter_code",
         unique_name_col=None,
+        random_sample=args.random_sample,
     )
     manager = EvaluationManager(
         model,
