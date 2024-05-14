@@ -246,7 +246,8 @@ def parse_time_limit(limit: str, default=30, scaling_factor=2) -> int:
     if "-" in limit:
         # get the second number after the dash
         limit = limit.split("-")[1].strip().split()[0]
-        return int(limit) * scaling_factor
+        limit = float(limit)
+        return (int(limit) + 1) * scaling_factor
     split = limit.split()
     num = float(split[0])
     return (int(num) + 1) * scaling_factor  # add 1 second to be safe

@@ -1,5 +1,6 @@
 from typing import List
 import torch
+from codeprm.prompts import py_prompt
 
 from abc import ABC, abstractmethod
 
@@ -9,15 +10,6 @@ def autodetect_dtype() -> str:
         return "bfloat16"
     else:
         return "auto"
-
-
-def py_prompt(question: str, code=""):
-    # escape any triple quotes in the question
-    question = question.replace('"""', r'\"""')
-    return f'''"""
-{question}
-"""
-{code}'''
 
 
 def model_factory(
