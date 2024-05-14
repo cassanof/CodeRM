@@ -82,7 +82,12 @@ def make_items_from_ds(
             dataset), "Unique name column is not actually unique"
 
     if random_sample is not None:
-        dataset = dataset.shuffle(seed=42).select(range(random_sample))
+        if isinstance(dataset, list):
+            import random
+            random.seed(42)
+            dataset = random.sample(dataset, random_sample)
+        else:
+            dataset = dataset.shuffle(seed=42).select(range(random_sample))
 
     items = []
     for i, item in enumerate(dataset):
