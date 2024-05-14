@@ -1,5 +1,6 @@
 import datasets
 from codeprm.model import py_prompt
+import random
 
 
 def main(args):
@@ -10,11 +11,19 @@ def main(args):
     solutions = []
     mark = args.mask_loss_mark if args.mask_loss_mark else ""
     for ex in ds:
-        for sol in ex["solutions"]:
+        if args.strategy == "all":
+            for sol in ex["solutions"]:
+                content.append(py_prompt(ex["question"], mark + sol))
+                solutions.append(sol)
+        elif args.strategy == "random":
+            sol = random.choice(ex["solutions"])
             content.append(py_prompt(ex["question"], mark + sol))
             solutions.append(sol)
+        else:
+            raise ValueError("Invalid strategy: " + args.strategy)
 
-    ds = datasets.Dataset.from_dict({"content": content, "solutions": solutions})
+    ds = datasets.Dataset.from_dict(
+        {"content": content, "solutions": solutions})
     print("New ds:")
     print(ds)
     print("Printing one example:")
@@ -29,5 +38,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, required=True)
     parser.add_argument("--push", type=str, required=True)
     parser.add_argument("--mask_loss_mark", type=str, default=None)
+    parser.add_argument("--strategy", type=str, default="all",
+                        # TODO: maybe add a strat that takes account of LoC distribution
+                        choices=["all", "random"])
     args = parser.parse_args()
+    random.seed(42)
     main(args)
