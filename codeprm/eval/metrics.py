@@ -21,8 +21,9 @@ def per_file_metrics(file: Path, k: int) -> str:
     assert obj is not None, f"Failed to read {file}"
 
     items = obj["items"]
-    n = obj["completion_limit"]
-    assert n >= k, f"Completion limit {n} is less than k {k}"
+    size = len(items)
+    n_comps = obj["completion_limit"]
+    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
 
     pass_ks = []
     for item in items:
@@ -31,15 +32,15 @@ def per_file_metrics(file: Path, k: int) -> str:
             if result["passing"]:
                 correct += 1
 
-        score = pass_at_k(n, correct, k)
+        score = pass_at_k(n_comps, correct, k)
         score = round(score * 100, 4)
         pass_ks.append(score)
 
-    return f"{file.stem},{n},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
+    return f"{file.stem},{size},{n_comps},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
 
 
 def main(args):
-    header = "name,n,k,avg pass@k,std pass@k"
+    header = "name,dataset size,num completions,k,avg pass@k,std pass@k"
     print(header)
     for file in args.inputs:
         print(per_file_metrics(Path(file), args.k))
