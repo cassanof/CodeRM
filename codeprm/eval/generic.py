@@ -61,7 +61,7 @@ class CompletionItem:
             "prompt": self.get_prompt(),
             "starter_code": self.get_starter_code(),
             "tests": self.get_tests(),
-            "results": [{"code": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
+            "results": [{"completions": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
         }
 
 
