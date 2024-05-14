@@ -1,4 +1,5 @@
 from codeprm.eval.generic import EvaluationManager, get_generic_argparser, make_items_from_ds
+import json
 from codeprm.model import model_factory
 import datasets
 
@@ -10,6 +11,11 @@ def main(args):
         num_gpus=args.num_gpus,
     )
     dataset = datasets.load_dataset(args.dataset, split="test")
+    # convert dataset to list
+    dataset = dataset.to_list()
+    # json loads all tests
+    for i, item in enumerate(dataset):
+        dataset[i]["input_output"] = json.loads(item["input_output"])
 
     items = make_items_from_ds(
         dataset,
