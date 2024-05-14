@@ -4,6 +4,7 @@ Splits the given result file into a separate files for each difficulty level.
 import datasets
 from codeprm.utils import gunzip_json_read, gunzip_json_write
 from pathlib import Path
+from tqdm import tqdm
 
 
 def main(args):
@@ -37,7 +38,7 @@ def main(args):
         difficulty = index_to_diff[i]
         difficulty_to_ds[difficulty]["items"].append(item)
 
-    for diff, ds in difficulty_to_ds.items():
+    for diff, ds in tqdm(difficulty_to_ds.items(), desc="Writing files"):
         stem = path.stem.split(".")[0]
         output_path = path.parent / f"{stem}_{diff}.json.gz"
         gunzip_json_write(output_path, ds)
