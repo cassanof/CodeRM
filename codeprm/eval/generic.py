@@ -192,8 +192,9 @@ class EvaluationManager:
                 items[i].results.append(CompletionResult(passing, output))
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
+        outpath = Path(output_path + ".json.gz")
         if verbose:
-            print(f"Saving completions to {output_path}...")
+            print(f"Saving completions to {outpath}...")
         d = {
             "model": self.model.get_name(),
             "max_tokens": self.max_tokens,
@@ -203,7 +204,7 @@ class EvaluationManager:
             "dataset_name": self.dataset_name,
             "items": [item.to_dict() for item in items],
         }
-        gunzip_json_write(Path(output_path + ".json.gz"), d)
+        gunzip_json_write(outpath, d)
 
 
 def get_generic_argparser(dataset_default: str):
