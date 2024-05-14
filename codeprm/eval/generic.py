@@ -1,6 +1,8 @@
 from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
 from tqdm import tqdm
 from codeprm.execution import parse_time_limit, smart_exec_tests_batched
+from utils import gunzip_json_write
 from codeprm.utils import chunkify
 from codeprm.model import BaseModel
 import os
@@ -10,6 +12,12 @@ class CompletionResult:
     def __init__(self, passing: bool, output: str):
         self.passing = passing
         self.output = output
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "passing": self.passing,
+            "output": self.output,
+        }
 
 
 class CompletionItem:
@@ -47,6 +55,15 @@ class CompletionItem:
             starter = starter if starter is not None else ""
             return starter
         return ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "unique_name": self.unique_name,
+            "prompt": self.get_prompt(),
+            "starter_code": self.get_starter_code(),
+            "tests": self.get_tests(),
+            "results": [{"code": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
+        }
 
 
 def make_items_from_ds(
@@ -89,7 +106,7 @@ def make_items_from_ds(
     return items
 
 
-class CompletionManager:
+class EvaluationManager:
     def __init__(
             self,
             model: BaseModel,
@@ -167,3 +184,93 @@ class CompletionManager:
             )
             for (i, _), (passing, output) in zip(chunk, results):
                 items[i].results.append(CompletionResult(passing, output))
+
+    def save_completions(self, items: List[CompletionItem], output_path: str):
+        d = {
+            "model": self.model.get_name(),
+            "max_tokens": self.max_tokens,
+            "top_p": self.top_p,
+            "temperature": self.temperature,
+            "completion_limit": self.completion_limit,
+            "items": [item.to_dict() for item in items],
+        }
+        gunzip_json_write(Path(output_path), d)
+
+
+def get_generic_argparser(dataset_default: str):
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=dataset_default,
+        help="Dataset name"
+    )
+    parser.add_argument(
+        "--completion-limit",
+        type=int,
+        default=20,
+        help="Number of completions to generate per problem"
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1028,
+        help="Total batch size for generation"
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=2048,
+        help="Max new tokens in the generated text"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="Model to use"
+    )
+    parser.add_argument(
+        "--model-kind",
+        type=str,
+        default="base",
+        help="Model kind",
+        choices=["base"]
+    )
+    parser.add_argument(
+        "--num-gpus",
+        type=int,
+        default=1,
+        help="Number of GPUs to use"
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=0.9,
+        help="Top-p sampling"
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.2,
+        help="Temperature for sampling. Set to 0 for greedy decoding"
+    )
+    parser.add_argument(
+        "--random-sample",
+        type=int,
+        default=None,
+        help="Randomly (seed=42) sample this many examples from the dataset and evaluate. By default, None, so evaluates the entire dataset"
+    )
+    parser.add_argument(
+        "--executor",
+        type=str,
+        default="http://127.0.0.1:8000",
+        help="Server URL for executing the code"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Output path to store the results"
+    )
+    return parser

@@ -32,6 +32,13 @@ def model_factory(
 
 
 class BaseModel(ABC):
+    # init method
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+
+    def get_name(self) -> str:
+        return self.model_name
+
     @abstractmethod
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
         pass
@@ -48,6 +55,7 @@ class HFModel(BaseModel):
             num_gpus=1,
             prompt_fn=py_prompt,
     ):
+        super().__init__(model_name)
         from vllm import LLM
         self.model = LLM(
             model_name,
