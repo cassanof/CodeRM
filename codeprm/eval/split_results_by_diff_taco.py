@@ -38,7 +38,8 @@ def main(args):
         difficulty_to_ds[difficulty]["items"].append(item)
 
     for diff, ds in difficulty_to_ds.items():
-        output_path = path.parent / f"{path.stem}_{diff}.json.gz"
+        stem = path.stem.split(".")[0]
+        output_path = path.parent / f"{stem}_{diff}.json.gz"
         gunzip_json_write(output_path, ds)
 
 
