@@ -18,6 +18,7 @@ def per_file_metrics(file: Path, k: int) -> str:
     
     items = obj["items"]
     n = obj["completion_limit"]
+    assert n >= k, f"Completion limit {n} is less than k {k}"
 
     pass_ks = []
     for item in items:
