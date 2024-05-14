@@ -27,7 +27,9 @@ def per_file_metrics(file: Path, k: int) -> str:
             if result["passing"]:
                 correct += 1
 
-        pass_ks.append(pass_at_k(n, correct, k))
+        score = pass_at_k(n, correct, k)
+        score = round(score * 100, 4)
+        pass_ks.append(score)
 
     return f"{file.stem},{n},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
 
