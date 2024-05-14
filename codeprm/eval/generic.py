@@ -144,7 +144,7 @@ class EvaluationManager:
             chunks = tqdm(
                 chunks,
                 total=len(chunks),
-                desc="Generating batches of completions",
+                desc=f"Generating batches of completions (batch size: {self.batch_size})",
             )
 
         for chunk in chunks:
@@ -171,7 +171,7 @@ class EvaluationManager:
             chunks = tqdm(
                 chunks,
                 total=len(chunks),
-                desc="Evaluating completions",
+                desc=f"Executing batches of completions (batch size: {self.exec_batch_size})",
             )
 
         for chunk in chunks:
