@@ -189,8 +189,9 @@ class EvaluationManager:
             for (i, _), (passing, output) in zip(chunk, results):
                 items[i].results.append(CompletionResult(passing, output))
 
-    def save_completions(self, items: List[CompletionItem], output_path: str):
-        print(f"Saving completions to {output_path}...")
+    def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
+        if verbose:
+            print(f"Saving completions to {output_path}...")
         d = {
             "model": self.model.get_name(),
             "max_tokens": self.max_tokens,
