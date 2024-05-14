@@ -1,4 +1,5 @@
-from codeprm.eval.generic import CompletionGenerator, make_items_from_ds
+from codeprm.eval.generic import CompletionManager, make_items_from_ds
+from codeprm.execution import smart_exec_tests_batched
 from codeprm.model import model_factory
 import datasets
 
@@ -14,16 +15,24 @@ def main(args):
     items = make_items_from_ds(
         dataset,
         "question",
+        "input_output",
         starter_code_col="starter_code",
+        unique_name_col="url",
     )
-    CompletionGenerator(
+    manager = CompletionManager(
         model,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
         temperature=args.temperature,
         batch_size=args.batch_size,
         completion_limit=args.completion_limit,
-    ).generate_completions(items, use_tqdm=True)
+    )
+    # generate
+    manager.generate_completions(items, use_tqdm=True)
+    # evaluate
+    manager.evaluate_completions(items, use_tqdm=True)
+
+    # evaluate
 
 
 if __name__ == "__main__":
@@ -83,6 +92,18 @@ if __name__ == "__main__":
         type=float,
         default=0.2,
         help="Temperature for sampling. Set to 0 for greedy decoding"
+    )
+    parser.add_argument(
+        "--random-sample",
+        type=int,
+        default=None,
+        help="Randomly (seed=42) sample this many examples from the dataset and evaluate. By default, None, so evaluates the entire dataset"
+    )
+    parser.add_argument(
+        "--executor",
+        type=str,
+        default="http://127.0.0.1:8000",
+        help="Server URL for executing the code"
     )
     parser.add_argument(
         "--output-dir",

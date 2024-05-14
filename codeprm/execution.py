@@ -188,6 +188,12 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
 
 
 def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, batched_io=False) -> Tuple[bool, str]:
+    """
+    Supports various test formats:
+        - simple I/O tests that use stdin and stdout
+        - named tests that use assert statements
+        - stringified tests that use a custom format (TODO)
+    """
     inputs = tests["inputs"]
     outputs = tests["outputs"]
 
@@ -203,16 +209,20 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
         return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
 
 
-def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8000", timeout=30) -> List[Tuple[bool, str]]:
+def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8000", timeouts=None) -> List[Tuple[bool, str]]:
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
     threads = []
 
-    def exec_test_fn(i, code, tests):
+    if timeouts is None:
+        timeouts = [30] * len(codes)
+
+    def exec_test_fn(i, code, tests, timeout):
         results[i] = smart_exec_tests(
             code, tests, executor=executor, timeout=timeout)
 
-    for i, (code, tests) in enumerate(zip(codes, tests_per_code)):
-        t = threading.Thread(target=exec_test_fn, args=(i, code, tests))
+    for i, (code, tests, timeout) in enumerate(zip(codes, tests_per_code, timeouts)):
+        t = threading.Thread(target=exec_test_fn,
+                             args=(i, code, tests, timeout))
         threads.append(t)
         t.start()
 
@@ -240,3 +250,12 @@ def parse_time_limit(limit: str, default=30, scaling_factor=2) -> int:
     split = limit.split()
     num = float(split[0])
     return (int(num) + 1) * scaling_factor  # add 1 second to be safe
+
+
+def check_executor_alive(executor="http://127.0.0.1:8000") -> bool:
+    import requests
+    try:
+        r = requests.get(executor)
+        return r.status_code == 200
+    except requests.exceptions.ConnectionError:
+        return False

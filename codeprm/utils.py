@@ -1,10 +1,13 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TypeVar
 from pathlib import Path
 import json
 import gzip
 
 
-def chunkify(lst: List[Any], n: int):
+T = TypeVar("T")
+
+
+def chunkify(lst: List[T], n: int) -> List[List[T]]:
     chunks = []
     for i in range(0, len(lst), n):
         chunk = []
