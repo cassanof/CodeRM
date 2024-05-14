@@ -1,3 +1,7 @@
+"""
+Takes in a result file and spits out the pass@k metrics.
+"""
+
 from pathlib import Path
 import numpy as np
 from codeprm.utils import gunzip_json_read

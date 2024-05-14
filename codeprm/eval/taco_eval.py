@@ -26,12 +26,13 @@ def main(args):
         random_sample=args.random_sample,
     )
     manager = EvaluationManager(
-        model,
+        model=model,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
         temperature=args.temperature,
         batch_size=args.batch_size,
         completion_limit=args.completion_limit,
+        dataset_name=args.dataset,
     )
     # generate
     manager.generate_completions(items, use_tqdm=True)

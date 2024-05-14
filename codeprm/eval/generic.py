@@ -119,6 +119,7 @@ class EvaluationManager:
             temperature: float,
             batch_size: int,
             completion_limit: int,
+            dataset_name: str,
             exec_batch_size=os.cpu_count(),
             executor="http://127.0.0.1:8000",
     ):
@@ -128,6 +129,7 @@ class EvaluationManager:
         self.temperature = temperature
         self.completion_limit = completion_limit
         self.batch_size = batch_size
+        self.dataset_name = dataset_name
         self.exec_batch_size = exec_batch_size if exec_batch_size is not None else 1
         self.executor = executor
 
@@ -198,9 +200,10 @@ class EvaluationManager:
             "top_p": self.top_p,
             "temperature": self.temperature,
             "completion_limit": self.completion_limit,
+            "dataset_name": self.dataset_name,
             "items": [item.to_dict() for item in items],
         }
-        gunzip_json_write(Path(output_path), d)
+        gunzip_json_write(Path(output_path + ".json.gz"), d)
 
 
 def get_generic_argparser(dataset_default: str):
@@ -277,6 +280,6 @@ def get_generic_argparser(dataset_default: str):
         "--output",
         type=str,
         required=True,
-        help="Output path to store the results"
+        help="Output path to store the results. don't add extension"
     )
     return parser
