@@ -146,7 +146,14 @@ class CompletionManager:
 
         chunks = chunkify(indexed_completions, self.exec_batch_size)
 
-        for chunk in tqdm(chunks, total=len(chunks), desc="Evaluating completions"):
+        if use_tqdm:
+            chunks = tqdm(
+                chunks,
+                total=len(chunks),
+                desc="Evaluating completions",
+            )
+
+        for chunk in chunks:
             codes = [items[i].get_starter_code() + completion for i,
                      completion in chunk]
             tests_per_code = [
