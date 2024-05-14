@@ -23,6 +23,9 @@ def main(args):
                 obj_no_items[key] = value
         difficulty_to_ds[d] = obj_no_items
 
+    for item in obj["items"]:
+        difficulty_to_ds[item["difficulty"]]["items"].append(item)
+
     for diff, ds in tqdm(difficulty_to_ds.items(), desc="Writing files"):
         stem = path.stem.split(".")[0]
         output_path = path.parent / f"{stem}_{diff}.json.gz"
