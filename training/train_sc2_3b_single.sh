@@ -32,4 +32,4 @@ python3 -m torch.distributed.launch \
         --perc_valid_set 0.0 \
         --save_total_limit 20
 popd
-rm -fr /scratch/federicoc/model_starcoder2_3b_taco/*/*global_steps*
+rm -fr /scratch/federicoc/model_starcoder2_3b_taco_single/*/*global_steps*
