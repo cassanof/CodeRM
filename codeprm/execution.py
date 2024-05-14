@@ -256,6 +256,6 @@ def check_executor_alive(executor="http://127.0.0.1:8000") -> bool:
     import requests
     try:
         r = requests.get(executor)
-        return r.status_code == 200
+        return r.status_code == 200 or r.status_code == 404
     except requests.exceptions.ConnectionError:
         return False
