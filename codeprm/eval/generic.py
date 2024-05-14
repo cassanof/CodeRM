@@ -27,12 +27,14 @@ class CompletionItem:
             tests_col: str,
             item: Dict[str, Any],
             starter_code_col: Optional[str] = None,
+            difficulty_col: Optional[str] = None,
     ):
         self.prompt_col = prompt_col
         self.starter_code_col = starter_code_col
         self.tests_col = tests_col
         self.item = item
         self.unique_name = unique_name
+        self.difficulty_col = difficulty_col
 
         self.completions: List[str] = []
         self.results: List[CompletionResult] = []
@@ -42,6 +44,11 @@ class CompletionItem:
 
     def get_tests(self) -> Any:  # TODO: proper types
         return self.item[self.tests_col]
+
+    def get_difficulty(self) -> Optional[str]:
+        if self.difficulty_col is not None:
+            return self.item[self.difficulty_col]
+        return None
 
     def get_timeout(self, default=30) -> int:
         if "time_limit" in self.item:
@@ -60,6 +67,7 @@ class CompletionItem:
             "unique_name": self.unique_name,
             "prompt": self.get_prompt(),
             "starter_code": self.get_starter_code(),
+            "difficulty": self.get_difficulty(),
             "tests": self.get_tests(),
             "results": [{"code": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
         }
@@ -69,6 +77,7 @@ def make_items_from_ds(
         dataset,
         prompt_col: str,
         tests_col: str,
+        difficulty_col: Optional[str] = None,
         starter_code_col: Optional[str] = None,
         random_sample: Optional[int] = None,
         unique_name_col: Optional[str] = None,
@@ -104,6 +113,7 @@ def make_items_from_ds(
                 tests_col,
                 item,
                 starter_code_col=starter_code_col,
+                difficulty_col=difficulty_col,
             )
         )
 
