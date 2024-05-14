@@ -15,7 +15,7 @@ def pass_at_k(n: int, c: int, k: int) -> float:
 def per_file_metrics(file: Path, k: int) -> str:
     obj = gunzip_json_read(file)
     assert obj is not None, f"Failed to read {file}"
-    
+
     items = obj["items"]
     n = obj["completion_limit"]
     assert n >= k, f"Completion limit {n} is less than k {k}"
@@ -32,12 +32,6 @@ def per_file_metrics(file: Path, k: int) -> str:
         pass_ks.append(score)
 
     return f"{file.stem},{n},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
-
-
-
-
-
-
 
 
 def main(args):
