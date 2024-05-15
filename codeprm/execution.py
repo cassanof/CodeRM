@@ -173,6 +173,8 @@ def is_eq(a, b):
 
 
 def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    if "class Solution:" in code:
+        entrypoint = "Solution()." + entrypoint
     instru = SOL_DEPS + code + EQ_INSTRUMENTATION
     tests = ""
     for inp, out in zip(inps, outs):
