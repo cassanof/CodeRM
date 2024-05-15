@@ -92,13 +92,13 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
                             ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=False)
     feedback = ""
     good = True
-    for inp, out, (passing, outs) in zip(inps, outs, res):
+    for i, (out, (passing, outs)) in enumerate(zip(outs, res)):
         if not passing:
             good = False
-            feedback += f"[{inp!r}] errored with {outs!r}\n"
+            feedback += f"[{i}] errored with {outs!r}\n"
         elif not compare_io(outs, out):
             good = False
-            feedback += f"[{inp!r}] expected {out!r} but got {outs!r}\n"
+            feedback += f"[{i}] expected {out!r} but got {outs!r}\n"
 
     return good, feedback
 
@@ -135,9 +135,9 @@ def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000"
 
     outputs = outputs.split("___SENTINEL___")[:-1]
     feedback = ""
-    for inp, out, actual in zip(inps, outs, outputs):
+    for i, (out, actual) in enumerate(zip(outs, outputs)):
         if not compare_io(actual, out):
-            feedback += f"[{inp!r}] expected {out!r} but got {actual!r}\n"
+            feedback += f"[{i}] expected {out!r} but got {actual!r}\n"
 
     return not bool(feedback), feedback
 
@@ -248,7 +248,7 @@ def parse_time_limit(limit: str, default=30, scaling_factor=2) -> int:
     if "-" in limit:
         # get the second number after the dash
         limit = limit.split("-")[1].strip().split()[0]
-        limit = float(limit)
+        limit = float(limit)  # type: ignore
         return (int(limit) + 1) * scaling_factor
     split = limit.split()
     num = float(split[0])
