@@ -68,7 +68,7 @@ class CompletionItem:
             "prompt": self.get_prompt(),
             "starter_code": self.get_starter_code(),
             "difficulty": self.get_difficulty(),
-            "tests": self.get_tests(),
+            #  "tests": self.get_tests(), # don't include this in the output, too large
             "results": [{"code": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
         }
 
