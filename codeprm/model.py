@@ -1,6 +1,6 @@
 from typing import List
 import torch
-from codeprm.prompts import py_prompt
+from codeprm.prompts import py_prompt, py_prompt_3shot_taco
 
 from abc import ABC, abstractmethod
 
@@ -18,7 +18,9 @@ def model_factory(
         num_gpus=1,
 ):
     if kind == "base":
-        return HFModel(name, num_gpus=num_gpus)
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
+    elif kind == "few-shot":
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_3shot_taco)
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
@@ -60,12 +62,15 @@ class HFModel(BaseModel):
     def generate(self, prompts: List[str], **kwargs) -> List[str]:
         from vllm import SamplingParams
         kwargs = kwargs.copy()
+        stop = kwargs.pop("stop", [])
+        stop.append("# START NEW CODE")  # for few-shot prompts
         gens = self.model.generate(
             prompts=prompts,
             sampling_params=SamplingParams(
                 top_p=kwargs.pop("top_p", 0.9),
                 temperature=kwargs.pop("temperature", 0.2),
                 max_tokens=kwargs.pop("max_tokens", 2048),
+                stop=stop,
             ),
             use_tqdm=kwargs.pop("use_tqdm", False),
         )

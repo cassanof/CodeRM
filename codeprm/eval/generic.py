@@ -259,7 +259,7 @@ def get_generic_argparser(dataset_default: str):
         type=str,
         default="base",
         help="Model kind",
-        choices=["base"]
+        choices=["base", "few-shot"]
     )
     parser.add_argument(
         "--num-gpus",
