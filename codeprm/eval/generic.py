@@ -87,8 +87,10 @@ def make_items_from_ds(
 
     if unique_name_col is not None:
         # check that it's actually unique
-        assert len(set(dataset[unique_name_col])) == len(
-            dataset), "Unique name column is not actually unique"
+        ids = set()
+        for item in dataset:
+            assert item[unique_name_col] not in ids, "Unique name column is not actually unique"
+            ids.add(item[unique_name_col])
 
     if random_sample is not None:
         if isinstance(dataset, list):
@@ -156,7 +158,8 @@ class EvaluationManager:
             chunks = tqdm(
                 chunks,
                 total=len(chunks),
-                desc=f"Generating batches of completions (batch size: {self.batch_size})",
+                desc=f"Generating batches of completions (batch size: {
+                    self.batch_size})",
             )
 
         for chunk in chunks:
@@ -183,7 +186,8 @@ class EvaluationManager:
             chunks = tqdm(
                 chunks,
                 total=len(chunks),
-                desc=f"Executing batches of completions (batch size: {self.exec_batch_size})",
+                desc=f"Executing batches of completions (batch size: {
+                    self.exec_batch_size})",
             )
 
         for chunk in chunks:
