@@ -44,7 +44,7 @@ def filter_not_executing(ex):
     }
 
 
-ds = ds.map(filter_not_executing, num_proc=args.workers)
+ds = ds.map(filter_not_executing, num_proc=args.workers, load_from_cache=False)
 ds = ds.filter(lambda x: len(x["solutions"]) > 0)
 
 ds.save_to_disk(args.input_dir + "_exec_filtered")
