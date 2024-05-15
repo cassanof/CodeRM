@@ -18,6 +18,9 @@ NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr "," "\n" | wc -l)
 TEMPERATURE=${TEMPERATURE:-0.0}
 COMPLETION_LIMIT=${COMPLETION_LIMIT:-1}
 
+# string version of TEMPERATURE, without the dot
+TEMPERATURE_STR=$(echo $TEMPERATURE | tr -d . | tr - _)
+
 SCRIPT_NAME=$(basename $SCRIPT)
 SCRIPT_NAME=${SCRIPT_NAME%.*}
 
@@ -30,5 +33,5 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
-      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
+      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}"
 done
