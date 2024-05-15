@@ -28,5 +28,5 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
-      --output-dir "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
+      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
 done
