@@ -18,6 +18,9 @@ NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr "," "\n" | wc -l)
 TEMPERATURE=${TEMPERATURE:-0.0}
 COMPLETION_LIMIT=${COMPLETION_LIMIT:-1}
 
+SCRIPT_NAME=$(basename $SCRIPT)
+SCRIPT_NAME=${SCRIPT_NAME%.*}
+
 for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
     echo "Evaluating $CHECKPOINT"
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python $SCRIPT \
@@ -25,5 +28,5 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
-      --output-dir "${CHECKPOINT_DIR}/${CHECKPOINT}_eval_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
+      --output-dir "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
 done
