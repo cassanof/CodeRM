@@ -23,10 +23,12 @@ SCRIPT_NAME=${SCRIPT_NAME%.*}
 
 for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
     echo "Evaluating $CHECKPOINT"
+    # get checkpoint number, after "-"
+    CHECKPOINT_NUM=${CHECKPOINT#*-}
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python $SCRIPT \
       --model $CHECKPOINT_DIR/$CHECKPOINT \
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
-      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
+      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE}_comps${COMPLETION_LIMIT}"
 done
