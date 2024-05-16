@@ -220,6 +220,7 @@ class EvaluationManager:
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
         outpath = Path(output_path + ".json.gz")
+        outpath.parent.mkdir(parents=True, exist_ok=True)
         if verbose:
             print(f"Saving completions to {outpath}...")
         d = {
