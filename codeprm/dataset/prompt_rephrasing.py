@@ -2,6 +2,7 @@ from typing import List, Tuple
 import datasets
 from codeprm.utils import chunkify
 import random
+from tqdm import tqdm
 from vllm import LLM, SamplingParams
 from codeprm.model import autodetect_dtype
 
@@ -801,6 +802,38 @@ def main(args):
     )
     dataset = datasets.load_dataset(args.dataset, split="train")
 
+    if args.sample is not None:
+        dataset = dataset.select(range(args.sample))
+
+    indexed_prompts = []
+    rephrases = [[] for _ in range(len(dataset))]
+    for i, ex in enumerate(dataset):
+        prompts = []
+        for _ in range(len(ex["solutions"])):
+            prompts.append((i, get_prompt(ex["question"])))
+
+        indexed_prompts.extend(prompts)
+
+    chunks = chunkify(indexed_prompts, args.batch_size)
+    for chunk in tqdm(chunks):
+        inputs = [x[1] for x in chunk]
+        outputs = model.generate(
+            inputs,
+            params=SamplingParams(
+                max_tokens=2048,
+                temperature=0.45,
+                top_p=0.9,
+                repetition_penalty=1.1,
+                stop=["# Original"],
+            )
+        )
+        outputs = [o.outputs[0].text for o in outputs]
+        for i, (idx, _) in enumerate(chunk):
+            rephrases[idx].append(outputs[i])
+
+    dataset = dataset.add_column("rephrased", rephrases)
+    dataset.push_to_hub(args.push, private=True)
+
 
 if __name__ == "__main__":
     import argparse
@@ -808,6 +841,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--model", type=str, default="bigcode/starcoder2-15b")
     parser.add_argument("--num-gpus", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=1024)
+    parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--push", type=str, required=True)
     args = parser.parse_args()
     random.seed(42)
