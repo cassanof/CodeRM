@@ -243,6 +243,12 @@ def get_generic_argparser(dataset_default: str):
         help="Total batch size for generation"
     )
     parser.add_argument(
+        "--exec-batch-size",
+        type=int,
+        default=os.cpu_count() * 4,
+        help="Total batch size for execution (defaults to os.cpu_count() * 4)"
+    )
+    parser.add_argument(
         "--max-tokens",
         type=int,
         default=2048,

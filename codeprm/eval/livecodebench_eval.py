@@ -31,9 +31,10 @@ def main(args):
         max_tokens=args.max_tokens,
         top_p=args.top_p,
         temperature=args.temperature,
-        batch_size=args.batch_size,
         completion_limit=args.completion_limit,
         dataset_name=args.dataset,
+        batch_size=args.batch_size,
+        exec_batch_size=args.exec_batch_size,
     )
     # generate
     manager.generate_completions(items, use_tqdm=True)
