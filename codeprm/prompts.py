@@ -42,8 +42,8 @@ def py_prompt_2shot_lcb(question: str, code=""):
 
     shots = ""
     for shot in shots_arr:
-        shots += "# START NEW CODE"
-        shots += f'''"""
+        shots += f'''# START NEW CODE
+"""
 {shot["question"]}
 """
 {shot["code"]}
