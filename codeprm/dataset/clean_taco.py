@@ -77,7 +77,7 @@ def main(args):
 
     # filter to have at least 1 solution
     ds = ds.filter(lambda x: len(x["solutions"]) >= args.min_solutions)
-    print("Has at least one solution: ", len(ds))
+    print(f"Has at least {args.min_solutions} solutions: ", len(ds))
 
     ds = ds.map(patch_tests, num_proc=os.cpu_count())
 
@@ -100,6 +100,6 @@ if __name__ == "__main__":
     parser.add_argument("--min_solutions", type=int, default=1)
     parser.add_argument("--min_lines_in_solution", type=int, default=3)
     parser.add_argument("--max_tokens", type=int, default=2048)
-    parser.add_argument("--split", type=str, default="train")
+    parser.add_argument("--split", type=str, default="train+test")
     args = parser.parse_args()
     main(args)
