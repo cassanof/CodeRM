@@ -1,6 +1,6 @@
 from typing import List
 import torch
-from codeprm.prompts import py_prompt, py_prompt_3shot_taco
+from codeprm.prompts import py_prompt, py_prompt_2shot_lcb
 
 from abc import ABC, abstractmethod
 
@@ -20,7 +20,7 @@ def model_factory(
     if kind == "base":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
     elif kind == "few-shot":
-        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_3shot_taco)
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
