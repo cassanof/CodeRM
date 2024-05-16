@@ -1,4 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple
+import time
+from codeprm.code_exec_server.code_exec_reqs import check_executor_alive
 from pathlib import Path
 from tqdm import tqdm
 from codeprm.execution import parse_time_limit, smart_exec_tests_batched
@@ -212,10 +214,31 @@ class EvaluationManager:
 
             strugglers = []
             for (i, c), (passing, output) in zip(chunk, results):
-                assert "Failed to execute program" not in output, "Failed to execute program"
-                if "Failed to execute program" in output:
+                if not passing and "Failed to execute program:" in output:
                     strugglers.append((i, c))
                 else:
+                    items[i].results.append(CompletionResult(passing, output))
+
+            if strugglers:
+                # wait for container to be alive
+                max_retries = 5
+                for _ in range(max_retries):
+                    if check_executor_alive(self.executor):
+                        break
+                    time.sleep(1)
+
+                # retry strugglers one by one
+                if use_tqdm:
+                    strugglers = tqdm(
+                        strugglers,
+                        total=len(strugglers),
+                        desc="Container runtime failed, retrying one by one",
+                    )
+
+                for i, c in strugglers:
+                    results = eval_chunk([(i, c)])
+                    passing, output = results[0]
+                    assert "Failed to execute program:" not in output, "Execution runtime failed. Check the executor"
                     items[i].results.append(CompletionResult(passing, output))
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
@@ -256,10 +279,13 @@ def get_generic_argparser(dataset_default: str):
         default=1028,
         help="Total batch size for generation"
     )
+    cpu_count = os.cpu_count()
+    if cpu_count is None:
+        cpu_count = 1
     parser.add_argument(
         "--exec-batch-size",
         type=int,
-        default=os.cpu_count() * 2,
+        default=cpu_count,
         help="Total batch size for execution (defaults to os.cpu_count() * 2)"
     )
     parser.add_argument(
