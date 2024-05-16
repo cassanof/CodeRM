@@ -206,6 +206,7 @@ class EvaluationManager:
                 executor=self.executor,
             )
             for (i, _), (passing, output) in zip(chunk, results):
+                assert "Failed to execute program" not in output, "Error in execution runtime! Aborting."
                 items[i].results.append(CompletionResult(passing, output))
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
@@ -248,8 +249,8 @@ def get_generic_argparser(dataset_default: str):
     parser.add_argument(
         "--exec-batch-size",
         type=int,
-        default=os.cpu_count() * 4,
-        help="Total batch size for execution (defaults to os.cpu_count() * 4)"
+        default=os.cpu_count() * 2,
+        help="Total batch size for execution (defaults to os.cpu_count() * 2)"
     )
     parser.add_argument(
         "--max-tokens",
