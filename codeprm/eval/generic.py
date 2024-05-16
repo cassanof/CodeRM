@@ -192,7 +192,7 @@ class EvaluationManager:
                 + f" {self.exec_batch_size})",
             )
 
-        for chunk in chunks:
+        def eval_chunk(chunk):
             codes = [items[i].get_starter_code() + completion for i,
                      completion in chunk]
             tests_per_code = [
@@ -205,9 +205,18 @@ class EvaluationManager:
                 timeouts=time_limits,
                 executor=self.executor,
             )
-            for (i, _), (passing, output) in zip(chunk, results):
-                assert "Failed to execute program" not in output, "Error in execution runtime! Aborting."
-                items[i].results.append(CompletionResult(passing, output))
+            return results
+
+        for chunk in chunks:
+            results = eval_chunk(chunk)
+
+            strugglers = []
+            for (i, c), (passing, output) in zip(chunk, results):
+                assert "Failed to execute program" not in output, "Failed to execute program"
+                if "Failed to execute program" in output:
+                    strugglers.append((i, c))
+                else:
+                    items[i].results.append(CompletionResult(passing, output))
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
         outpath = Path(output_path + ".json.gz")
