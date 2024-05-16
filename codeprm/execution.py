@@ -91,16 +91,15 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
     res = exec_test_batched(executor, instrus, [
                             ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=False)
     feedback = ""
-    good = True
     for i, (out, (passing, outs)) in enumerate(zip(outs, res)):
         if not passing:
-            good = False
-            feedback += f"[{i}] errored with {outs!r}\n"
+            feedback = f"[{i}] errored with {outs!r}\n"
+            break
         elif not compare_io(outs, out):
-            good = False
-            feedback += f"[{i}] expected {out!r} but got {outs!r}\n"
+            feedback = f"[{i}] expected {out!r} but got {outs!r}\n"
+            break
 
-    return good, feedback
+    return not bool(feedback), feedback
 
 
 FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
@@ -137,7 +136,8 @@ def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000"
     feedback = ""
     for i, (out, actual) in enumerate(zip(outs, outputs)):
         if not compare_io(actual, out):
-            feedback += f"[{i}] expected {out!r} but got {actual!r}\n"
+            feedback = f"[{i}] expected {out!r} but got {actual!r}\n"
+            break
 
     return not bool(feedback), feedback
 
