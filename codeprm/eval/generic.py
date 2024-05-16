@@ -134,6 +134,7 @@ class EvaluationManager:
             dataset_name: str,
             exec_batch_size=os.cpu_count(),
             executor="http://127.0.0.1:8000",
+            timeout=30,
     ):
         self.model = model
         self.max_tokens = max_tokens
@@ -144,6 +145,7 @@ class EvaluationManager:
         self.dataset_name = dataset_name
         self.exec_batch_size = exec_batch_size if exec_batch_size is not None else 1
         self.executor = executor
+        self.timeout = timeout
 
     def generate_completions(self, items: List[CompletionItem], use_tqdm=True):
         indexed_prompts = []
@@ -195,7 +197,8 @@ class EvaluationManager:
                      completion in chunk]
             tests_per_code = [
                 items[i].get_tests() for i, _ in chunk]
-            time_limits = [items[i].get_timeout() for i, _ in chunk]
+            time_limits = [items[i].get_timeout(
+                default=self.timeout) for i, _ in chunk]
             results = smart_exec_tests_batched(
                 codes,
                 tests_per_code,
