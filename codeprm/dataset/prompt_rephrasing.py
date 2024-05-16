@@ -819,7 +819,7 @@ def main(args):
         inputs = [x[1] for x in chunk]
         outputs = model.generate(
             inputs,
-            params=SamplingParams(
+            sampling_params=SamplingParams(
                 max_tokens=2048,
                 temperature=0.45,
                 top_p=0.9,
