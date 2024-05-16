@@ -35,7 +35,7 @@ def main(args):
         dataset_name=args.dataset,
         batch_size=args.batch_size,
         exec_batch_size=args.exec_batch_size,
-        timeout=6,  # this is what is set by LiveCodeBench
+        timeout=8,  # 6 is what is set by LiveCodeBench. we run with 8 to be safe
     )
     # generate
     manager.generate_completions(items, use_tqdm=True)
