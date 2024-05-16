@@ -1,3 +1,7 @@
+"""
+This script is used to evaluate the model on the TACO eval dataset.
+Turns out that StarCoder2 trained on the eval set, so it's contaminated.
+"""
 from codeprm.eval.generic import EvaluationManager, get_generic_argparser, make_items_from_ds
 import json
 from codeprm.model import model_factory
