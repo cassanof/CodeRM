@@ -14,7 +14,7 @@ def main(args):
         args.model,
         num_gpus=args.num_gpus,
     )
-    dataset = datasets.load_dataset(args.dataset, split="test")
+    dataset = datasets.load_dataset(args.dataset, split=args.split)
     # convert dataset to list
     dataset = dataset.to_list()
     # json loads all tests

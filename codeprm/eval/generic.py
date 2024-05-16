@@ -268,6 +268,12 @@ def get_generic_argparser(dataset_default: str):
         help="Dataset name"
     )
     parser.add_argument(
+        "--split",
+        type=str,
+        default="test",
+        help="Dataset split"
+    )
+    parser.add_argument(
         "--completion-limit",
         type=int,
         default=20,
