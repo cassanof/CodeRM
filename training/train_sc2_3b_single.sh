@@ -19,7 +19,7 @@ python3 -m torch.distributed.launch \
         --no_approx_tokens \
         --output_dir="/scratch/federicoc/model_starcoder2_3b_taco_single" \
         --seq_length 4096 \
-        --epochs 4 \
+        --epochs 5 \
         --fa2 \
         --batch_size 1 \
         --gradient_accumulation_steps 8 \
