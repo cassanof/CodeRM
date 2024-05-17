@@ -288,13 +288,11 @@ def get_generic_argparser(dataset_default: str):
     cpu_count = os.cpu_count()
     if cpu_count is None:
         cpu_count = 1
-    else:
-        cpu_count *= 2
     parser.add_argument(
         "--exec-batch-size",
         type=int,
         default=cpu_count,
-        help="Total batch size for execution (defaults to os.cpu_count() * 2)"
+        help="Total batch size for execution (defaults to os.cpu_count())"
     )
     parser.add_argument(
         "--max-tokens",
