@@ -16,15 +16,7 @@ def pass_at_k(n: int, c: int, k: int) -> float:
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
 
-def per_file_metrics(file: Path, k: int) -> str:
-    obj = gunzip_json_read(file)
-    assert obj is not None, f"Failed to read {file}"
-
-    items = obj["items"]
-    size = len(items)
-    n_comps = obj["completion_limit"]
-    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
-
+def get_pass_ks(items, n_comps, k):
     pass_ks = []
     for item in items:
         correct = 0
@@ -35,6 +27,19 @@ def per_file_metrics(file: Path, k: int) -> str:
         score = pass_at_k(n_comps, correct, k)
         score = round(score * 100, 4)
         pass_ks.append(score)
+    return pass_ks
+
+
+def per_file_metrics(file: Path, k: int) -> str:
+    obj = gunzip_json_read(file)
+    assert obj is not None, f"Failed to read {file}"
+
+    items = obj["items"]
+    size = len(items)
+    n_comps = obj["completion_limit"]
+    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
+
+    pass_ks = get_pass_ks(items, n_comps, k)
 
     return f"{file.stem},{size},{n_comps},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
 
