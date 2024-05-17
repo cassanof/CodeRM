@@ -43,7 +43,7 @@ def per_file_metrics(file: Path, k: int) -> str:
 
     pass_ks = get_pass_ks(items, k)
 
-    return f"{file.stem},{size},{n_comps},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
+    return f"{file.stem},{size},{len(items[0]['results'])},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
 
 
 def main(args):
