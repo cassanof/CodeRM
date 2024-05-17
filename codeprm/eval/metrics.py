@@ -16,7 +16,11 @@ def pass_at_k(n: int, c: int, k: int) -> float:
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
 
-def get_pass_ks(items, n_comps, k):
+def get_pass_ks(items, k):
+    n_comps = len(items[0]["results"])
+    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
+    assert all(len(item["results"]) ==
+               n_comps for item in items), "All items should have the same number of completions"
     pass_ks = []
     for item in items:
         correct = 0
@@ -36,10 +40,8 @@ def per_file_metrics(file: Path, k: int) -> str:
 
     items = obj["items"]
     size = len(items)
-    n_comps = obj["completion_limit"]
-    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
 
-    pass_ks = get_pass_ks(items, n_comps, k)
+    pass_ks = get_pass_ks(items, k)
 
     return f"{file.stem},{size},{n_comps},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
 
