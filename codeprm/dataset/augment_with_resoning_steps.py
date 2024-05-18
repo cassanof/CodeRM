@@ -1066,7 +1066,13 @@ def main(args):
 
     # attempt to retry failed steps
     chunked_failed = chunkify(failed_steps, args.batch_size)
+
+    num_does_match = 0
+    num_processed = 0
+
     for chunk in tqdm(chunked_failed, desc=f"Retrying failed steps"):
+        print(f"Current match rate (for retries): {
+              num_does_match / (num_processed + 1e-6)}")
         inputs = [p for _, _, _, p in chunk]
         outputs = model.generate(
             inputs,
@@ -1079,7 +1085,9 @@ def main(args):
         )
         outputs = [o.outputs[0].text for o in outputs]
         for (i, j, inp_sol, _), out in zip(chunk, outputs):
+            num_processed += 1
             if check_astmatch(inp_sol, out):
+                num_does_match += 1
                 with_steps[i][j] = out
 
     dataset = dataset.add_column("reasoning_steps", with_steps)
