@@ -1013,6 +1013,7 @@ def main(args):
         args.model,
         dtype=autodetect_dtype(),
         tensor_parallel_size=args.num_gpus,
+        enable_prefix_caching=True,
     )
     tokenizer = model.get_tokenizer()
     dataset = datasets.load_dataset(args.dataset, split="train")
