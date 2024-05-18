@@ -1057,6 +1057,9 @@ def main(args):
                 with_steps[i].append(out)
                 num_does_match += 1
 
+    dataset = dataset.add_column("reasoning_steps", with_steps)
+    dataset.push_to_hub(args.push, private=True)
+
 
 if __name__ == "__main__":
     import argparse
