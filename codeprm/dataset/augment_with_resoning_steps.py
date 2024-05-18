@@ -1016,6 +1016,10 @@ def main(args):
         enable_prefix_caching=not args.no_prefix_caching,
     )
     tokenizer = model.get_tokenizer()
+
+    def make_prompt(question: str, code: str) -> str:
+        return add_reasoning_steps_prompt(tokenizer, py_prompt(question, code))
+
     dataset = datasets.load_dataset(args.dataset, split="train")
 
     if args.sample:
@@ -1030,8 +1034,7 @@ def main(args):
                     i,
                     j,
                     inp_sol,
-                    add_reasoning_steps_prompt(
-                        tokenizer, py_prompt(question, inp_sol))
+                    make_prompt(question, inp_sol),
                 )
             )
 
@@ -1055,14 +1058,15 @@ def main(args):
             ),
         )
         outputs = [o.outputs[0].text for o in outputs]
-        for (i, j, inp_sol, p), out in zip(chunk, outputs):
+        for (i, j, inp_sol, _), out in zip(chunk, outputs):
             num_processed += 1
             if check_astmatch(inp_sol, out):
                 with_steps[i].append(out)
                 num_does_match += 1
             else:
                 with_steps[i].append(None)
-                failed_steps.extend([(i, j, inp_sol, p)] * args.retry_k)
+                failed_steps.extend(
+                    [(i, j, inp_sol, dataset[i]["question"])] * args.retry_k)
 
     # attempt to retry failed steps
     chunked_failed = chunkify(failed_steps, args.batch_size)
@@ -1073,7 +1077,7 @@ def main(args):
     for chunk in tqdm(chunked_failed, desc=f"Retrying failed steps"):
         print("Current match rate (for retries): " +
               f"{num_does_match / (num_processed + 1e-6)}")
-        inputs = [p for _, _, _, p in chunk]
+        inputs = [make_prompt(q, s) for _, _, s, q in chunk]
         outputs = model.generate(
             inputs,
             sampling_params=SamplingParams(
