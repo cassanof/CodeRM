@@ -1051,7 +1051,7 @@ def main(args):
                 stop="```",
             ),
         )
-        outputs = [o.output[0].text for o in outputs]
+        outputs = [o.outputs[0].text for o in outputs]
         for (i, _, inp_sol), out in zip(chunk, outputs):
             num_processed += 1
             if check_astmatch(inp_sol, out):
