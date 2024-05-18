@@ -963,7 +963,7 @@ def check_astmatch(inp, out):
 
     outdump = outdump.split("\n")
     inpdump = inpdump.split("\n")
-    
+
     for j, (i, o) in enumerate(zip(inpdump, outdump)):
         if i != o:
             print(f"Failed at {j}: {i} != {o}")
@@ -1013,7 +1013,7 @@ def main(args):
         args.model,
         dtype=autodetect_dtype(),
         tensor_parallel_size=args.num_gpus,
-        enable_prefix_caching=True,
+        enable_prefix_caching=not args.no_prefix_caching,
     )
     tokenizer = model.get_tokenizer()
     dataset = datasets.load_dataset(args.dataset, split="train")
@@ -1073,5 +1073,11 @@ if __name__ == "__main__":
                         default="cassanof/taco_cleaned_exec_filtered_max75_v3")
     parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--push", type=str, required=True)
+    parser.add_argument(
+        "--no_prefix_caching",
+        dest="no_prefix_caching",
+        action="store_true",
+        help="Disable prefix caching",
+    )
     args = parser.parse_args()
     main(args)
