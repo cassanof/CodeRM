@@ -1041,7 +1041,8 @@ def main(args):
     num_does_match = 0
     num_processed = 0
 
-    for chunk in tqdm(chunks, desc=f"Generating reasoning steps. Current match rate: {num_does_match}/{num_processed}"):
+    for chunk in tqdm(chunks, desc=f"Generating reasoning steps"):
+        print(f"Current match rate: {num_does_match / (num_processed + 1e-6)}")
         inputs = [inp for _, _, inp in chunk]
         outputs = model.generate(
             inputs,
