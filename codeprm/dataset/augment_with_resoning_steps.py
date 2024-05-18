@@ -1018,6 +1018,7 @@ def main(args):
         args.model,
         dtype=autodetect_dtype(),
         tensor_parallel_size=args.num_gpus,
+        enforce_eager=True,
         enable_prefix_caching=not args.no_prefix_caching,
     )
     tokenizer = model.get_tokenizer()
