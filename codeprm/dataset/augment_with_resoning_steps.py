@@ -1052,7 +1052,7 @@ def main(args):
             ),
         )
         outputs = [o.outputs[0].text for o in outputs]
-        for (i, _, inp_sol), out in zip(chunk, outputs):
+        for (i, inp_sol, _), out in zip(chunk, outputs):
             num_processed += 1
             if check_astmatch(inp_sol, out):
                 with_steps[i].append(out)
