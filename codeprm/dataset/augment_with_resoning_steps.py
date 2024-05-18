@@ -1032,7 +1032,7 @@ def main(args):
     indexed_prompts = []
     for i, ex in tqdm(enumerate(dataset), desc="Processing dataset"):
         question = ex["question"]
-        for j, inp_sol in enumerate(ex["solutions"]):
+        for j, inp_sol in enumerate(ex["solutions"][:args.max_solns]):
             indexed_prompts.append(
                 (
                     i,
@@ -1112,6 +1112,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str,
                         default="cassanof/taco_cleaned_exec_filtered_max75_v3")
     parser.add_argument("--sample", type=int, default=None)
+    parser.add_argument("--max-solns", type=int, default=75)
     parser.add_argument("--retry-k", type=int, default=5)
     parser.add_argument("--retry-temp", type=float, default=0.45)
     parser.add_argument("--push", type=str, required=True)
