@@ -1108,8 +1108,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str,
                         default="cassanof/taco_cleaned_exec_filtered_max75_v3")
     parser.add_argument("--sample", type=int, default=None)
-    parser.add_argument("--retry-k", type=int, default=3)
-    parser.add_argument("--retry-temp", type=float, default=0.5)
+    parser.add_argument("--retry-k", type=int, default=5)
+    parser.add_argument("--retry-temp", type=float, default=0.45)
     parser.add_argument("--push", type=str, required=True)
     parser.add_argument(
         "--no_prefix_caching",
