@@ -59,6 +59,7 @@ The sequence of actions of Tanya for the first example:
 
 Since Tanya eats candy instantly, the required time is four seconds.
 """
+import numpy as np
 inf = 10000
 (n, s, k) = map(int, input().split())
 a = list(map(int, input().split()))
@@ -100,7 +101,8 @@ if ans < inf:
 	print(ans)
 else:
 	print(-1)'''
-O_0 = r'''inf = 10000
+O_0 = r'''import numpy as np
+inf = 10000
 
 # Reading input values for number of boxes, starting position, and minimum candies to eat
 (n, s, k) = map(int, input().split())
