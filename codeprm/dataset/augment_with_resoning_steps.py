@@ -976,13 +976,14 @@ def check_astmatch(inp, out):
     return True
 
 
-def add_reasoning_steps_prompt(tokenizer, code: str) -> str:
+def add_reasoning_steps_prompt(tokenizer, code: str, max_shots=3) -> str:
     system = "You are an exceptional code reasoner. Your job is to take uncommented algorithmic Python code, and to insert reasoning steps as single-line comments before each important step in the algorithm."
     turn_req = "Can you please add reasoning steps to the following code? IMPORTANT: DO NOT CHANGE ANY CODE, ANY CHANGES TO THE CODE ARE STRICTLY PROHOBITED. Your job is to add a line-comment before each important steps detailing the step in words."
     turn_resp = "Sure, I can add reasoning steps to the code. Here's the modified code with comments:"
     random.shuffle(FEW_SHOTS)
+    selected = FEW_SHOTS[:max_shots]
     turns = []
-    for user, ai in FEW_SHOTS:
+    for user, ai in selected:
         turns.extend(
             [
                 {
@@ -1022,7 +1023,7 @@ def main(args):
     tokenizer = model.get_tokenizer()
 
     def make_prompt(question: str, code: str) -> str:
-        return add_reasoning_steps_prompt(tokenizer, py_prompt(question, code))
+        return add_reasoning_steps_prompt(tokenizer, py_prompt(question, code), max_shots=args.max_shots)
 
     dataset = datasets.load_dataset(args.dataset, split="train")
 
@@ -1112,6 +1113,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str,
                         default="cassanof/taco_cleaned_exec_filtered_max75_v3")
     parser.add_argument("--sample", type=int, default=None)
+    parser.add_argument("--max-shots", type=int, default=3)
     parser.add_argument("--max-solns", type=int, default=75)
     parser.add_argument("--retry-k", type=int, default=5)
     parser.add_argument("--retry-temp", type=float, default=0.45)
