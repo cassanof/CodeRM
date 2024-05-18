@@ -1071,8 +1071,8 @@ def main(args):
     num_processed = 0
 
     for chunk in tqdm(chunked_failed, desc=f"Retrying failed steps"):
-        print(f"Current match rate (for retries): {
-              num_does_match / (num_processed + 1e-6)}")
+        print("Current match rate (for retries): " +
+              f"{num_does_match / (num_processed + 1e-6)}")
         inputs = [p for _, _, _, p in chunk]
         outputs = model.generate(
             inputs,
