@@ -8,7 +8,7 @@ from tqdm import tqdm
 import astdump
 
 
-I_0 = '''"""
+I_0 = r'''"""
 There are $n$ candy boxes in front of Tania. The boxes are arranged in a row from left to right, numbered from $1$ to $n$. The $i$-th box contains $r_i$ candies, candies have the color $c_i$ (the color can take one of three values ​​— red, green, or blue). All candies inside a single box have the same color (and it is equal to $c_i$).
 
 Initially, Tanya is next to the box number $s$. Tanya can move to the neighbor box (that is, with a number that differs by one) or eat candies in the current box. Tanya eats candies instantly, but the movement takes one second.
@@ -100,7 +100,7 @@ if ans < inf:
 	print(ans)
 else:
 	print(-1)'''
-O_0 = '''inf = 10000
+O_0 = r'''inf = 10000
 
 # Reading input values for number of boxes, starting position, and minimum candies to eat
 (n, s, k) = map(int, input().split())
@@ -178,7 +178,7 @@ if ans < inf:
 	print(ans)
 else:
 	print(-1)'''
-I_1 = '''"""
+I_1 = r'''"""
 If you visit Aizu Akabeko shrine, you will find a unique paper fortune on which a number with more than one digit is written.
 
 Each digit ranges from 1 to 9 (zero is avoided because it is considered a bad omen in this shrine). Using this string of numeric values, you can predict how many years it will take before your dream comes true. Cut up the string into more than one segment and compare their values. The difference between the largest and smallest value will give you the number of years before your wish will be fulfilled. Therefore, the result varies depending on the way you cut up the string. For example, if you are given a string 11121314 and divide it into segments, say, as 1,11,21,3,14, then the difference between the largest and smallest is 21 - 1 = 20. Another division 11,12,13,14 produces 3 (i.e. 14 - 11) years. Any random division produces a game of luck. However, you can search the minimum number of years using a program.
@@ -269,7 +269,7 @@ def check12(S):
 	return maxv - minv
 S = input()
 print(min(checkEqual(S), check12(S)))'''
-O_1 = '''# Function to calculate the difference between the digits of two strings
+O_1 = r'''# Function to calculate the difference between the digits of two strings
 def sub(maxs, mins):
     # Loop through each digit in maxs and mins
     for i in range(len(maxs)):
@@ -323,7 +323,7 @@ def check12(S):
 S = input()
 # Calculate and print the minimum number of years before the wish is fulfilled
 print(min(checkEqual(S), check12(S)))'''
-I_2 = '''"""
+I_2 = r'''"""
 You have a simple undirected graph consisting of $n$ vertices and $m$ edges. The graph doesn't contain self-loops, there is at most one edge between a pair of vertices. The given graph can be disconnected.
 
 Let's make a definition.
@@ -410,7 +410,7 @@ if len(d) != 3:
 	return
 for i in range(1, n + 1):
 	print(d[a[i]], end=' ')'''
-O_2 = '''# Read the number of vertices (n) and edges (m)
+O_2 = r'''# Read the number of vertices (n) and edges (m)
 (n, m) = map(int, input().split())
 
 # Initialize a dictionary to store unique edge patterns
@@ -453,7 +453,7 @@ if len(d) != 3:
 # Output the unique identifier for each vertex based on its edge pattern
 for i in range(1, n + 1):
 	print(d[a[i]], end=' ')'''
-I_3 = '''"""
+I_3 = r'''"""
 Appleman has a tree with n vertices. Some of the vertices (at least one) are colored black and other vertices are colored white.
 
 Consider a set consisting of k (0 ≤ k < n) edges of Appleman's tree. If Appleman deletes these edges from the tree, then it will split into (k + 1) parts. Note, that each part will be a tree with colored vertices.
@@ -549,7 +549,7 @@ while stack:
 		stack.pop()
 ans = dp[0][1]
 print(ans)'''
-O_3 = '''# Read the number of vertices in the tree
+O_3 = r'''# Read the number of vertices in the tree
 n = int(input())
 
 # Read the edges connecting the vertices
@@ -618,7 +618,7 @@ while stack:
 # The final answer is the number of ways to split the tree with root having exactly one black vertex
 ans = dp[0][1]
 print(ans)'''
-I_4 = '''"""
+I_4 = r'''"""
 You are playing a game of Jongmah. You don't need to know the rules to solve this problem. You have n tiles in your hand. Each tile has an integer between 1 and m written on it.
 
 To win the game, you will need to form some number of triples. Each triple consists of three tiles, such that the numbers written on the tiles are either all the same or consecutive. For example, 7, 7, 7 is a valid triple, and so is 12, 13, 14, but 2,2,3 or 2,4,6 are not. You can only use the tiles in your hand to form triples. Each tile can be used in at most one triple.
@@ -691,7 +691,7 @@ for (i, a) in enumerate(A):
 					dp2[y][z] = max(dp2[y][z], dp[x][y] + z + (cnt[a] - x - y - z) // 3)
 	dp = dp2
 print(dp[0][0])'''
-O_4 = '''from collections import Counter
+O_4 = r'''from collections import Counter
 
 # Read the number of tiles and the number of tile types
 (n, m) = map(int, input().split())
@@ -730,7 +730,7 @@ for (i, a) in enumerate(A):
 
 # Print the maximum number of triples that can be formed
 print(dp[0][0])'''
-I_5 = '''"""
+I_5 = r'''"""
 Taro is planning a long trip by train during the summer vacation. However, in order for Taro, who is a high school student, to travel as far as possible during the summer vacation, which has only one month, he cannot make a good plan unless he finds the cheapest and the fastest way. Let's create a program to help Taro's plan so that he can enjoy a wonderful trip.
 
 
@@ -818,7 +818,7 @@ while True:
 	for _ in [0] * int(input()):
 		(p, q, r) = map(int, input().split())
 		print((edges_time if r else edges_cost)[p - 1][q - 1])'''
-O_5 = '''
+O_5 = r'''
 # Function to perform the Warshall-Floyd algorithm for finding shortest paths in a weighted graph
 def warshall_floyd(v_count: int, matrix: list) -> list:
     # Iterate through each vertex as an intermediate vertex
@@ -860,7 +860,7 @@ while True:
         (p, q, r) = map(int, input().split())
         # Output the minimum cost or time based on the query type
         print((edges_time if r else edges_cost)[p - 1][q - 1])'''
-I_6 = '''"""
+I_6 = r'''"""
 Creatnx has $n$ mirrors, numbered from $1$ to $n$. Every day, Creatnx asks exactly one mirror "Am I beautiful?". The $i$-th mirror will tell Creatnx that he is beautiful with probability $\frac{p_i}{100}$ for all $1 \le i \le n$.
 
 Creatnx asks the mirrors one by one, starting from the $1$-st mirror. Every day, if he asks $i$-th mirror, there are two possibilities:  The $i$-th mirror tells Creatnx that he is beautiful. In this case, if $i = n$ Creatnx will stop and become happy, otherwise he will continue asking the $i+1$-th mirror next day;  In the other case, Creatnx will feel upset. The next day, Creatnx will start asking from the $1$-st mirror again. 
@@ -915,7 +915,7 @@ acc[-1] = 100 * inv[a[-1]]
 for i in range(n - 1)[::-1]:
 	acc[i] = acc[i + 1] * 100 * inv[a[i]] % mod
 print(sum(acc) % mod)'''
-O_6 = '''# Read the number of mirrors
+O_6 = r'''# Read the number of mirrors
 n = int(input())
 # Read the probabilities for each mirror
 a = list(map(int, input().split()))
@@ -1024,17 +1024,19 @@ def main(args):
     indexed_prompts = []
     for i, ex in tqdm(enumerate(dataset), desc="Processing dataset"):
         question = ex["question"]
-        for sol in ex["solutions"]:
+        for j, inp_sol in enumerate(ex["solutions"]):
             indexed_prompts.append(
                 (
                     i,
-                    sol,
+                    j,
+                    inp_sol,
                     add_reasoning_steps_prompt(
-                        tokenizer, py_prompt(question, sol))
+                        tokenizer, py_prompt(question, inp_sol))
                 )
             )
 
     with_steps = [[] for _ in range(len(dataset))]
+    failed_steps = []
     chunks = chunkify(indexed_prompts, args.batch_size)
 
     # some stats
@@ -1043,7 +1045,7 @@ def main(args):
 
     for chunk in tqdm(chunks, desc=f"Generating reasoning steps"):
         print(f"Current match rate: {num_does_match / (num_processed + 1e-6)}")
-        inputs = [inp for _, _, inp in chunk]
+        inputs = [inp for _, _, _,  inp in chunk]
         outputs = model.generate(
             inputs,
             sampling_params=SamplingParams(
@@ -1053,13 +1055,32 @@ def main(args):
             ),
         )
         outputs = [o.outputs[0].text for o in outputs]
-        for (i, inp_sol, _), out in zip(chunk, outputs):
+        for (i, j, inp_sol, p), out in zip(chunk, outputs):
             num_processed += 1
             if check_astmatch(inp_sol, out):
                 with_steps[i].append(out)
                 num_does_match += 1
             else:
-                with_steps[i].append(None) # to keep order
+                with_steps[i].append(None)
+                failed_steps.extend([(i, j, inp_sol, p)] * args.retry_k)
+
+    # attempt to retry failed steps
+    chunked_failed = chunkify(failed_steps, args.batch_size)
+    for chunk in tqdm(chunked_failed, desc=f"Retrying failed steps"):
+        inputs = [p for _, _, _, p in chunk]
+        outputs = model.generate(
+            inputs,
+            sampling_params=SamplingParams(
+                max_tokens=4096,
+                temperature=args.retry_temp,
+                top_p=0.95,
+                stop="```",
+            ),
+        )
+        outputs = [o.outputs[0].text for o in outputs]
+        for (i, j, inp_sol, _), out in zip(chunk, outputs):
+            if check_astmatch(inp_sol, out):
+                with_steps[i][j] = out
 
     dataset = dataset.add_column("reasoning_steps", with_steps)
     dataset.push_to_hub(args.push, private=True)
@@ -1075,6 +1096,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str,
                         default="cassanof/taco_cleaned_exec_filtered_max75_v3")
     parser.add_argument("--sample", type=int, default=None)
+    parser.add_argument("--retry-k", type=int, default=3)
+    parser.add_argument("--retry-temp", type=float, default=0.5)
     parser.add_argument("--push", type=str, required=True)
     parser.add_argument(
         "--no_prefix_caching",
