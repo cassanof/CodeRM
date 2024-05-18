@@ -1058,6 +1058,8 @@ def main(args):
             if check_astmatch(inp_sol, out):
                 with_steps[i].append(out)
                 num_does_match += 1
+            else:
+                with_steps[i].append(None) # to keep order
 
     dataset = dataset.add_column("reasoning_steps", with_steps)
     dataset.push_to_hub(args.push, private=True)
