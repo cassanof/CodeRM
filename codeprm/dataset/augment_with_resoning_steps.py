@@ -1119,13 +1119,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str,
                         default="Qwen/CodeQwen1.5-7B-Chat")
-    parser.add_argument("--batch-size", type=int, default=1024)
+    parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--dataset", type=str,
-                        default="cassanof/taco_cleaned_exec_filtered_max75_v3")
+                        default="cassanof/taco_cleaned_exec_filtered_v4")
     parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--max-shots", type=int, default=3)
-    parser.add_argument("--max-solns", type=int, default=75)
+    parser.add_argument("--max-solns", type=int, default=10)
     parser.add_argument("--retry-k", type=int, default=5)
     parser.add_argument("--retry-temp", type=float, default=0.45)
     parser.add_argument("--push", type=str, required=True)
