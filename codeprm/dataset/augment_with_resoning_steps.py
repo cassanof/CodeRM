@@ -1014,6 +1014,7 @@ def add_reasoning_steps_prompt(tokenizer, code: str, max_shots=3) -> str:
 
 
 def main(args):
+    random.seed(42)
     model = LLM(
         args.model,
         dtype=autodetect_dtype(),
@@ -1028,8 +1029,17 @@ def main(args):
 
     dataset = datasets.load_dataset(args.dataset, split="train")
 
+
     if args.sample:
         dataset = dataset.select(range(args.sample))
+
+    def shuffle_solutions(ex):
+        solns = ex["solutions"]
+        random.shuffle(solns)
+        return {"solutions": solns}
+
+    # randomize solutions. there is some order in the solutions, so we shuffle them
+    dataset = dataset.map(lambda ex: shuffle_solutions(ex), desc="Shuffling solutions")
 
     indexed_prompts = []
     for i, ex in tqdm(enumerate(dataset), desc="Processing dataset"):
