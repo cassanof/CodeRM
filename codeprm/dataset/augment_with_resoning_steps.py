@@ -980,7 +980,7 @@ def check_astmatch(inp, out):
 
 def add_reasoning_steps_prompt(tokenizer, code: str, max_shots=3) -> str:
     system = "You are an exceptional code reasoner. Your job is to take uncommented algorithmic Python code, and to insert reasoning steps as single-line comments before each important step in the algorithm."
-    turn_req = "Can you please add reasoning steps to the following code? IMPORTANT: DO NOT CHANGE ANY CODE, ANY CHANGES TO THE CODE ARE STRICTLY PROHOBITED. Your job is to add a line-comment before each important steps detailing the step in words."
+    turn_req = "Can you please add reasoning steps to the following code? IMPORTANT: DO NOT CHANGE ANY CODE, ANY CHANGES TO THE CODE ARE STRICTLY PROHOBITED. Your job is to add a line-comment BEFORE each important steps detailing the step in words."
     turn_resp = "Sure, I can add reasoning steps to the code. Here's the modified code with comments:"
     random.shuffle(FEW_SHOTS)
     selected = FEW_SHOTS[:max_shots]
