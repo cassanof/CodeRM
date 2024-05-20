@@ -434,10 +434,12 @@ count = 1
 
 # Check if any vertex has no edges and sort adjacency information
 for i in range(1, n + 1):
+    # If a vertex has no edges, the conditions can't be satisfied
 	if len(a[i]) == 1:
-		print('-1')  # If a vertex has no edges, the conditions can't be satisfied
+		print('-1')  
 		return
-	a[i].sort()  # Sort adjacency list for consistent pattern comparison
+    # Sort adjacency list for consistent pattern comparison
+	a[i].sort()  
 
 # Concatenate adjacency information into strings for pattern recognition
 for i in range(1, n + 1):
@@ -449,9 +451,9 @@ for i in range(1, n + 1):
 		d[a[i]] = count
 		count += 1
 
-# Check if there are exactly 3 unique edge patterns
+# Check if there are exactly 3 unique edge patterns. If not exactly 3 patterns, conditions can't be satisfied.
 if len(d) != 3:
-	print('-1')  # If not exactly 3 patterns, conditions can't be satisfied
+	print('-1')
 	return
 
 # Output the unique identifier for each vertex based on its edge pattern
