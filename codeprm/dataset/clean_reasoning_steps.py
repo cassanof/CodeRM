@@ -83,7 +83,7 @@ def main(args):
         "reasoning_steps": [transform_trailing_to_leading_comments(r) for r in x["reasoning_steps"] if r is not None],
     })
     ds = ds.map(lambda x: {
-        "reasoning_steps": [r for r in x["reasoning_steps"] if get_reasoning_steps(r) != []],
+        "reasoning_steps": [r for r in x["reasoning_steps"] if 0 < len(get_reasoning_steps(r)) <= 50],
     })
     ds = ds.filter(lambda x: len(x["reasoning_steps"]) > 0)
     ds.save_to_disk(args.output)
