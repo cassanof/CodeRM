@@ -6,7 +6,7 @@ fi
 DS=$(realpath $1)
 export WANDB_PROJECT="codeprm"
 export WANDB_NAME=$(basename $0 .sh)
-OUTDIR="/scratch/federicoc/model_starcoder2_15b_taco_reasoning_single"
+OUTDIR="./model_starcoder2_15b_taco_reasoning_single"
 pushd ../finetuning-harness/
 python3 -m torch.distributed.launch \
         --nproc_per_node 8 \
