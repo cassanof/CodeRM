@@ -276,7 +276,7 @@ def get_generic_argparser(dataset_default: str):
     parser.add_argument(
         "--completion-limit",
         type=int,
-        default=20,
+        default=1,
         help="Number of completions to generate per problem"
     )
     parser.add_argument(
@@ -328,7 +328,7 @@ def get_generic_argparser(dataset_default: str):
     parser.add_argument(
         "--temperature",
         type=float,
-        default=0.2,
+        default=0.0,
         help="Temperature for sampling. Set to 0 for greedy decoding"
     )
     parser.add_argument(
