@@ -77,16 +77,37 @@ def transform_trailing_to_leading_comments(code: str) -> str:
     return '\n'.join(transformed_lines)
 
 
+def remove_comments(code):
+    """Remove comments from the code."""
+    return "\n".join(line for line in code.split('\n') if not line.strip().startswith('#'))
+
+
+def count_characters(code):
+    """Count the number of characters without comments."""
+    code_no_comments = remove_comments(code)
+    return len(code_no_comments.replace('\n', '').replace(' ', ''))
+
+
+def get_steps_to_char_ratio(code):
+    """Calculate the steps to number of characters ratio for the given code."""
+    reasoning_steps = len(get_reasoning_steps(code))
+    characters_count = count_characters(code)
+    return reasoning_steps / characters_count if characters_count > 0 else 0
+
+
 def main(args):
     ds = datasets.load_dataset(args.dataset, split="train")
     ds = ds.map(lambda x: {
         "reasoning_steps": [transform_trailing_to_leading_comments(r) for r in x["reasoning_steps"] if r is not None],
     })
+    # steps to char ratio needs to be `0.01 <= ratio <= 0.8`
+    # this is based on visual inspection of the data (see taco_reasoning_analysis.ipynb)
     ds = ds.map(lambda x: {
-        "reasoning_steps": [r for r in x["reasoning_steps"] if 0 < len(get_reasoning_steps(r)) <= 50],
+        "reasoning_steps": [r for r in x["reasoning_steps"] if 0.01 <= get_steps_to_char_ratio(r) <= 0.8],
     })
     ds = ds.filter(lambda x: len(x["reasoning_steps"]) > 0)
     ds.save_to_disk(args.output)
+
 
 if __name__ == "__main__":
     import argparse
