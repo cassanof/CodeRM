@@ -3,7 +3,7 @@ import time
 from codeprm.code_exec_server.code_exec_reqs import check_executor_alive
 from pathlib import Path
 from tqdm import tqdm
-from codeprm.execution import parse_time_limit, smart_exec_tests_batched
+from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_batched, smart_exec_tests_queuebatched
 from codeprm.utils import chunkify, gunzip_json_write
 from codeprm.model import BaseModel
 import os
@@ -184,62 +184,56 @@ class EvaluationManager:
             for completion in item.completions:
                 indexed_completions.append((i, completion))
 
-        chunks = chunkify(indexed_completions, self.exec_batch_size)
+        codes = [items[i].get_starter_code() + completion for i,
+                 completion in indexed_completions]
+        tests_per_code = [
+            items[i].get_tests() for i, _ in indexed_completions]
+        time_limits = [items[i].get_timeout(
+            default=self.timeout) for i, _ in indexed_completions]
+        results = smart_exec_tests_queuebatched(
+            codes,
+            tests_per_code,
+            timeouts=time_limits,
+            executor=self.executor,
+            workers=self.exec_batch_size,
+            use_tqdm=use_tqdm,
+        )
 
-        if use_tqdm:
-            chunks = tqdm(
-                chunks,
-                total=len(chunks),
-                desc="Executing batches of completions (batch size:"
-                + f" {self.exec_batch_size})",
-            )
+        strugglers = []
+        for (i, c), (passing, output) in zip(indexed_completions, results):
+            if not passing and "Failed to execute program:" in output:
+                strugglers.append((i, c))
+            else:
+                items[i].results.append(CompletionResult(passing, output))
 
-        def eval_chunk(chunk):
-            codes = [items[i].get_starter_code() + completion for i,
-                     completion in chunk]
-            tests_per_code = [
-                items[i].get_tests() for i, _ in chunk]
-            time_limits = [items[i].get_timeout(
-                default=self.timeout) for i, _ in chunk]
-            results = smart_exec_tests_batched(
-                codes,
-                tests_per_code,
-                timeouts=time_limits,
-                executor=self.executor,
-            )
-            return results
+        if strugglers:
+            # wait for container to be alive
+            max_retries = 5
+            for _ in range(max_retries):
+                if check_executor_alive(self.executor):
+                    break
+                time.sleep(1)
 
-        for chunk in chunks:
-            results = eval_chunk(chunk)
+            # retry strugglers one by one
+            if use_tqdm:
+                strugglers = tqdm(
+                    strugglers,
+                    total=len(strugglers),
+                    desc="Container runtime failed, retrying one by one",
+                )
 
-            strugglers = []
-            for (i, c), (passing, output) in zip(chunk, results):
-                if not passing and "Failed to execute program:" in output:
-                    strugglers.append((i, c))
-                else:
-                    items[i].results.append(CompletionResult(passing, output))
+            for i, c in strugglers:
+                result = smart_exec_tests(
+                    items[i].get_starter_code() + c,
+                    items[i].get_tests(),
+                    timeout=items[i].get_timeout(default=self.timeout),
+                    executor=self.executor,
+                )
+                passing, output = result
+                assert "Failed to execute program:" not in output, "Execution runtime failed. Check the executor"
+                items[i].results.append(CompletionResult(passing, output))
 
-            if strugglers:
-                # wait for container to be alive
-                max_retries = 5
-                for _ in range(max_retries):
-                    if check_executor_alive(self.executor):
-                        break
-                    time.sleep(1)
-
-                # retry strugglers one by one
-                if use_tqdm:
-                    strugglers = tqdm(
-                        strugglers,
-                        total=len(strugglers),
-                        desc="Container runtime failed, retrying one by one",
-                    )
-
-                for i, c in strugglers:
-                    results = eval_chunk([(i, c)])
-                    passing, output = results[0]
-                    assert "Failed to execute program:" not in output, "Execution runtime failed. Check the executor"
-                    items[i].results.append(CompletionResult(passing, output))
+        return results
 
     def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
         outpath = Path(output_path + ".json.gz")
