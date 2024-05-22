@@ -75,11 +75,14 @@ def main(args):
     ds = ds.filter(lambda x: len(
         tokenizer.encode(x["question"])) <= args.max_tokens)
 
+    ds = ds.map(patch_tests, num_proc=os.cpu_count())
+
     # filter to have at least 1 solution
+    ds_less = ds.filter(lambda x: len(x["solutions"]) < args.min_solutions)
     ds = ds.filter(lambda x: len(x["solutions"]) >= args.min_solutions)
     print(f"Has at least {args.min_solutions} solutions: ", len(ds))
+    print(f"Has less than {args.min_solutions} solutions: ", len(ds_less))
 
-    ds = ds.map(patch_tests, num_proc=os.cpu_count())
 
     total_size = 0
     for ex in ds:
@@ -87,14 +90,16 @@ def main(args):
 
     print("Total number of solutions: ", total_size)
 
-    # save the dataset
+    # save the datasets
     ds.save_to_disk(args.output)
+    ds_less.save_to_disk(args.output_less)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=str, default="taco_cleaned")
+    parser.add_argument("--output_less", type=str, default="taco_cleaned_less")
     parser.add_argument("--min_solution_line_length", type=int, default=3)
     parser.add_argument("--min_tests", type=int, default=10)
     parser.add_argument("--min_solutions", type=int, default=1)
