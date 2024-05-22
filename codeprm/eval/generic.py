@@ -235,24 +235,37 @@ class EvaluationManager:
 
         return results
 
-    def save_completions(self, items: List[CompletionItem], output_path: str, verbose=True):
-        outpath = Path(output_path + ".json.gz")
-        outpath.parent.mkdir(parents=True, exist_ok=True)
-        if verbose:
-            print(f"Saving completions to {outpath}...")
-        d = {
-            "model": self.model.get_name(),
-            "max_tokens": self.max_tokens,
-            "top_p": self.top_p,
-            "temperature": self.temperature,
-            "completion_limit": self.completion_limit,
-            "dataset_name": self.dataset_name,
-            "items": [item.to_dict() for item in items],
-        }
-        gunzip_json_write(outpath, d)
+    def save_completions(
+            self,
+            items: List[CompletionItem],
+            output_path: str,
+            fmt="gzjson",
+            verbose=True,
+    ):
+        if fmt == "gzjson":
+            outpath = Path(output_path + ".json.gz")
+            outpath.parent.mkdir(parents=True, exist_ok=True)
+            if verbose:
+                print(f"Saving completions to {outpath}...")
+            d = {
+                "model": self.model.get_name(),
+                "max_tokens": self.max_tokens,
+                "top_p": self.top_p,
+                "temperature": self.temperature,
+                "completion_limit": self.completion_limit,
+                "dataset_name": self.dataset_name,
+                "items": [item.to_dict() for item in items],
+            }
+            gunzip_json_write(outpath, d)
+        elif fmt == "datasets":
+            import datasets
+            ds = datasets.Dataset.from_list([item.to_dict() for item in items])
+            ds.save_to_disk(output_path)
+        else:
+            raise ValueError(f"Unknown format {fmt}")
 
 
-def get_generic_argparser(dataset_default: str):
+def get_generic_argparser(dataset_default: str, split="test"):
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -264,7 +277,7 @@ def get_generic_argparser(dataset_default: str):
     parser.add_argument(
         "--split",
         type=str,
-        default="test",
+        default=split,
         help="Dataset split"
     )
     parser.add_argument(
@@ -342,5 +355,12 @@ def get_generic_argparser(dataset_default: str):
         type=str,
         required=True,
         help="Output path to store the results. don't add extension"
+    )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        default="gzjson",
+        help="Output format. either 'gzjson' or 'datasets'",
+        choices=["gzjson", "datasets"]
     )
     return parser

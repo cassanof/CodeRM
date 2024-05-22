@@ -44,10 +44,10 @@ def main(args):
     # evaluate
     manager.evaluate_completions(items, use_tqdm=True)
     # save
-    manager.save_completions(items, args.output)
+    manager.save_completions(items, args.output, fmt=args.output_format)
 
 
 if __name__ == "__main__":
-    parser = get_generic_argparser("cassanof/taco_cleaned_eval")
+    parser = get_generic_argparser("cassanof/taco_cleaned_all", split="train")
     args = parser.parse_args()
     main(args)

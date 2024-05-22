@@ -42,7 +42,7 @@ def main(args):
     # evaluate
     manager.evaluate_completions(items, use_tqdm=True)
     # save
-    manager.save_completions(items, args.output)
+    manager.save_completions(items, args.output, fmt=args.output_format)
 
 
 if __name__ == "__main__":
