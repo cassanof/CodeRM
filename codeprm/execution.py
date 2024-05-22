@@ -1,5 +1,8 @@
 from typing import List, Optional, Tuple
+import os
 import threading
+from tqdm import tqdm
+import queue
 import re
 from codeprm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
 
@@ -227,6 +230,73 @@ def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8
                              args=(i, code, tests, timeout))
         threads.append(t)
         t.start()
+
+    for t in threads:
+        t.join()
+
+    results_new = []
+    for r in results:
+        if r is None:
+            results_new.append(
+                (False, "Failed to execute program. Thread error."))
+        else:
+            results_new.append(r)
+
+    return results_new
+
+
+def smart_exec_tests_queuebatched(
+        codes,
+        tests_per_code,
+        executor="http://127.0.0.1:8000",
+        timeouts=None,
+        workers=os.cpu_count(),
+        use_tqdm=True
+) -> List[Tuple[bool, str]]:
+    workers = workers or 1
+    results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
+
+    if timeouts is None:
+        timeouts = [30] * len(codes)
+
+    lock = threading.Lock()
+
+    def worker(q: queue.Queue, pbar: Optional[tqdm]):
+        while True:
+            item = q.get()
+            if item is None:
+                break  # closed!
+
+            i, code, tests, timeout = item
+            results[i] = smart_exec_tests(
+                code, tests, executor=executor, timeout=timeout)
+            q.task_done()
+
+            if pbar is not None:
+                with lock:
+                    pbar.update(1)
+
+    q = queue.Queue()
+    for i, (code, tests, timeout) in enumerate(zip(codes, tests_per_code, timeouts)):
+        q.put((i, code, tests, timeout))
+
+    if use_tqdm:
+        pbar = tqdm(total=len(codes), desc="Executing tests")
+    else:
+        pbar = None
+
+    threads = []
+    for _ in range(workers):
+        t = threading.Thread(target=worker, args=(q, pbar))
+        t.start()
+        threads.append(t)
+
+    # block until all tasks are done
+    q.join()
+
+    # close the threads
+    for _ in range(workers):
+        q.put(None)
 
     for t in threads:
         t.join()
