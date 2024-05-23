@@ -1,0 +1,58 @@
+from codeprm.utils import gunzip_json_read
+from pathlib import Path
+from codeprm.prompts import py_prompt
+import datasets
+
+
+def main(args):
+    ds = datasets.load_from_disk(args.input)
+
+    new_ds = []
+    for ex in ds:
+        passing = []
+        failing = []
+
+        for r in ex["results"]:
+            code = r["code"]
+            if r["passing"]:
+                passing.append(code)
+            else:
+                failing.append(code)
+
+        to_sample = min(len(passing), len(failing), args.max_per_class)
+        # sample one if there is only one
+        to_sample_pass = max(to_sample, 1 if len(passing) > 1 else 0)
+        to_sample_fail = max(to_sample, 1 if len(failing) > 1 else 0)
+
+        def code_to_content(code):
+            code = ex["starter_code"] + code
+            return py_prompt(ex["prompt"], code)
+
+        for code in passing[:to_sample_pass]:
+            new_ds.append({"content": code_to_content(code), "score": 1})
+        for code in failing[:to_sample_fail]:
+            new_ds.append({"content": code_to_content(code), "score": 0})
+
+    # print stats
+    print(f"Total examples: {len(ds)}")
+    print(f"Total examples in new dataset: {len(new_ds)}")
+    print(f"Passing examples: {sum(ex['score'] == 1 for ex in new_ds)}")
+    print(f"Failing examples: {sum(ex['score'] == 0 for ex in new_ds)}")
+
+    new_ds = datasets.Dataset.from_list(new_ds)
+    new_ds.push_to_hub(args.push, private=True, split=args.push_split)
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", type=str, required=True,
+                        help="Input dataset path for the results")
+    parser.add_argument("--push", type=str, required=True,
+                        help="Push dataset path for the ORM")
+    parser.add_argument("--push-split", type=str, default="train",
+                        help="The split for the pushed dataset")
+    parser.add_argument("--max-per-class", type=int, default=10,
+                        help="Max number of examples per class")
+    args = parser.parse_args()
+    main(args)
