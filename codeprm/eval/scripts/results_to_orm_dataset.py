@@ -1,10 +1,10 @@
-from codeprm.utils import gunzip_json_read
-from pathlib import Path
 from codeprm.prompts import py_prompt
+import random
 import datasets
 
 
 def main(args):
+    random.seed(42)
     ds = datasets.load_from_disk(args.input)
 
     new_ds = []
@@ -29,18 +29,34 @@ def main(args):
             return py_prompt(ex["prompt"], code)
 
         for code in passing[:to_sample_pass]:
-            new_ds.append({"content": code_to_content(code), "score": 1})
+            new_ds.append({"content": code_to_content(
+                code), "score": 1, "solution": code})
         for code in failing[:to_sample_fail]:
-            new_ds.append({"content": code_to_content(code), "score": 0})
+            new_ds.append({"content": code_to_content(
+                code), "score": 0, "solution": code})
 
     # print stats
     print(f"Total examples: {len(ds)}")
     print(f"Total examples in new dataset: {len(new_ds)}")
     print(f"Passing examples: {sum(ex['score'] == 1 for ex in new_ds)}")
     print(f"Failing examples: {sum(ex['score'] == 0 for ex in new_ds)}")
+    print()
 
-    new_ds = datasets.Dataset.from_list(new_ds)
-    new_ds.push_to_hub(args.push, private=True, split=args.push_split)
+    # balance the dataset
+    passing_examples = [ex for ex in new_ds if ex['score'] == 1]
+    failing_examples = [ex for ex in new_ds if ex['score'] == 0]
+    min_examples = min(len(passing_examples), len(failing_examples))
+
+    balanced_ds = random.sample(
+        passing_examples, min_examples) + random.sample(failing_examples, min_examples)
+    print(f"Total examples in balanced dataset: {len(balanced_ds)}")
+    print(f"Passing examples in balanced dataset: {
+          sum(ex['score'] == 1 for ex in balanced_ds)}")
+    print(f"Failing examples in balanced dataset: {
+          sum(ex['score'] == 0 for ex in balanced_ds)}")
+
+    final_ds = datasets.Dataset.from_list(balanced_ds)
+    final_ds.push_to_hub(args.push, private=True, split=args.push_split)
 
 
 if __name__ == "__main__":
