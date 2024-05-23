@@ -1,3 +1,8 @@
+#!/bin/bash
+
+export WANDB_PROJECT="codeprm"
+export WANDB_NAME="starcoder2_3b_orm_raw10"
+pushd ../code-scorer/
 python3 -m torch.distributed.launch \
   --nproc_per_node 8 \
   train.py \
@@ -12,5 +17,6 @@ python3 -m torch.distributed.launch \
   --eval_dataset "cassanof/lcb_orm_eval" \
   --model "bigcode/starcoder2-3b" \
   --bf16 \
-  --fa2 \
-  --no_fp16
+  --no_fp16 \
+  --fa2
+popd
