@@ -7,3 +7,6 @@
 [submodule "training/finetuning-harness"]
 	path = training/finetuning-harness
 	url = git@github.com:cassanof/finetuning-harness
+[submodule "training/code-scorer"]
+	path = training/code-scorer
+	url = git@github.com:cassanof/code-scorer
