@@ -1,8 +1,22 @@
-from typing import List
+from typing import Any, Dict, List
 import torch
 from codeprm.prompts import py_prompt, py_prompt_2shot_lcb
 
 from abc import ABC, abstractmethod
+
+
+class Completion:
+    def __init__(self, code: str, cumulative_logprob: float, num_tokens: int):
+        self.code = code
+        self.cumulative_logprob = cumulative_logprob
+        self.num_tokens = num_tokens
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "code": self.code,
+            "cumulative_logprob": self.cumulative_logprob,
+            "num_tokens": self.num_tokens,
+        }
 
 
 def autodetect_dtype() -> str:
@@ -34,8 +48,12 @@ class BaseModel(ABC):
         return self.model_name
 
     @abstractmethod
-    def generate(self, prompts: List[str], **kwargs) -> List[str]:
+    def generate_with_info(self, prompts: List[str], **kwargs) -> List[Completion]:
         pass
+
+    def generate(self, prompts: List[str], **kwargs) -> List[str]:
+        completions = self.generate_with_info(prompts, **kwargs)
+        return [c.code for c in completions]
 
     @abstractmethod
     def format_prompt(self, question: str, code=""):
@@ -59,7 +77,7 @@ class HFModel(BaseModel):
         )
         self.prompt_fn = prompt_fn
 
-    def generate(self, prompts: List[str], **kwargs) -> List[str]:
+    def generate_with_info(self, prompts: List[str], **kwargs) -> List[Completion]:
         from vllm import SamplingParams
         kwargs = kwargs.copy()
         stop = kwargs.pop("stop", [])
@@ -74,7 +92,15 @@ class HFModel(BaseModel):
             ),
             use_tqdm=kwargs.pop("use_tqdm", False),
         )
-        return [gen.outputs[0].text for gen in gens]
+        outs = []
+        for gen in gens:
+            gen = gen.outputs[0]
+            outs.append(Completion(
+                gen.text,
+                gen.cumulative_logprob,
+                len(gen.token_ids),
+            ))
+        return outs
 
     def format_prompt(self, question: str, code=""):
         return self.prompt_fn(question, code)

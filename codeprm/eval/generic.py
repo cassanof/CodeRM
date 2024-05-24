@@ -38,7 +38,7 @@ class CompletionItem:
         self.unique_name = unique_name
         self.difficulty_col = difficulty_col
 
-        self.completions: List[str] = []
+        self.completions: List[Completion] = []
         self.results: List[CompletionResult] = []
 
     def get_prompt(self) -> str:
@@ -71,7 +71,7 @@ class CompletionItem:
             "starter_code": self.get_starter_code(),
             "difficulty": self.get_difficulty(),
             #  "tests": self.get_tests(), # don't include this in the output, too large
-            "results": [{"code": c, **r.to_dict()} for c, r in zip(self.completions, self.results)],
+            "results": [{**c.to_dict(), **r.to_dict()} for c, r in zip(self.completions, self.results)],
         }
 
 
@@ -168,7 +168,7 @@ class EvaluationManager:
 
         for chunk in chunks:
             indices, prompts = zip(*chunk)
-            completions = self.model.generate(
+            completions = self.model.generate_with_info(
                 prompts,
                 max_tokens=self.max_tokens,
                 top_p=self.top_p,
@@ -182,7 +182,7 @@ class EvaluationManager:
         indexed_completions: List[Tuple[int, str]] = []
         for i, item in enumerate(items):
             for completion in item.completions:
-                indexed_completions.append((i, completion))
+                indexed_completions.append((i, completion.code))
 
         codes = [items[i].get_starter_code() + completion for i,
                  completion in indexed_completions]
