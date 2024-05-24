@@ -49,6 +49,7 @@ def main(args):
 
     balanced_ds = random.sample(
         passing_examples, min_examples) + random.sample(failing_examples, min_examples)
+    random.shuffle(balanced_ds)
     print(f"Total examples in balanced dataset: {len(balanced_ds)}")
     print(f"Passing examples in balanced dataset: {
           sum(ex['score'] == 1 for ex in balanced_ds)}")
