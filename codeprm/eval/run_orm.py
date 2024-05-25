@@ -39,7 +39,7 @@ if __name__ == "__main__":
                         help="Path to the input result file computed by the generator model.")
     parser.add_argument("--output", type=str, required=True,
                         help="Path to the output file to write the results with ORM labels and scores.")
-    parser.add_argument("--batch-size", type=int, default=32,
-                        help="Batch size for the ORM model.")
+    parser.add_argument("--batch-size", type=int, default=1,
+                        help="Batch size for the ORM model. Batching requires padding, so 1 is recommended.")
     args = parser.parse_args()
     main(args)

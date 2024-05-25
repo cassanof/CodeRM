@@ -30,7 +30,6 @@ def get_pass_ks(items, k):
                 correct += 1
 
         score = pass_at_k(n_comps, correct, k)
-        score = round(score * 100, 4)
         pass_ks.append(score)
     return pass_ks
 
