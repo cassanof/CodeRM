@@ -4,7 +4,7 @@ from codeprm.utils import chunkify
 import random
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
-from codeprm.model import autodetect_dtype
+from codeprm.model import autodetect_dtype_str
 
 
 FEW_SHOTS: List[Tuple[str, str]] = [
@@ -797,7 +797,7 @@ def get_prompt(question: str) -> str:
 def main(args):
     model = LLM(
         args.model,
-        dtype=autodetect_dtype(),
+        dtype=autodetect_dtype_str(),
         tensor_parallel_size=args.num_gpus,
     )
     dataset = datasets.load_dataset(args.dataset, split="train")

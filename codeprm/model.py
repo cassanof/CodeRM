@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
+import numpy as np
 import torch
 from codeprm.prompts import py_prompt, py_prompt_2shot_lcb
 
@@ -19,11 +20,18 @@ class Completion:
         }
 
 
-def autodetect_dtype() -> str:
+def autodetect_dtype_str() -> str:
     if torch.cuda.is_bf16_supported():
         return "bfloat16"
     else:
         return "auto"
+
+
+def autodetect_dtype() -> torch.dtype:
+    if torch.cuda.is_bf16_supported():
+        return torch.bfloat16
+    else:
+        return torch.float16
 
 
 def model_factory(
@@ -57,6 +65,18 @@ class BaseModel(ABC):
 
     @abstractmethod
     def format_prompt(self, question: str, code=""):
+        pass
+
+
+class ClassificationModel(ABC):
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+
+    def get_name(self) -> str:
+        return self.model_name
+
+    @abstractmethod
+    def score(self, contents: List[str]) -> List[Tuple[int, float]]:
         pass
 
 
@@ -104,3 +124,43 @@ class HFModel(BaseModel):
 
     def format_prompt(self, question: str, code=""):
         return self.prompt_fn(question, code)
+
+
+def detect_first_unused_device() -> str:
+    import torch
+    for i in range(torch.cuda.device_count()):
+        if not torch.cuda.memory_reserved(i):
+            return f"cuda:{i}"
+    return "cpu"
+
+
+class ORMModel(ClassificationModel):
+    def __init__(self, model_name: str, device=detect_first_unused_device()):
+        super().__init__(model_name)
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+        self.device = device
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_name, add_eos_token=True)
+        with torch.no_grad():
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                torch_dtype=autodetect_dtype(),
+                use_flash_attention=True,
+                use_cache=False,
+            ).to(self.device)
+
+    def score(self, contents: List[str], **kwargs) -> List[Tuple[int, float]]:
+        max_length = kwargs.get("max_length", 4096)
+        with torch.no_grad():
+            inputs = self.tokenizer(
+                contents,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=max_length,
+            ).to(self.device)
+            outputs = self.model(**inputs)
+            logits = outputs.logits.to(torch.float32).detach().cpu().numpy()
+            classes = np.argmax(logits, axis=1)
+            probs = np.max(logits, axis=1)
+            return list(zip(classes, probs))

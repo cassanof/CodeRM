@@ -1,7 +1,7 @@
 import random
 import datasets
 from vllm import LLM, SamplingParams
-from codeprm.model import autodetect_dtype
+from codeprm.model import autodetect_dtype_str
 from codeprm.prompts import py_prompt
 from codeprm.utils import chunkify
 from tqdm import tqdm
@@ -1019,7 +1019,7 @@ def main(args):
     random.seed(42)
     model = LLM(
         args.model,
-        dtype=autodetect_dtype(),
+        dtype=autodetect_dtype_str(),
         tensor_parallel_size=args.num_gpus,
         enforce_eager=True,
         enable_prefix_caching=not args.no_prefix_caching,
