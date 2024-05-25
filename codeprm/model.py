@@ -159,8 +159,13 @@ class ORMModel(ClassificationModel):
                 truncation=True,
                 max_length=max_length,
             ).to(self.device)
+            # goal of this function is to return class id and probability of the class
             outputs = self.model(**inputs)
-            logits = outputs.logits.to(torch.float32).detach().cpu().numpy()
-            classes = np.argmax(logits, axis=1)
-            probs = np.max(logits, axis=1)
-            return list(zip(classes, probs))
+            logits = outputs.logits
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+            probs = probs.cpu().numpy()
+            scores = []
+            for i in range(len(probs)):
+                score = probs[i]
+                scores.append((np.argmax(score), np.max(score)))
+            return scores
