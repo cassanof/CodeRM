@@ -27,7 +27,7 @@ for ((i=0; i<NUM_GPUS; i++)); do
   TOTAL_MAX=$((TOTAL_MAX + MAX_ITEMS))
   
   echo "Processing chunk $i: start_idx=$START_IDX, max_items=$MAX_ITEMS"
-  python3 codeprm/eval/taco_eval.py \
+  CUDA_VISIBLE_DEVICES=$i python3 codeprm/eval/taco_eval.py \
     --dataset cassanof/taco_cleaned_all \
     --split train \
     --model cassanof/starcoder2-15b-taco-reasoning \
