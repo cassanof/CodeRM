@@ -7,7 +7,7 @@ export WANDB_PROJECT="codeprm"
 export WANDB_JOB_TYPE="sweep"
 
 # loop over all configurations
-for dropout in ${DROPOUTS[@]}; do
+for grad_acc in ${GRAD_ACCS[@]}; do
   for lr in ${LR[@]}; do
     echo "Running: GRAD_ACC=$grad_acc, LR=$lr"
     ./train.sh $grad_acc $lr
