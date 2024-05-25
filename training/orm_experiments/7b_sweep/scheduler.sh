@@ -8,7 +8,7 @@ export WANDB_JOB_TYPE="sweep"
 
 # loop over all configurations
 for grad_acc in ${GRAD_ACCS[@]}; do
-  for lr in ${LR[@]}; do
+  for lr in ${LRS[@]}; do
     echo "Running: GRAD_ACC=$grad_acc, LR=$lr"
     ./train.sh $grad_acc $lr
   done
