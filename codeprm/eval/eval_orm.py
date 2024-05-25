@@ -11,6 +11,7 @@ def main(args):
         f"{args.input}"
     completions = obj["items"]
     model = OutcomeRewardModel(args.model, device=args.device)
+    accurate = 0
     for c in tqdm(completions, desc="Processing completions"):
         print(c.keys())
         chunks = chunkify(list(enumerate(c["results"])), args.batch_size)
@@ -22,11 +23,15 @@ def main(args):
                     py_prompt(c["prompt"], c["starter_code"] + r["code"]))
 
             scores = model.score(contents)
-            for i, s in zip(indices, scores):
-                c["results"][i]["orm_label"] = s[0]
-                c["results"][i]["orm_score"] = s[1]
+            for i, (label, score) in zip(indices, scores):
+                c["results"][i]["orm_label"] = label
+                c["results"][i]["orm_score"] = score
+                # get accuracy
+                if bool(label) == c["results"][i]["passing"]:
+                    accurate += 1
 
     gunzip_json_write(Path(args.output), obj)
+    print(f"Accuracy: {accurate / len(completions)}")
 
 
 if __name__ == "__main__":
