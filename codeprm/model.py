@@ -169,5 +169,5 @@ class OutcomeRewardModel(ClassificationModel):
             scores = []
             for i in range(len(probs)):
                 score = probs[i]
-                scores.append((np.argmax(score), np.max(score)))
+                scores.append((int(np.argmax(score)), float(np.max(score))))
             return scores

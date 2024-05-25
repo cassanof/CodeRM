@@ -3,6 +3,7 @@ Takes in a result file and spits out the pass@k metrics.
 """
 
 from pathlib import Path
+from typing import Optional
 import numpy as np
 from codeprm.utils import gunzip_json_read
 
@@ -34,6 +35,22 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
+def orm_acc(items) -> Optional[float]:
+    """
+    Calculates the ORM accuracy, if the results contain ORM labels.
+    """
+    n_comps = len(items[0]["results"])
+    assert all(len(item["results"]) ==
+               n_comps for item in items), "All items should have the same number of completions"
+    correct = 0
+    for item in items:
+        for result in item["results"]:
+            if result["passing"]:
+                correct += 1
+
+    return round(correct / (len(items) * n_comps) * 100, 4)
+
+
 def per_file_metrics(file: Path, k: int) -> str:
     obj = gunzip_json_read(file)
     assert obj is not None, f"Failed to read {file}"
@@ -42,12 +59,13 @@ def per_file_metrics(file: Path, k: int) -> str:
     size = len(items)
 
     pass_ks = get_pass_ks(items, k)
+    orm_acc = orm_acc(items)
 
-    return f"{file.stem},{size},{len(items[0]['results'])},{k},{np.mean(pass_ks)},{np.std(pass_ks)}"
+    return f"{file.stem},{size},{len(items[0]['results'])},{k},{np.mean(pass_ks)},{orm_acc}"
 
 
 def main(args):
-    header = "name,dataset size,num completions,k,avg pass@k,std pass@k"
+    header = "name,dataset size,num completions,k,avg pass@k,orm acc"
     print(header)
     for file in args.inputs:
         print(per_file_metrics(Path(file), args.k))
