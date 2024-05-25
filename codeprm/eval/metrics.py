@@ -96,7 +96,7 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_consider=None) -> st
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm pass@{1, n}"
+    header = "name,dataset size,n,k,avg pass@k,orm pass@{1|n}"
     print(header)
     for file in args.inputs:
         print(per_file_metrics(Path(file), args.k,
