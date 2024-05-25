@@ -3,10 +3,26 @@ import time
 from codeprm.code_exec_server.code_exec_reqs import check_executor_alive
 from pathlib import Path
 from tqdm import tqdm
-from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_batched, smart_exec_tests_queuebatched
-from codeprm.utils import chunkify, gunzip_json_write
-from codeprm.model import BaseModel
+from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
+from codeprm.utils import chunkify, gunzip_json_write, gunzip_json_read
+from codeprm.model import BaseModel, Completion
 import os
+
+
+def read_completions_from_disk(path: str) -> Optional[List[Dict[str, Any]]]:
+    # either datasets or gzjson
+    path_p = Path(path)
+    if not path_p.exists():
+        return None
+    if "gz" in path_p.suffix:
+        obj = gunzip_json_read(path_p)
+        if obj is None:
+            return None
+        return obj["items"]
+    elif path_p.is_dir():
+        import datasets
+        ds = datasets.load_from_disk(path)
+        return ds.to_list()  # type: ignore
 
 
 class CompletionResult:

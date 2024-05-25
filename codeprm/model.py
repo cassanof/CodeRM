@@ -131,41 +131,42 @@ def detect_first_unused_device() -> str:
     for i in range(torch.cuda.device_count()):
         if not torch.cuda.memory_reserved(i):
             return f"cuda:{i}"
+    print("WARNING: No available GPU detected, using CPU. Specify --device to use a specific device.")
     return "cpu"
 
 
-class ORMModel(ClassificationModel):
-    def __init__(self, model_name: str, device=detect_first_unused_device()):
+class OutcomeRewardModel(ClassificationModel):
+    def __init__(self, model_name: str, device=None):
         super().__init__(model_name)
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
+        if device is None:
+            device = detect_first_unused_device()
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name, add_eos_token=True)
-        with torch.no_grad():
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_name,
-                torch_dtype=autodetect_dtype(),
-                use_flash_attention_2=True,
-                use_cache=False,
-            ).to(self.device)
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            model_name,
+            torch_dtype=autodetect_dtype(),
+            use_flash_attention_2=True,
+            use_cache=False,
+        ).to(self.device).eval()
 
     def score(self, contents: List[str], **kwargs) -> List[Tuple[int, float]]:
         max_length = kwargs.get("max_length", 4096)
-        with torch.no_grad():
-            inputs = self.tokenizer(
-                contents,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=max_length,
-            ).to(self.device)
-            # goal of this function is to return class id and probability of the class
-            outputs = self.model(**inputs)
-            logits = outputs.logits
-            probs = torch.nn.functional.softmax(logits, dim=-1)
-            probs = probs.cpu().to(torch.float32).numpy()
-            scores = []
-            for i in range(len(probs)):
-                score = probs[i]
-                scores.append((np.argmax(score), np.max(score)))
-            return scores
+        inputs = self.tokenizer(
+            contents,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=max_length,
+        ).to(self.device)
+        # goal of this function is to return class id and probability of the class
+        outputs = self.model(**inputs)
+        logits = outputs.logits
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        probs = probs.cpu().to(torch.float32).numpy()
+        scores = []
+        for i in range(len(probs)):
+            score = probs[i]
+            scores.append((np.argmax(score), np.max(score)))
+        return scores
