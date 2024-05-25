@@ -3,7 +3,7 @@
 GRAD_ACC=$1
 LR=$2
 
-export WANDB_PROJECT="codeprm"
+export WANDB_PROJECT="codeprm-orm-7b-sweep"
 export WANDB_NAME="sweep_starcoder2_7b_orm_raw10_${GRAD_ACC}_${LR}"
 OUTDIR="./model_starcoder2_7b_orm_raw10_${GRAD_ACC}_${LR}"
 
