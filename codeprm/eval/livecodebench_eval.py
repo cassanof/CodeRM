@@ -1,4 +1,4 @@
-from codeprm.eval.generic import EvaluationManager, get_generic_argparser, make_items_from_ds
+from codeprm.eval.generic import EvaluationManager, get_generic_argparser, make_items_from_ds, partition_items
 import json
 from codeprm.model import model_factory
 import datasets
@@ -26,6 +26,8 @@ def main(args):
         random_sample=args.random_sample,
         unique_name_col="id",
     )
+    items = partition_items(
+        items, start_idx=args.start_idx, max_items=args.max_items)
     manager = EvaluationManager(
         model=model,
         max_tokens=args.max_tokens,

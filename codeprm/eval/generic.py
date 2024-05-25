@@ -140,6 +140,12 @@ def make_items_from_ds(
     return items
 
 
+def partition_items(items: List[CompletionItem], start_idx: Optional[int], max_items: Optional[int]) -> List[CompletionItem]:
+    if start_idx is None or max_items is None:
+        return items
+    return items[start_idx:start_idx + max_items]
+
+
 class EvaluationManager:
     def __init__(
             self,
@@ -378,5 +384,19 @@ def get_generic_argparser(dataset_default: str, split="test"):
         default="gzjson",
         help="Output format. either 'gzjson' or 'datasets'",
         choices=["gzjson", "datasets"]
+    )
+    parser.add_argument(
+        "--start-idx",
+        type=int,
+        default=None,
+        help="Start index for the dataset. Useful for parallel processing in combination with --max-items",
+        required=("--max-items" in parser._option_string_actions)
+    )
+    parser.add_argument(
+        "--max-items",
+        type=int,
+        default=None,
+        help="Max items to process. Useful for parallel processing in combination with --start-idx",
+        required=("--start-idx" in parser._option_string_actions)
     )
     return parser
