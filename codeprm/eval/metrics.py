@@ -59,7 +59,7 @@ def get_orm_acc(items) -> Optional[float]:
             correct += 1
         total += 1
 
-    return round(correct / total * 100, 4)
+    return correct / total
 
 
 def per_file_metrics(file: Path, k: int) -> str:
@@ -70,9 +70,11 @@ def per_file_metrics(file: Path, k: int) -> str:
     size = len(items)
 
     pass_ks = get_pass_ks(items, k)
+    mean_pass_k = round(np.mean(pass_ks) * 100, 4)
     orm_acc = get_orm_acc(items)
+    orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
 
-    return f"{file.stem},{size},{len(items[0]['results'])},{k},{np.mean(pass_ks)},{orm_acc}"
+    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc}"
 
 
 def main(args):
