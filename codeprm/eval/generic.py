@@ -141,6 +141,9 @@ def make_items_from_ds(
 
 
 def partition_items(items: List[CompletionItem], start_idx: Optional[int], max_items: Optional[int]) -> List[CompletionItem]:
+    # warning if start_idx is not None and max_items is None and vice versa
+    if (start_idx is not None and max_items is None) or (start_idx is None and max_items is not None):
+        print("WARNING: start_idx and max_items should be used together for parallel processing. Ignoring them.")
     if start_idx is None or max_items is None:
         return items
     return items[start_idx:start_idx + max_items]
@@ -390,13 +393,11 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=int,
         default=None,
         help="Start index for the dataset. Useful for parallel processing in combination with --max-items",
-        required=("--max-items" in parser._option_string_actions)
     )
     parser.add_argument(
         "--max-items",
         type=int,
         default=None,
         help="Max items to process. Useful for parallel processing in combination with --start-idx",
-        required=("--start-idx" in parser._option_string_actions)
     )
     return parser
