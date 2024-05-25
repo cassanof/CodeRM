@@ -145,7 +145,7 @@ class ORMModel(ClassificationModel):
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 model_name,
                 torch_dtype=autodetect_dtype(),
-                use_flash_attention=True,
+                use_flash_attention2=True,
                 use_cache=False,
             ).to(self.device)
 
