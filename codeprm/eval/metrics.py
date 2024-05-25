@@ -35,20 +35,32 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def orm_acc(items) -> Optional[float]:
+def get_orm_acc(items) -> Optional[float]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
     """
-    n_comps = len(items[0]["results"])
-    assert all(len(item["results"]) ==
-               n_comps for item in items), "All items should have the same number of completions"
     correct = 0
+    total = 0
     for item in items:
-        for result in item["results"]:
-            if result["passing"]:
-                correct += 1
+        max_score = -1
+        max_res = None
 
-    return round(correct / (len(items) * n_comps) * 100, 4)
+        for result in item["results"]:
+            if "orm_score" not in result:
+                return None  # ORM score not found
+
+            if result["orm_label"] == 1 and result["orm_score"] > max_score:
+                max_score = result["orm_score"]
+                max_res = result
+
+        if max_res is None:
+            max_res = item["results"][0]  # first one will do
+
+        if max_res["orm_label"] == 1 and max_res["passing"]:
+            correct += 1
+        total += 1
+
+    return round(correct / total * 100, 4)
 
 
 def per_file_metrics(file: Path, k: int) -> str:
@@ -59,7 +71,7 @@ def per_file_metrics(file: Path, k: int) -> str:
     size = len(items)
 
     pass_ks = get_pass_ks(items, k)
-    orm_acc = orm_acc(items)
+    orm_acc = get_orm_acc(items)
 
     return f"{file.stem},{size},{len(items[0]['results'])},{k},{np.mean(pass_ks)},{orm_acc}"
 
