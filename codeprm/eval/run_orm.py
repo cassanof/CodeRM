@@ -11,7 +11,6 @@ def main(args):
         f"{args.input}"
     completions = obj["items"]
     model = OutcomeRewardModel(args.model, device=args.device)
-    accurate = 0
     for c in tqdm(completions, desc="Processing completions"):
         chunks = chunkify(list(enumerate(c["results"])), args.batch_size)
         for chunk in tqdm(chunks, desc="Processing chunks"):
@@ -25,12 +24,8 @@ def main(args):
             for i, (label, score) in zip(indices, scores):
                 c["results"][i]["orm_label"] = label
                 c["results"][i]["orm_score"] = score
-                # get accuracy
-                if bool(label) == c["results"][i]["passing"]:
-                    accurate += 1
 
     gunzip_json_write(Path(args.output), obj)
-    print(f"Accuracy: {accurate / len(completions)}")
 
 
 if __name__ == "__main__":
