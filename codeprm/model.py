@@ -163,7 +163,7 @@ class ORMModel(ClassificationModel):
             outputs = self.model(**inputs)
             logits = outputs.logits
             probs = torch.nn.functional.softmax(logits, dim=-1)
-            probs = probs.cpu().numpy()
+            probs = probs.to(torch.float32).cpu().numpy()
             scores = []
             for i in range(len(probs)):
                 score = probs[i]
