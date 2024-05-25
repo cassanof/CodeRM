@@ -33,11 +33,11 @@ for ((i=0; i<NUM_GPUS; i++)); do
     --model cassanof/starcoder2-15b-taco-reasoning \
     --completion-limit 100 \
     --temperature 0.8 \
-    --exec_batch_size $NPROC_PER_GPU \
+    --exec-batch-size $NPROC_PER_GPU \
     --output "$OUTDIR/chunk_$i" \
     --output-format datasets \
-    --start_idx $START_IDX \
-    --max_items $MAX_ITEMS &
+    --start-idx $START_IDX \
+    --max-items $MAX_ITEMS &
 
   # Add the process ID to the PIDS array
   PIDS+=($!)
