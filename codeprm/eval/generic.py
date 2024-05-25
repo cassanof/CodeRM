@@ -386,17 +386,17 @@ def get_generic_argparser(dataset_default: str, split="test"):
         choices=["gzjson", "datasets"]
     )
     parser.add_argument(
-        "--start_idx",
+        "--start-idx",
         type=int,
         default=None,
-        help="Start index for the dataset. Useful for parallel processing in combination with --max_items",
-        required=("--max_items" in parser._option_string_actions)
+        help="Start index for the dataset. Useful for parallel processing in combination with --max-items",
+        required=("--max-items" in parser._option_string_actions)
     )
     parser.add_argument(
-        "--max_items",
+        "--max-items",
         type=int,
         default=None,
-        help="Max items to process. Useful for parallel processing in combination with --start_idx",
-        required=("--start_idx" in parser._option_string_actions)
+        help="Max items to process. Useful for parallel processing in combination with --start-idx",
+        required=("--start-idx" in parser._option_string_actions)
     )
     return parser
