@@ -13,7 +13,6 @@ def main(args):
     model = OutcomeRewardModel(args.model, device=args.device)
     accurate = 0
     for c in tqdm(completions, desc="Processing completions"):
-        print(c.keys())
         chunks = chunkify(list(enumerate(c["results"])), args.batch_size)
         for chunk in tqdm(chunks, desc="Processing chunks"):
             indices, results = zip(*chunk)
