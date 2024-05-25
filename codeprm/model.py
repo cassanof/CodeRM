@@ -153,20 +153,21 @@ class OutcomeRewardModel(ClassificationModel):
 
     def score(self, contents: List[str], **kwargs) -> List[Tuple[int, float]]:
         max_length = kwargs.get("max_length", 4096)
-        inputs = self.tokenizer(
-            contents,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=max_length,
-        ).to(self.device)
-        # goal of this function is to return class id and probability of the class
-        outputs = self.model(**inputs)
-        logits = outputs.logits
-        probs = torch.nn.functional.softmax(logits, dim=-1)
-        probs = probs.cpu().to(torch.float32).numpy()
-        scores = []
-        for i in range(len(probs)):
-            score = probs[i]
-            scores.append((np.argmax(score), np.max(score)))
-        return scores
+        with torch.no_grad():
+            inputs = self.tokenizer(
+                contents,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=max_length,
+            ).to(self.device)
+            # goal of this function is to return class id and probability of the class
+            outputs = self.model(**inputs)
+            logits = outputs.logits
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+            probs = probs.cpu().to(torch.float32).numpy()
+            scores = []
+            for i in range(len(probs)):
+                score = probs[i]
+                scores.append((np.argmax(score), np.max(score)))
+            return scores
