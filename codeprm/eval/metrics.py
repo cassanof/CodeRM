@@ -1,7 +1,6 @@
 """
 Takes in a result file and spits out the pass@k metrics.
 """
-
 from pathlib import Path
 from typing import Optional
 import numpy as np
@@ -34,7 +33,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None) -> Optional[float]:
+def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -43,6 +42,8 @@ def get_orm_acc(items, prod=None) -> Optional[float]:
     - None: original ORM scores are used
     - "unnormalized": math.exp(cumulative_logprob) * orm_score is used
     - "normalized": math.exp(cumulative_logprob / num_tokens) * orm_score is used
+
+    The consider parameter allows to consider only the first N samples for ORM accuracy.
     """
     correct = 0
     total = 0
@@ -50,7 +51,12 @@ def get_orm_acc(items, prod=None) -> Optional[float]:
         max_score = -1
         max_res = None
 
-        for result in item["results"]:
+        results = item["results"]
+        if consider is not None:
+            assert consider > 0, "orm consider parameter should be > 0"
+            results = results[:consider]
+
+        for result in results:
             if "orm_score" not in result:
                 return None  # ORM score not found
 
@@ -74,7 +80,7 @@ def get_orm_acc(items, prod=None) -> Optional[float]:
     return correct / total
 
 
-def per_file_metrics(file: Path, k: int, orm_prod=None) -> str:
+def per_file_metrics(file: Path, k: int, orm_prod=None, orm_consider=None) -> str:
     obj = gunzip_json_read(file)
     assert obj is not None, f"Failed to read {file}"
 
@@ -83,7 +89,7 @@ def per_file_metrics(file: Path, k: int, orm_prod=None) -> str:
 
     pass_ks = get_pass_ks(items, k)
     mean_pass_k = round(np.mean(pass_ks) * 100, 4)
-    orm_acc = get_orm_acc(items, prod=orm_prod)
+    orm_acc = get_orm_acc(items, prod=orm_prod, consider=orm_consider)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
 
     return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc}"
@@ -93,7 +99,8 @@ def main(args):
     header = "name,dataset size,num completions,k,avg pass@k,orm acc"
     print(header)
     for file in args.inputs:
-        print(per_file_metrics(Path(file), args.k, orm_prod=args.orm_prod))
+        print(per_file_metrics(Path(file), args.k,
+              orm_prod=args.orm_prod, orm_consider=args.orm_consider))
 
 
 if __name__ == "__main__":
@@ -117,6 +124,12 @@ if __name__ == "__main__":
         default=None,
         choices=[None, "unnormalized", "normalized"],
         help="Product of logprobs for ORM accuracy"
+    )
+    parser.add_argument(
+        "--orm-consider",
+        type=int,
+        default=None,
+        help="How many samples should be considered for ORM accuracy",
     )
     args = parser.parse_args()
     main(args)
