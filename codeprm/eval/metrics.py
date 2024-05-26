@@ -73,7 +73,7 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
         if max_res is None:
             max_res = item["results"][0]  # first one will do
 
-        if max_res["orm_label"] == 1 and max_res["passing"]:
+        if max_res["passing"]:
             correct += 1
         total += 1
 
