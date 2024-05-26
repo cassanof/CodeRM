@@ -1,7 +1,9 @@
-from typing import Any, Dict, List, Tuple
+import os
+from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 import torch
-from codeprm.prompts import py_prompt, py_prompt_2shot_lcb
+from codeprm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt
+from codeprm.utils import markdown_codeblock_extract
 
 from abc import ABC, abstractmethod
 
@@ -43,6 +45,8 @@ def model_factory(
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
     elif kind == "few-shot":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
+    elif kind == "openai":
+        return OpenAIChatModel(name, prompt_fn=py_prompt_2shot_lcb_chat)
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
@@ -56,15 +60,15 @@ class BaseModel(ABC):
         return self.model_name
 
     @abstractmethod
-    def generate_with_info(self, prompts: List[str], **kwargs) -> List[Completion]:
+    def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         pass
 
-    def generate(self, prompts: List[str], **kwargs) -> List[str]:
+    def generate(self, prompts: List[Prompt], **kwargs) -> List[str]:
         completions = self.generate_with_info(prompts, **kwargs)
         return [c.code for c in completions]
 
     @abstractmethod
-    def format_prompt(self, question: str, code=""):
+    def format_prompt(self, question: str, code="") -> Prompt:
         pass
 
 
@@ -97,7 +101,7 @@ class HFModel(BaseModel):
         )
         self.prompt_fn = prompt_fn
 
-    def generate_with_info(self, prompts: List[str], **kwargs) -> List[Completion]:
+    def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         from vllm import SamplingParams
         kwargs = kwargs.copy()
         stop = kwargs.pop("stop", [])
@@ -105,8 +109,8 @@ class HFModel(BaseModel):
         gens = self.model.generate(
             prompts=prompts,
             sampling_params=SamplingParams(
-                top_p=kwargs.pop("top_p", 0.9),
-                temperature=kwargs.pop("temperature", 0.2),
+                top_p=kwargs.pop("top_p", 1.0),
+                temperature=kwargs.pop("temperature", 0.0),
                 max_tokens=kwargs.pop("max_tokens", 2048),
                 stop=stop,
             ),
@@ -122,7 +126,7 @@ class HFModel(BaseModel):
             ))
         return outs
 
-    def format_prompt(self, question: str, code=""):
+    def format_prompt(self, question: str, code="") -> str:
         return self.prompt_fn(question, code)
 
 
@@ -172,4 +176,58 @@ class OutcomeRewardModel(ClassificationModel):
                 scores.append((int(np.argmax(score)), float(np.max(score))))
             return scores
 
-#  class OpenAIModel
+
+def post_process_markdown(new: str) -> str:
+    try:
+        extracted = markdown_codeblock_extract(new)
+    except Exception as e:
+        print(f"Failed to extract codeblock from {new}: {e}")
+        extracted = new
+    return extracted.strip()
+
+
+class OpenAIChatModel(BaseModel):
+    def __init__(self, model_name: str, prompt_fn=py_prompt_2shot_lcb_chat):
+        super().__init__(model_name)
+        from openai import Client
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key is None:
+            raise ValueError("OPENAI_API_KEY is not set")
+        self.client = Client(api_key=api_key)
+        self.prompt_fn = prompt_fn
+
+    def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
+        def logprobs_to_cumulative(logprobs):  # NOTE: normalized
+            c = 0
+            for l in logprobs:
+                c += l
+            return c / len(logprobs)
+        max_tokens = kwargs.pop("max_tokens", 3076)
+        stop = kwargs.pop("stop", [])
+        # TODO: find common prompts and group them together for batched generation
+        completions = []
+        for prompt in prompts:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=prompt,
+                max_tokens=max_tokens,
+                logprobs=True,
+                stop=stop,
+                temperature=kwargs.pop("temperature", 0.0),
+                top_p=kwargs.pop("top_p", 1.0),
+            )
+            choice = response.choices[0]
+            o = choice.message.content
+            logprobs = choice.logprobs.content  # type: ignore
+            assert o is not None, "OpenAI returned a null response"
+            assert logprobs is not None, "OpenAI returned a null logprobs"
+            logprobs = [l.logprob for l in logprobs]
+            num_tokens = len(logprobs)
+            proc = post_process_markdown(o)
+            cumulative_logprob = logprobs_to_cumulative(logprobs)
+            completions.append(Completion(
+                proc, cumulative_logprob, num_tokens))
+        return completions
+
+    def format_prompt(self, question: str, code="") -> Conversation:
+        return self.prompt_fn(question, code)

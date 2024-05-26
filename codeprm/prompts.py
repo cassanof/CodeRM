@@ -1,3 +1,10 @@
+from typing import Dict, List, Union
+
+
+Message = Dict[str, str]
+Conversation = List[Message]
+Prompt = Union[str, Conversation]
+
 def py_prompt(question: str, code=""):
     # escape any triple quotes in the question
     question = question.replace('"""', r'\"""')
@@ -53,3 +60,39 @@ def py_prompt_2shot_lcb(question: str, code=""):
 {question}
 """
 {code}'''.strip()
+
+
+def py_prompt_2shot_lcb_chat(question: str, code="") -> Conversation:
+    system = "You are an expert Python programmer. You will be given a question (problem specification) and will generate a correct Python program that matches the specification and passes all tests. You will NOT return anything except for the program inside markdown codeblocks"
+    og_q = question.replace('"""', r'\"""')
+    if code == "" or code is None:
+        shots_arr = LCB_IO_FEWSHOT
+    else:
+        shots_arr = LCB_FN_FEWSHOT
+
+    shots = [{
+        "role": "system",
+        "content": system
+    }]
+    for shot in shots_arr:
+        question = shot["question"]
+        response = shot["code"]
+
+        shots.append({
+            "role": "user",
+            "content": f"Please write a Python program that meets the following requirements:\n\n{question}"
+        })
+        shots.append({
+            "role": "system",
+            "content": f"```python\n{response}\n```"
+        })
+
+    shots.append({
+        "role": "user",
+        "content": f"Please write a Python program that meets the following requirements:\n\n{og_q}"
+    })
+
+    if not (code == "" or code is None):
+        shots[-1]["content"] += "\n\nYour solution should utilize the following starter code:\n\n```python\n" + code + "\n```"
+
+    return shots

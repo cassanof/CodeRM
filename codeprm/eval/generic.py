@@ -4,6 +4,7 @@ from codeprm.code_exec_server.code_exec_reqs import check_executor_alive
 from pathlib import Path
 from tqdm import tqdm
 from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
+from codeprm.prompts import Prompt
 from codeprm.utils import chunkify, gunzip_json_write, gunzip_json_read
 from codeprm.model import BaseModel, Completion
 import os
@@ -175,7 +176,7 @@ class EvaluationManager:
         self.timeout = timeout
 
     def generate_completions(self, items: List[CompletionItem], use_tqdm=True):
-        indexed_prompts = []
+        indexed_prompts: List[Tuple[int, Prompt]] = []
 
         for i, example in enumerate(items):
             indexed_prompts.extend(
@@ -343,7 +344,7 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=str,
         default="base",
         help="Model kind",
-        choices=["base", "few-shot"]
+        choices=["base", "few-shot", "openai"]
     )
     parser.add_argument(
         "--num-gpus",

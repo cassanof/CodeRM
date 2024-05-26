@@ -37,3 +37,17 @@ def gunzip_json_read(path: Path) -> Optional[dict]:
 def gunzip_json_write(path: Path, data: dict) -> None:
     with gzip.open(path, "wt") as f:
         json.dump(data, f)
+
+def markdown_codeblock_extract(response: str) -> str:
+    lines = response.split("\n")
+    buf = ""
+    in_codeblock = False
+    for ln in lines:
+        if ln.startswith("```"):
+            if in_codeblock:
+                break
+            else:
+                in_codeblock = True
+        elif in_codeblock:
+            buf += ln + "\n"
+    return buf
