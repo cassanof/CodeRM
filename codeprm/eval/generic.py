@@ -210,8 +210,12 @@ class EvaluationManager:
             for completion in item.completions:
                 indexed_completions.append((i, completion.code))
 
-        codes = [items[i].get_starter_code() + completion for i,
-                 completion in indexed_completions]
+        if self.model.prefix_starter_code():
+            codes = [items[i].get_starter_code() + completion for i,
+                     completion in indexed_completions]
+        else:
+            codes = [completion for _, completion in indexed_completions]
+
         tests_per_code = [
             items[i].get_tests() for i, _ in indexed_completions]
         time_limits = [items[i].get_timeout(

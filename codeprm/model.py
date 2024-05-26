@@ -57,20 +57,25 @@ class BaseModel(ABC):
     def __init__(self, model_name: str):
         self.model_name = model_name
 
-    def get_name(self) -> str:
-        return self.model_name
-
     @abstractmethod
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         pass
+
+    @abstractmethod
+    def format_prompt(self, question: str, code="") -> Prompt:
+        pass
+
+    def get_name(self) -> str:
+        return self.model_name
 
     def generate(self, prompts: List[Prompt], **kwargs) -> List[str]:
         completions = self.generate_with_info(prompts, **kwargs)
         return [c.code for c in completions]
 
-    @abstractmethod
-    def format_prompt(self, question: str, code="") -> Prompt:
-        pass
+    def prefix_starter_code(self) -> bool:
+        # whether the model requires to prefix starter code to responses
+        # chat models do not require this
+        return True
 
 
 class ClassificationModel(ABC):
@@ -246,3 +251,6 @@ class OpenAIChatModel(BaseModel):
 
     def format_prompt(self, question: str, code="") -> Conversation:
         return self.prompt_fn(question, code)
+
+    def prefix_starter_code(self) -> bool:
+        return False
