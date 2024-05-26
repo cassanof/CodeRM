@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import threading
 import torch
@@ -205,11 +205,10 @@ class OpenAIChatModel(BaseModel):
         self.prompt_fn = prompt_fn
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        completions = []
+        completions: List[Optional[Completion]] = [None] * len(prompts)
         threads = []
-        results_lock = threading.Lock()
 
-        def generate_completion(prompt):
+        def generate_completion(prompt, i):
             response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=prompt,
@@ -228,25 +227,22 @@ class OpenAIChatModel(BaseModel):
             num_tokens = len(logprobs)
             proc = post_process_markdown(o)
             cumulative_logprob = logprobs_to_cumulative(logprobs)
-            with results_lock:
-                completions.append(Completion(
-                    proc, cumulative_logprob, num_tokens))
+            completions[i] = Completion(
+                proc, cumulative_logprob, num_tokens)
 
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
             thread = threading.Thread(
-                target=generate_completion, args=(prompt,))
+                target=generate_completion, args=(prompt, i))
             threads.append(thread)
             thread.start()
 
         for thread in threads:
             thread.join()
 
-        assert len(completions) == len(
-            prompts), "Some completions are missing -- threading issue?"
         assert all(
-            c.code is not None for c in completions), "Some completions are missing code"
+            c is not None for c in completions), "Some completions are missing -- threading bug?"
 
-        return completions
+        return completions  # type: ignore
 
     def format_prompt(self, question: str, code="") -> Conversation:
         return self.prompt_fn(question, code)
