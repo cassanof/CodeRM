@@ -12,6 +12,7 @@ git clone --recurse-submodules git@github.com:cassanof/CodePRM
 
 ```bash
 pip install -r requirements.txt
+pip install -e .
 ```
 
 #### 2. Run code execution server
