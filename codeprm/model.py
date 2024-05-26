@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict, List, Tuple, Union
 import numpy as np
+import threading
 import torch
 from codeprm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt
 from codeprm.utils import markdown_codeblock_extract
@@ -186,6 +187,13 @@ def post_process_markdown(new: str) -> str:
     return extracted.strip()
 
 
+def logprobs_to_cumulative(logprobs):  # NOTE: normalized
+    c = 0
+    for l in logprobs:
+        c += l
+    return c / len(logprobs)
+
+
 class OpenAIChatModel(BaseModel):
     def __init__(self, model_name: str, prompt_fn=py_prompt_2shot_lcb_chat):
         super().__init__(model_name)
@@ -197,24 +205,19 @@ class OpenAIChatModel(BaseModel):
         self.prompt_fn = prompt_fn
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        def logprobs_to_cumulative(logprobs):  # NOTE: normalized
-            c = 0
-            for l in logprobs:
-                c += l
-            return c / len(logprobs)
-        max_tokens = kwargs.pop("max_tokens", 3076)
-        stop = kwargs.pop("stop", [])
-        # TODO: find common prompts and group them together for batched generation
         completions = []
-        for prompt in prompts:
+        threads = []
+        results_lock = threading.Lock()
+
+        def generate_completion(prompt):
             response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=prompt,
-                max_tokens=max_tokens,
+                max_tokens=kwargs.get("max_tokens", 3076),
                 logprobs=True,
-                stop=stop,
-                temperature=kwargs.pop("temperature", 0.0),
-                top_p=kwargs.pop("top_p", 1.0),
+                stop=kwargs.get("stop", []),
+                temperature=kwargs.get("temperature", 0.0),
+                top_p=kwargs.get("top_p", 1.0),
             )
             choice = response.choices[0]
             o = choice.message.content
@@ -225,8 +228,24 @@ class OpenAIChatModel(BaseModel):
             num_tokens = len(logprobs)
             proc = post_process_markdown(o)
             cumulative_logprob = logprobs_to_cumulative(logprobs)
-            completions.append(Completion(
-                proc, cumulative_logprob, num_tokens))
+            with results_lock:
+                completions.append(Completion(
+                    proc, cumulative_logprob, num_tokens))
+
+        for prompt in prompts:
+            thread = threading.Thread(
+                target=generate_completion, args=(prompt,))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        assert len(completions) == len(
+            prompts), "Some completions are missing -- threading issue?"
+        assert all(
+            c.code is not None for c in completions), "Some completions are missing code"
+
         return completions
 
     def format_prompt(self, question: str, code="") -> Conversation:
