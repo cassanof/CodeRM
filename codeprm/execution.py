@@ -277,7 +277,10 @@ def smart_exec_tests_queuebatched(
         workers=os.cpu_count(),
         use_tqdm=True
 ) -> List[Tuple[bool, str]]:
-    workers = workers or 1
+    if workers is None:
+        print("WARNING: couldn't get number of workers, defaulting to 1")
+        workers = 1
+
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
 
     if timeouts is None:

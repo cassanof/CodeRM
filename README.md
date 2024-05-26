@@ -56,3 +56,13 @@ python3 ./codeprm/eval/metrics.py ./results/3b_replication/lcb_eval_orm* | colum
 # check results (with pass@100)
 python3 ./codeprm/eval/metrics.py -k 100 ./results/3b_replication/lcb_eval_orm* | column -s, -t
 ```
+
+## Training data generation process
+
+1. taco uncleaned
+2. clean taco
+3. execution filter taco
+4. generate reasoning steps
+5. clean reasoning steps
+6. train 15b on reasoning step data
+7. use fine-tuned 15b to generate solutions on 13k taco
