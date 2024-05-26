@@ -211,9 +211,16 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         args = args.rstrip(", ")
         tests += f"assert is_eq({entrypoint}({args}), {out!r})\n"
 
+    tests += "print('___SENTINEL___')\n"
+
     passing, outs = exec_test(executor, instru, tests,
                               timeout=timeout, timeout_on_client=False)
-    return passing, outs
+    if passing:
+        if "___SENTINEL___" not in outs:
+            return False, "missing ___SENTINEL___ in output"
+        return True, ""
+    else:
+        return False, f"errored with {outs!r}"
 
 
 def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, batched_io=False) -> Tuple[bool, str]:

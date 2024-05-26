@@ -171,3 +171,5 @@ class OutcomeRewardModel(ClassificationModel):
                 score = probs[i]
                 scores.append((int(np.argmax(score)), float(np.max(score))))
             return scores
+
+#  class OpenAIModel
