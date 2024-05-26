@@ -8,7 +8,7 @@ git clone --recurse-submodules git@github.com:cassanof/CodePRM
 
 ### Replicate 3B ORM Evaluation Results
 
-#### 1. Install dependencies
+#### 1. Install dependencies and package
 
 ```bash
 pip install -r requirements.txt
