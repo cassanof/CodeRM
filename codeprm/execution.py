@@ -39,13 +39,20 @@ def compare_io(actual, expected, debug=False) -> bool:
         expected = "\n".join(expected)
 
     if actual == expected:
+        if debug:
+            print("exact match")
         return True
+
     actual = actual.strip()
     expected = expected.strip()
     if actual == expected:
+        if debug:
+            print("exact match after strip")
         return True
 
     if actual.lower() == expected.lower():
+        if debug:
+            print("case-insensitive match")
         return True
 
     try:
@@ -69,23 +76,33 @@ def compare_io(actual, expected, debug=False) -> bool:
         # compare each line
         for aline, eline in zip(actual_lines, expected_lines):
             if aline == eline:
+                if debug:
+                    print(f"line match: {aline} == {eline}")
                 continue
             if aline.lower() == eline.lower():
+                if debug:
+                    print(f"line match (case-insensitive): {aline} == {eline}")
                 continue
             # try float comparison, with some tolerance
             a = float(aline)
             e = float(eline)
             diff = abs(a - e)
             if diff < 1e-4:
+                if debug:
+                    print(f"float match: {a} == {e} (diff: {diff})")
                 continue
             if debug:
                 print(f"mismatch: {a} != {e} (diff: {diff})")
             return False
 
+        if debug:
+            print("all lines match")
         return True
     except ValueError:
         pass
 
+    if debug:
+        print("fallback comparison")
     return False
 
 
@@ -106,11 +123,13 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
 
 
 FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
+EXIT_RE = re.compile(r"exit\(.*\)")
 
 
 def instrument_io_code(code: str, inputs: List[str]) -> str:
     imports = re.findall(FROM_IMPORT_ALL_RE, code)
     code = re.sub(FROM_IMPORT_ALL_RE, "", code)
+    code = re.sub(EXIT_RE, "return", code)
     code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
     code_closed = "def __run_prog__():\n" + code_indented
 
@@ -136,6 +155,9 @@ def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000"
         return False, f"errored with {outputs!r}\n"
 
     outputs = outputs.split("___SENTINEL___")[:-1]
+    if len(outputs) != len(outs):
+        return False, f"expected {len(outs)} number of outputs but got {len(outputs)}\n"
+
     feedback = ""
     for i, (out, actual) in enumerate(zip(outs, outputs)):
         if not compare_io(actual, out):
