@@ -66,3 +66,5 @@ python3 ./codeprm/eval/metrics.py -k 100 ./results/3b_replication/lcb_eval_orm* 
 5. clean reasoning steps
 6. train 15b on reasoning step data
 7. use fine-tuned 15b to generate solutions on 13k taco
+8. clean solutions (using reasoning steps script)
+9. train ORM and final generator on cleaned reasoning steps
