@@ -17,6 +17,8 @@ def main(args):
         time_limit = parse_time_limit(ex["time_limit"], default=args.timeout)
         passing_solns = []
         for i, sol in enumerate(ex[args.soln_col]):
+            if sol is None:
+                continue
             if len(passing_solns) >= args.max_solns:
                 break
             if i >= args.max_attempts:
