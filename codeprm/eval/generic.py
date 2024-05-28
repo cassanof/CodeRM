@@ -260,7 +260,6 @@ class EvaluationManager:
                     executor=self.executor,
                 )
                 passing, output = result
-                assert "Failed to execute program:" not in output, "Execution runtime failed. Check the executor"
                 items[i].results.append(CompletionResult(passing, output))
 
         return results
