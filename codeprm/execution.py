@@ -123,18 +123,20 @@ def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", tim
 
 
 FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
+SYS_EXIT_RE = re.compile(r"sys.exit\(.*\)")
 EXIT_RE = re.compile(r"exit\(.*\)")
 QUIT_RE = re.compile(r"quit\(.*\)")
 
 
 def instrument_io_code(code: str, inputs: List[str]) -> str:
     imports = re.findall(FROM_IMPORT_ALL_RE, code)
-    try:
-        code = re.sub(FROM_IMPORT_ALL_RE, "", code)
-        code = re.sub(EXIT_RE, "return", code)
-        code = re.sub(QUIT_RE, "return", code)
-    except Exception as e:
-        print(f"Failed to run regex: {e}")
+    code = re.sub(FROM_IMPORT_ALL_RE, "", code)
+
+    # transform exits into returns
+    code = re.sub(SYS_EXIT_RE, "return", code)
+    code = re.sub(EXIT_RE, "return", code)
+    code = re.sub(QUIT_RE, "return", code)
+
     code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
     code_closed = "def __run_prog__():\n" + code_indented
 
