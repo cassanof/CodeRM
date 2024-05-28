@@ -51,10 +51,10 @@ def main(args):
         passing_examples, min_examples) + random.sample(failing_examples, min_examples)
     random.shuffle(balanced_ds)
     print(f"Total examples in balanced dataset: {len(balanced_ds)}")
-    print(f"Passing examples in balanced dataset: {
-          sum(ex['score'] == 1 for ex in balanced_ds)}")
-    print(f"Failing examples in balanced dataset: {
-          sum(ex['score'] == 0 for ex in balanced_ds)}")
+    print("Passing examples in balanced dataset: " +
+          f"{sum(ex['score'] == 1 for ex in balanced_ds)}")
+    print("Failing examples in balanced dataset: " +
+          f"{sum(ex['score'] == 0 for ex in balanced_ds)}")
 
     final_ds = datasets.Dataset.from_list(balanced_ds)
     final_ds.push_to_hub(args.push, private=True, split=args.push_split)
