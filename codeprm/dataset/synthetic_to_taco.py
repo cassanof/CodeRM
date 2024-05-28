@@ -20,6 +20,9 @@ def main(args):
 
     new_ds = datasets.Dataset.from_list(new_ds)
     new_ds = new_ds.filter(lambda x: len(x["solutions"]) > 0)
+    print(new_ds)
+    total_solns = sum([len(x["solutions"]) for x in new_ds])
+    print(f"Total solutions: {total_solns}")
     new_ds.save_to_disk(args.output)
 
 
