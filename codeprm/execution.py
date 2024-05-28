@@ -129,9 +129,12 @@ QUIT_RE = re.compile(r"quit\(.*\)")
 
 def instrument_io_code(code: str, inputs: List[str]) -> str:
     imports = re.findall(FROM_IMPORT_ALL_RE, code)
-    code = re.sub(FROM_IMPORT_ALL_RE, "", code)
-    code = re.sub(EXIT_RE, "return", code)
-    code = re.sub(QUIT_RE, "return", code)
+    try:
+        code = re.sub(FROM_IMPORT_ALL_RE, "", code)
+        code = re.sub(EXIT_RE, "return", code)
+        code = re.sub(QUIT_RE, "return", code)
+    except Exception as e:
+        print(f"Failed to run regex: {e}")
     code_indented = "\n".join([f"    {line}" for line in code.splitlines()])
     code_closed = "def __run_prog__():\n" + code_indented
 
