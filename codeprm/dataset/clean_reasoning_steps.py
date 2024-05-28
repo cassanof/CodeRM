@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 import datasets
 from typing import List
@@ -113,20 +114,23 @@ def attempt_convert_tabs_to_spaces(code):
 
 
 def main(args):
-    ds = datasets.load_dataset(args.dataset, split="train")
+    if Path(args.dataset).exists():
+        ds = datasets.load_from_disk(args.dataset)
+    else:
+        ds = datasets.load_dataset(args.dataset, split="train")
     ds = ds.map(lambda x: {
-        "reasoning_steps": [transform_trailing_to_leading_comments(r) for r in x["reasoning_steps"] if r is not None],
+        args.col: [transform_trailing_to_leading_comments(r) for r in x[args.col] if r is not None],
     })
     # steps to char ratio needs to be `0.01 <= ratio <= 0.8`
     # this is based on visual inspection of the data (see taco_reasoning_analysis.ipynb)
     ds = ds.map(lambda x: {
-        "reasoning_steps": [r for r in x["reasoning_steps"] if 0.01 <= get_steps_to_char_ratio(r) <= 0.8],
+        args.col: [r for r in x[args.col] if 0.01 <= get_steps_to_char_ratio(r) <= 0.8],
     })
     # convert tabs to spaces
     ds = ds.map(lambda x: {
-        "reasoning_steps": [attempt_convert_tabs_to_spaces(r) for r in x["reasoning_steps"]],
+        args.col: [attempt_convert_tabs_to_spaces(r) for r in x[args.col]],
     })
-    ds = ds.filter(lambda x: len(x["reasoning_steps"]) > 0)
+    ds = ds.filter(lambda x: len(x[args.col]) > 0)
     ds.save_to_disk(args.output)
 
 
@@ -137,5 +141,6 @@ if __name__ == "__main__":
                         default="cassanof/taco_cleaned_exec_filtered_v4_reasoning10")
     parser.add_argument("--output", type=str,
                         default="./taco_cleaned_exec_filtered_v4_reasoning10_cleaned")
+    parser.add_argument("--col", type=str, default="reasoning_steps")
     args = parser.parse_args()
     main(args)

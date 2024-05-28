@@ -9,7 +9,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_dir", type=str, default="./taco_cleaned")
 parser.add_argument("--executor", type=str, default="http://127.0.0.1:8000")
-parser.add_argument("--container_name", type=str, default="code-exec")
+parser.add_argument("--soln_col", type=str, default="solutions")
 parser.add_argument("--max-solns", type=int, default=75)
 parser.add_argument("--max-attempts", type=int, default=100)
 parser.add_argument("--workers", type=int, default=os.cpu_count() - 1)
@@ -26,7 +26,7 @@ if args.sample is not None:
 def filter_not_executing(ex):
     time_limit = parse_time_limit(ex["time_limit"], default=args.timeout)
     passing_solns = []
-    for i, sol in enumerate(ex["solutions"]):
+    for i, sol in enumerate(ex[args.soln_col]):
         if len(passing_solns) >= args.max_solns:
             break
         if i >= args.max_attempts:
@@ -39,11 +39,12 @@ def filter_not_executing(ex):
             print("\n".join(e.split("\n")[:10]))
 
     return {
-        "solutions": passing_solns,
+        args.soln_col: passing_solns,
     }
 
 
-ds = ds.map(filter_not_executing, num_proc=args.workers, load_from_cache_file=False)
-ds = ds.filter(lambda x: len(x["solutions"]) > 0)
+ds = ds.map(filter_not_executing, num_proc=args.workers,
+            load_from_cache_file=False)
+ds = ds.filter(lambda x: len(x[args.soln_col]) > 0)
 
 ds.save_to_disk(args.input_dir + "_exec_filtered")
