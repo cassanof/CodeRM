@@ -81,10 +81,15 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
 
 
 def per_file_metrics(file: Path, k: int, orm_prod=None, orm_consider=None) -> str:
-    obj = gunzip_json_read(file)
-    assert obj is not None, f"Failed to read {file}"
+    if file.is_dir():
+        import datasets
+        ds = datasets.load_from_disk(file)
+        items = ds.to_list()
+    else:
+        obj = gunzip_json_read(file)
+        assert obj is not None, f"Failed to read {file}"
+        items = obj["items"]
 
-    items = obj["items"]
     size = len(items)
 
     pass_ks = get_pass_ks(items, k)
