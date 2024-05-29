@@ -51,7 +51,6 @@ if __name__ == "__main__":
     parser.add_argument("--mask_loss_mark", type=str, default=None)
     parser.add_argument("--sols_col", type=str, default="solutions")
     parser.add_argument("--strategy", type=str, default="all",
-                        # TODO: maybe add a strat that takes account of LoC distribution
                         choices=["all", "random", "high-loc"])
     args = parser.parse_args()
     random.seed(42)
