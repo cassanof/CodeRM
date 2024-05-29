@@ -35,10 +35,10 @@ def main(args):
 
     ds = datasets.Dataset.from_dict(
         {"content": content, "solutions": solutions})
-    print("New ds:")
-    print(ds)
     print("Printing one example:")
     print(ds[0]["content"])
+    print("New ds:")
+    print(ds)
     ds.push_to_hub(args.push, private=True)
     print("IMPORTANT: Remember to MinHash-dedup the dataset before training! Only dedup based on 'solutions' column.")
 
