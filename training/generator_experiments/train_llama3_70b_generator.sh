@@ -7,7 +7,7 @@ fi
 DS=$(realpath $1)
 export WANDB_PROJECT="codeprm"
 export WANDB_NAME=$(basename $0 .sh)
-OUTDIR="./model_starcoder2_15b_generator"
+OUTDIR="./model_llama3_70b_generator"
 pushd ../finetuning-harness/
 # 128006: AddedToken("<|start_header_id|>"
 python3 -m torch.distributed.launch \
