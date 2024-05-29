@@ -28,10 +28,15 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
     echo "Evaluating $CHECKPOINT"
     # get checkpoint number, after "-"
     CHECKPOINT_NUM=${CHECKPOINT#*-}
+    OUTPUT_PATH="${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}"
+    if [ -f $OUTPUT_PATH ]; then
+        echo "Output file $OUTPUT_PATH already exists, skipping. Delete to re-run."
+        continue
+    fi
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python $SCRIPT \
       --model $CHECKPOINT_DIR/$CHECKPOINT \
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
-      --output "${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}"
+      --output $OUTPUT_PATH
 done
