@@ -1,0 +1,14 @@
+build_configs:
+  echo:
+    build_context:
+      root: ./
+      include_paths: 
+        - st_configs
+      dockerfile: Dockerfile
+      dockerignore: .dockerignore
+    local:
+      repository: scale_train/shared/training/tmp
+      tag: latest
+    remote:
+      registry: 692474966980.dkr.ecr.us-west-2.amazonaws.com
+      repository: scale_train/shared/training/tmp

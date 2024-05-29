@@ -1,0 +1,9 @@
+job_type: k8s-preset
+preset_instance_type: p5.48xlarge
+job_name: federico
+image: ${image}
+team: gen_ai
+product: train
+command: 
+  - sleep
+  - infinity
