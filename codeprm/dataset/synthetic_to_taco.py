@@ -15,6 +15,7 @@ def main(args):
             "question": d["prompt"],
             "difficulty": d["difficulty"],
             "unique_name": d["unique_name"],
+            "starter_code": d["starter_code"],
             "solutions": solutions
         })
 

@@ -96,8 +96,11 @@ def get_steps_to_char_ratio(code):
     return reasoning_steps / characters_count if characters_count > 0 else 0
 
 
-def attempt_convert_tabs_to_spaces(code):
-    """Attempt to convert tabs to spaces in the code. Uses ast.parse to make sure the code is valid."""
+def attempt_convert_tabs_to_spaces(code, starter_code):
+    """
+    Attempt to convert tabs to spaces in the code. Uses ast.parse to make sure the code is valid.
+    Also tries to add the starter code to the beginning of the code if the conversion fails.
+    """
     import ast
 
     converted_code = []
@@ -109,8 +112,16 @@ def attempt_convert_tabs_to_spaces(code):
         ast.parse(converted)
         return converted
     except SyntaxError:
-        print("Syntax error after converting tabs to spaces.")
-        return code
+        try:
+            starter_converted = []
+            for line in starter_code.split('\n'):
+                starter_converted.append(line.expandtabs(4))
+            starter_converted = '\n'.join(starter_converted)
+            ast.parse(starter_converted + converted)
+            return starter_converted + converted
+        except SyntaxError:
+            print(f"Failed to convert tabs to spaces for code.")
+            return code
 
 
 def main(args):
@@ -128,9 +139,10 @@ def main(args):
     })
     # convert tabs to spaces
     ds = ds.map(lambda x: {
-        args.col: [attempt_convert_tabs_to_spaces(r) for r in x[args.col]],
+        args.col: [attempt_convert_tabs_to_spaces(r, x["starter_code"]) for r in x[args.col]],
     })
     ds = ds.filter(lambda x: len(x[args.col]) > 0)
+    print(ds)
     ds.save_to_disk(args.output)
 
 
