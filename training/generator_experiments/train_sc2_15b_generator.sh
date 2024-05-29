@@ -21,7 +21,7 @@ python3 -m torch.distributed.launch \
         --no_approx_tokens \
         --output_dir="$OUTDIR" \
         --seq_length 4096 \
-        --epochs 5 \
+        --epochs 3 \
         --fa2 \
         --batch_size 1 \
         --gradient_accumulation_steps 4 \
