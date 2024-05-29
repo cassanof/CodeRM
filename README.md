@@ -68,7 +68,8 @@ python3 ./codeprm/eval/metrics.py -k 100 ./results/3b_replication/lcb_eval_orm* 
 7. use fine-tuned 15b to generate solutions on 13k taco
 8. merge synthetic reasoning steps with real reasoning steps
 9. clean all (using reasoning steps script)
-10. train final generator on cleaned and merged reasoning steps
-11. generate completions on 13k taco with final generator
-12. train orm on generated completions
-13. profit
+10. minhash dedup solutions
+11. train final generator on cleaned and merged reasoning steps
+12. generate completions on 13k taco with final generator
+13. train orm on generated completions
+14. profit
