@@ -7,18 +7,17 @@ fi
 DS=$(realpath $1)
 export WANDB_PROJECT="codeprm"
 export WANDB_NAME=$(basename $0 .sh)
-export DS_SKIP_CUDA_CHECK=1
-OUTDIR="./model_llama3_70b_generator"
+OUTDIR="./model_codeqwen_7b_generator"
+# 92301: AddedToken("<|extra_0|>"
 pushd ../finetuning-harness/
-# 128006: AddedToken("<|start_header_id|>"
 python3 -m torch.distributed.launch \
         --nproc_per_node 8 \
         main.py \
         --deepspeed="$DS" \
-        --model_path="meta-llama/Meta-Llama-3-70B" \
-        --dataset_name="codegenning/finetuning-set-llama3-v0" \
+        --model_path="Qwen/CodeQwen1.5-7B" \
+        --dataset_name="codegenning/finetuning-set-sc2-v0" \
         --dataset_loader="padded" \
-        --mask_loss_till_token_id 128006 \
+        --mask_loss_till_token_id 92301 \
         --trim_longer \
         --no_approx_tokens \
         --output_dir="$OUTDIR" \
