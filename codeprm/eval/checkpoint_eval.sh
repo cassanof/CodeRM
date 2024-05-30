@@ -31,7 +31,7 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
     # get checkpoint number, after "-"
     CHECKPOINT_NUM=${CHECKPOINT#*-}
     OUTPUT_PATH="${CHECKPOINT_DIR}/${CHECKPOINT}/${SCRIPT_NAME}_${CHECKPOINT_NUM}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}"
-    if [ -f $OUTPUT_PATH ]; then
+    if [ -f "${OUTPUT_PATH}.json.gz" ]; then
         echo "Output file $OUTPUT_PATH already exists, skipping. Delete to re-run."
         continue
     fi
