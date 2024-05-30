@@ -17,6 +17,8 @@ NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr "," "\n" | wc -l)
 # ENV vars with default values
 TEMPERATURE=${TEMPERATURE:-0.0}
 COMPLETION_LIMIT=${COMPLETION_LIMIT:-1}
+BATCH_SIZE=${BATCH_SIZE:-256}
+EXEC_BATCH_SIZE=${EXEC_BATCH_SIZE:-$(nproc)}
 
 # string version of TEMPERATURE, without the dot
 TEMPERATURE_STR=$(echo $TEMPERATURE | tr -d . | tr - _)
@@ -38,5 +40,7 @@ for CHECKPOINT in $(ls $CHECKPOINT_DIR); do
       --temperature $TEMPERATURE \
       --completion-limit $COMPLETION_LIMIT \
       --num-gpus $NUM_GPUS \
+      --batch-size $BATCH_SIZE \
+      --exec-batch-size $EXEC_BATCH_SIZE \
       --output $OUTPUT_PATH
 done
