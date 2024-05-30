@@ -103,7 +103,7 @@ class HFModel(BaseModel):
             model_name,
             tensor_parallel_size=num_gpus,
             enforce_eager=True,
-            max_model_len=4096,
+            # max_model_len=4096,
         )
         self.prompt_fn = prompt_fn
 
