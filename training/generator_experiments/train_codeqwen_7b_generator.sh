@@ -15,7 +15,7 @@ python3 -m torch.distributed.launch \
         main.py \
         --deepspeed="$DS" \
         --model_path="Qwen/CodeQwen1.5-7B" \
-        --dataset_name="codegenning/finetuning-set-sc2-v0" \
+        --dataset_name="codegenning/finetuning-set-codeqwen-v0" \
         --dataset_loader="padded" \
         --mask_loss_till_token_id 92301 \
         --trim_longer \
