@@ -22,6 +22,17 @@ class Completion:
             "num_tokens": self.num_tokens,
         }
 
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> "Completion":
+        assert "code" in d, "Missing 'code' key"
+        assert "cumulative_logprob" in d, "Missing 'cumulative_logprob' key"
+        assert "num_tokens" in d, "Missing 'num_tokens' key"
+        return Completion(
+            d["code"],
+            d["cumulative_logprob"],
+            d["num_tokens"],
+        )
+
 
 def autodetect_dtype_str() -> str:
     if torch.cuda.is_bf16_supported():

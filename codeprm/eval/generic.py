@@ -37,6 +37,15 @@ class CompletionResult:
             "output": self.output,
         }
 
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> "CompletionResult":
+        assert "passing" in d, "Missing 'passing' key"
+        assert "output" in d, "Missing 'output' key"
+        return CompletionResult(
+            d["passing"],
+            d["output"],
+        )
+
 
 class CompletionItem:
     def __init__(
@@ -306,8 +315,11 @@ class EvaluationManager:
         if completions is None:
             raise ValueError(f"Couldn't read completions from {path}")
         for i, item in enumerate(items):
-            print(item)
-            break
+            item.completions = [Completion.from_dict(c)
+                                for c in completions[i]["results"]]
+            if "passing" in completions[i]:
+                item.results = [CompletionResult.from_dict(
+                    completions[i]["passing"])]
 
 
 def get_generic_argparser(dataset_default: str, split="test"):
