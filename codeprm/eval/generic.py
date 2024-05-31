@@ -8,6 +8,8 @@ from codeprm.prompts import Prompt
 from codeprm.utils import chunkify, gunzip_json_write, gunzip_json_read
 from codeprm.model import BaseModel, Completion
 import os
+import json
+from codeprm.model import model_factory
 
 
 def read_completions_from_disk(path: str) -> Optional[List[Dict[str, Any]]]:
@@ -290,6 +292,8 @@ class EvaluationManager:
     ):
         if fmt == "gzjson":
             outpath = Path(output_path + ".json.gz")
+            if outpath.exists():
+                outpath.unlink()
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if verbose:
                 print(f"Saving completions to {outpath}...")
@@ -306,6 +310,9 @@ class EvaluationManager:
         elif fmt == "datasets":
             import datasets
             ds = datasets.Dataset.from_list([item.to_dict() for item in items])
+            outpath = Path(output_path)
+            if outpath.exists():
+                outpath.unlink()
             ds.save_to_disk(output_path)
         else:
             raise ValueError(f"Unknown format {fmt}")
@@ -319,9 +326,42 @@ class EvaluationManager:
             item.completions = [Completion.from_dict(c)
                                 for c in completions[i]["results"]]
             if "passing" in completions[i]["results"][0]:
-                assert all("passing" in c for c in completions[i]["results"]), "Some completions are missing 'passing' key"
+                assert all(
+                    "passing" in c for c in completions[i]["results"]), "Some completions are missing 'passing' key"
                 item.results = [CompletionResult.from_dict(
                     c) for c in completions[i]["results"]]
+
+
+def generic_eval_main(
+        args,
+        base_items: List[CompletionItem],
+        default_timeout=30,
+):
+    model = model_factory(
+        args.model_kind,
+        args.model,
+        num_gpus=args.num_gpus,
+    )
+    items = partition_items(
+        base_items, start_idx=args.start_idx, max_items=args.max_items)
+    manager = EvaluationManager(
+        model=model,
+        max_tokens=args.max_tokens,
+        top_p=args.top_p,
+        temperature=args.temperature,
+        completion_limit=args.completion_limit,
+        dataset_name=args.dataset,
+        batch_size=args.batch_size,
+        exec_batch_size=args.exec_batch_size,
+        timeout=default_timeout,
+    )
+    # generate
+    manager.generate_completions(items, use_tqdm=True)
+    # evaluate
+    manager.evaluate_completions(items, use_tqdm=True)
+    # save after exec
+    manager.save_completions(items, args.output, fmt=args.output_format)
+
 
 def get_generic_argparser(dataset_default: str, split="test"):
     import argparse
