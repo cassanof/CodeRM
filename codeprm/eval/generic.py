@@ -82,13 +82,21 @@ class CompletionItem:
         return ""
 
     def to_dict(self) -> Dict[str, Any]:
+        if len(self.completions) == len(self.results):
+            results = [{**c.to_dict(), **r.to_dict()}
+                       for c, r in zip(self.completions, self.results)]
+        elif len(self.results) == 0:  # no exec yet
+            results = [{**c.to_dict()} for c in self.completions]
+        else:
+            raise ValueError("Completions and results don't match")
+
         return {
             "unique_name": self.unique_name,
             "prompt": self.get_prompt(),
             "starter_code": self.get_starter_code(),
             "difficulty": self.get_difficulty(),
             #  "tests": self.get_tests(), # don't include this in the output, too large
-            "results": [{**c.to_dict(), **r.to_dict()} for c, r in zip(self.completions, self.results)],
+            "results": results,
         }
 
 
@@ -292,6 +300,14 @@ class EvaluationManager:
             ds.save_to_disk(output_path)
         else:
             raise ValueError(f"Unknown format {fmt}")
+
+    def load_completions(self, items: List[CompletionItem], path: str):
+        completions = read_completions_from_disk(path)
+        if completions is None:
+            raise ValueError(f"Couldn't read completions from {path}")
+        for i, item in enumerate(items):
+            print(item)
+            break
 
 
 def get_generic_argparser(dataset_default: str, split="test"):
