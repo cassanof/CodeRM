@@ -317,9 +317,11 @@ class EvaluationManager:
         for i, item in enumerate(items):
             item.completions = [Completion.from_dict(c)
                                 for c in completions[i]["results"]]
-            if "passing" in completions[i]:
+            if "passing" in completions[i]["results"][0]:
                 item.results = [CompletionResult.from_dict(
-                    completions[i]["passing"])]
+                    c) for c in completions[i]["results"]]
+
+
 
 
 def get_generic_argparser(dataset_default: str, split="test"):
