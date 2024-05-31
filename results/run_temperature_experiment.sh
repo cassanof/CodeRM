@@ -8,5 +8,4 @@ python3 ../codeprm/eval/livecodebench_eval.py \
   --model "codegenning/generator-sc2-15b" \
   --temperature $TEMP \
   --completion-limit 250 \
-  --num-gpus 4 \
   --output ./temperature_experiment/lcb_sc2_15b_generator_temp${TEMP};
