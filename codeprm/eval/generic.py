@@ -320,7 +320,7 @@ class EvaluationManager:
                 outpath.unlink()
             outpath.parent.mkdir(parents=True, exist_ok=True)
             if verbose:
-                print(f"Saving completions to {outpath}...")
+                print(f"Saving completions to {outpath}")
             d = {
                 "model": self.model.get_name(),
                 "max_tokens": self.max_tokens,
