@@ -49,7 +49,7 @@ for ((i=0; i<NUM_GPUS; i++)); do
   CUDA_VISIBLE_DEVICES=$i python3 codeprm/eval/taco_eval.py \
     --dataset cassanof/taco_cleaned_all \
     --split train \
-    --model "<TODO>" \
+    --model "codegenning/generator-sc2-15b" \
     --completion-limit $NUM_COMPS \
     --temperature $TEMPERATURE \
     --exec-batch-size $NPROC_PER_GPU \
