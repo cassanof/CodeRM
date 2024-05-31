@@ -194,8 +194,28 @@ class EvaluationManager:
         self.executor = executor
         self.timeout = timeout
 
-    def generate_completions(self, items: List[CompletionItem], use_tqdm=True):
+    def generate_completions(
+            self,
+            items: List[CompletionItem],
+            use_tqdm=True,
+            save_every_batch=None,
+    ):
+        """
+        Generates completions for each item in the list and saves them to the item.
+        use_tqdm: whether to show progress bar
+        save_every_batch: either None, path, or (path, type). If path is given, saves the completions to disk every batch. 
+        If type is given, saves in that format. Either "gzjson" or "datasets"
+        """
         indexed_prompts: List[Tuple[int, Prompt]] = []
+
+        save_path = None
+        save_fmt = None
+        if save_every_batch is not None:
+            if isinstance(save_every_batch, str):
+                save_path = save_every_batch
+                save_fmt = "gzjson"
+            else:
+                save_path, save_fmt = save_every_batch
 
         for i, example in enumerate(items):
             indexed_prompts.extend(
@@ -222,6 +242,10 @@ class EvaluationManager:
             )
             for i, completion in zip(indices, completions):
                 items[i].completions.append(completion)
+
+            if save_path is not None and save_fmt is not None:
+                self.save_completions(
+                    items, save_path, fmt=save_fmt, verbose=False)
 
     def evaluate_completions(self, items: List[CompletionItem], use_tqdm=True):
         indexed_completions: List[Tuple[int, str]] = []
@@ -355,8 +379,19 @@ def generic_eval_main(
         exec_batch_size=args.exec_batch_size,
         timeout=default_timeout,
     )
+
+    save_every_batch = None
+    if args.save_every_batch:
+        save_every_batch = (args.output, args.output_format)
+
     # generate
-    manager.generate_completions(items, use_tqdm=True)
+    manager.generate_completions(
+        items,
+        use_tqdm=True,
+        save_every_batch=save_every_batch,
+    )
+    # save before exec
+    manager.save_completions(items, args.output, fmt=args.output_format)
     # evaluate
     manager.evaluate_completions(items, use_tqdm=True)
     # save after exec
@@ -460,6 +495,11 @@ def get_generic_argparser(dataset_default: str, split="test"):
         default="gzjson",
         help="Output format. either 'gzjson' or 'datasets'",
         choices=["gzjson", "datasets"]
+    )
+    parser.add_argument(
+        "--save-every-batch",
+        action="store_true",
+        help="Save completions every batch. Useful for long running processes"
     )
     parser.add_argument(
         "--start-idx",
