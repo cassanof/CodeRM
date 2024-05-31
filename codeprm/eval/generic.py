@@ -318,6 +318,7 @@ class EvaluationManager:
             item.completions = [Completion.from_dict(c)
                                 for c in completions[i]["results"]]
             if "passing" in completions[i]["results"][0]:
+                assert all("passing" in c for c in completions[i]["results"]), "Some completions are missing 'passing' key"
                 item.results = [CompletionResult.from_dict(
                     c) for c in completions[i]["results"]]
 
