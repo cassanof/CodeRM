@@ -310,7 +310,8 @@ class EvaluationManager:
         else:
             raise ValueError(f"Unknown format {fmt}")
 
-    def load_completions(self, items: List[CompletionItem], path: str):
+    @staticmethod
+    def load_completions(items: List[CompletionItem], path: str):
         completions = read_completions_from_disk(path)
         if completions is None:
             raise ValueError(f"Couldn't read completions from {path}")
@@ -321,9 +322,6 @@ class EvaluationManager:
                 assert all("passing" in c for c in completions[i]["results"]), "Some completions are missing 'passing' key"
                 item.results = [CompletionResult.from_dict(
                     c) for c in completions[i]["results"]]
-
-
-
 
 def get_generic_argparser(dataset_default: str, split="test"):
     import argparse
