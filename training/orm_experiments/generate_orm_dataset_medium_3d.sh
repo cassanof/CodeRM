@@ -1,12 +1,17 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <start_idx> <end_idx>"
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 <start_idx> <end_idx; optional, defaults to max size>"
   exit 1
 fi
 
+ACTUAL_MAX_SIZE=13402
+
 G_START_IDX=$1
-G_END_IDX=$2
+G_END_IDX=$ACTUAL_MAX_SIZE
+if [ "$#" -eq 2 ]; then
+  G_END_IDX=$2
+fi
 
 if [ $G_START_IDX -ge $G_END_IDX ]; then
   echo "Error: Start index must be less than end index."
