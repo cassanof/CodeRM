@@ -4,6 +4,7 @@ import numpy as np
 import threading
 from codeprm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt
 from codeprm.utils import markdown_codeblock_extract
+import torch
 
 from abc import ABC, abstractmethod
 
