@@ -24,6 +24,7 @@ NUM_GPUS=8
 NUM_COMPS=50
 TEMPERATURE=0.8
 EXEC_MULTIPLIER=2
+BATCH_SIZE=2048
 
 NPROC=$(nproc)
 NPROC_PER_GPU=$(((NPROC / NUM_GPUS) * EXEC_MULTIPLIER))
@@ -59,7 +60,7 @@ for ((i=0; i<NUM_GPUS; i++)); do
     --completion-limit $NUM_COMPS \
     --temperature $TEMPERATURE \
     --exec-batch-size $NPROC_PER_GPU \
-    --batch-size 256 \
+    --batch-size $BATCH_SIZE \
     --output "$OUTDIR/chunk_$i" \
     --output-format datasets \
     --start-idx $START_IDX \
