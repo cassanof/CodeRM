@@ -117,6 +117,7 @@ class HFModel(BaseModel):
             model_name,
             tensor_parallel_size=num_gpus,
             enforce_eager=True,
+            dtype=autodetect_dtype_str(),
             # max_model_len=4096,
         )
         self.num_gpus = num_gpus
