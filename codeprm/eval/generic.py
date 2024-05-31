@@ -392,6 +392,8 @@ def generic_eval_main(
     )
     # save before exec
     manager.save_completions(items, args.output, fmt=args.output_format)
+    # clean GPU memory, model not needed anymore
+    model.free_memory()
     # evaluate
     manager.evaluate_completions(items, use_tqdm=True)
     # save after exec

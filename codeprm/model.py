@@ -2,7 +2,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import threading
-import torch
 from codeprm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt
 from codeprm.utils import markdown_codeblock_extract
 
@@ -76,6 +75,9 @@ class BaseModel(ABC):
     def format_prompt(self, question: str, code="") -> Prompt:
         pass
 
+    def free_memory(self):
+        pass  # only used for local models
+
     def get_name(self) -> str:
         return self.model_name
 
@@ -116,6 +118,7 @@ class HFModel(BaseModel):
             enforce_eager=True,
             # max_model_len=4096,
         )
+        self.num_gpus = num_gpus
         self.prompt_fn = prompt_fn
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
@@ -142,6 +145,20 @@ class HFModel(BaseModel):
                 len(gen.token_ids),
             ))
         return outs
+
+    def free_memory(self):
+        from vllm.distributed.parallel_state import destroy_model_parallel
+        import torch
+        import gc
+        destroy_model_parallel()
+        del self.model.llm_engine.model_executor.driver_worker
+        del self.model
+        gc.collect()
+        torch.cuda.empty_cache()
+        if self.num_gpus > 1:
+            # NOTE: unfortunately no way to free main process when TP>1 :(
+            import ray
+            ray.shutdown()
 
     def format_prompt(self, question: str, code="") -> str:
         return self.prompt_fn(question, code)
