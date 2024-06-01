@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 import time
 from codeprm.code_exec_server.code_exec_reqs import check_executor_alive
+import shutil
 from pathlib import Path
 from tqdm import tqdm
 from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
@@ -336,7 +337,9 @@ class EvaluationManager:
             ds = datasets.Dataset.from_list([item.to_dict() for item in items])
             outpath = Path(output_path)
             if outpath.exists():
-                outpath.unlink()
+                # delete directory, unlink doesn't work for directories
+                shutil.rmtree(outpath)
+
             ds.save_to_disk(output_path)
         else:
             raise ValueError(f"Unknown format {fmt}")
