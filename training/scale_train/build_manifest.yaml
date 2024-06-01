@@ -21,7 +21,5 @@ interactive_configs:
       - id=codeartifact-pip-conf,src=${CODEARTIFACT_PIP_CONF}
     use_gpu: False
     mounts:
-      - host_path: ${CODEPRM_ROOT}
+      - host_path: /mnt/efs/federicocassano/codeprm
         container_path: /workspace
-      - host_path: ${MOUNTABLE_AWS_FOLDER}
-        container_path: /root/.aws
