@@ -153,3 +153,5 @@ venv.bak
 
 # Other common options
 # tests
+**/on_disk
+**/model_
