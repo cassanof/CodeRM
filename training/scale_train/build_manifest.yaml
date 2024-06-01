@@ -17,9 +17,6 @@ build_configs:
 
 interactive_configs:
   echo: # key must match a build config in the build_configs dict
-    secrets:
-      - id=codeartifact-pip-conf,src=${CODEARTIFACT_PIP_CONF}
-    use_gpu: False
     mounts:
       - host_path: /mnt/efs/federicocassano/codeprm
         container_path: /workspace
