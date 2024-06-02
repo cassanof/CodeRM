@@ -10,7 +10,7 @@ export WANDB_NAME=$(basename $0 .sh)
 OUTDIR="./model_starcoder2_3b_generator"
 pushd ../finetuning-harness/
 python3 -m torch.distributed.launch \
-        --nproc_per_node 8 \
+        --nproc_per_node 4 \
         main.py \
         --deepspeed="$DS" \
         --model_path="bigcode/starcoder2-3b" \
@@ -24,7 +24,7 @@ python3 -m torch.distributed.launch \
         --epochs 3 \
         --fa2 \
         --batch_size 1 \
-        --gradient_accumulation_steps 4 \
+        --gradient_accumulation_steps 8 \
         --learning_rate 1e-5 \
         --num_warmup_steps 10 \
         --num_workers=$(expr $(nproc --all) - 4) \
