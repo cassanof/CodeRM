@@ -281,7 +281,7 @@ class EvaluationManager:
                 items[i].results.append(CompletionResult(passing, output))
 
         if strugglers:
-            # wait for container to be alive
+            # wait for container to be alive (if not already)
             max_retries = 5
             for _ in range(max_retries):
                 if check_executor_alive(self.executor):
