@@ -91,14 +91,14 @@ def main(args):
                         completions_to_redo.append(c)
             redo_item.completions = completions_to_redo
 
-    # 2. redo completions
-    manager.evaluate_completions(redo_items)
-
     # edge case: if len(og_items[...].results) == 0, then the eval was not done. fill with None
     if any(len(og_item.results) == 0 for og_item in og_items):
         print("Warning: some items were not evaluated in the original completion file. Filling with None")
         for og_item in og_items:
             og_item.results = [None] * len(og_item.completions) # type: ignore
+
+    # 2. redo completions
+    manager.evaluate_completions(redo_items)
 
     # 3. merge in redone completions to original items
     for og_item, redo_item in zip(og_items, redo_items):
