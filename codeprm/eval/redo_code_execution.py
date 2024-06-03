@@ -110,11 +110,11 @@ def main(args):
         completion_to_res = {}
         assert len(redo_item.completions) == len(redo_item.results)
         for c, r in zip(redo_item.completions, redo_item.results):
-            completion_to_res[c] = r
+            completion_to_res[c.code] = r
 
         for i, c in enumerate(og_item.completions):
             if c in completion_to_res:
-                og_item.results[i] = completion_to_res[c]
+                og_item.results[i] = completion_to_res[c.code]
 
     # 4. save output
     manager.save_completions(og_items, args.output, fmt="datasets")
