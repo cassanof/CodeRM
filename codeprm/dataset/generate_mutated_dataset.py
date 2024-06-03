@@ -79,8 +79,9 @@ def get_mutated_step(code, mutated) -> Tuple[int, int]:
     for r in ranges:
         if r[0] <= line_number <= r[1]+1:
             return r
+    mutdiff = "\n".join(diff)
     raise ValueError(f"No range found for line number: {line_number}\n" +
-                     f"Ranges: {ranges}\nMutation:\n{'\n'.join(diff)}")
+                     f"Ranges: {ranges}\nMutation:\n{mutdiff}")
 
 
 def mutate_example(ex, args):
