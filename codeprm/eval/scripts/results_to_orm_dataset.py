@@ -69,7 +69,7 @@ if __name__ == "__main__":
                         help="Push dataset path for the ORM")
     parser.add_argument("--push-split", type=str, default="train",
                         help="The split for the pushed dataset")
-    parser.add_argument("--max-per-class", type=int, default=10,
+    parser.add_argument("--max-per-class", type=int, default=50,
                         help="Max number of examples per class")
     args = parser.parse_args()
     main(args)
