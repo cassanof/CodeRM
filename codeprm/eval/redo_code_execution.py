@@ -113,7 +113,7 @@ def main(args):
             completion_to_res[c.code] = r
 
         for i, c in enumerate(og_item.completions):
-            if c in completion_to_res:
+            if c.code in completion_to_res:
                 og_item.results[i] = completion_to_res[c.code]
 
     # 4. save output
