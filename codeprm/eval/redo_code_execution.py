@@ -77,6 +77,7 @@ def main(args):
     print(f"Loaded {len(og_items)} items")
 
     # 1. select items to redo, with reduced completion lists
+    assert len(og_items) == len(redo_items)
 
     for og_item, redo_item in zip(og_items, redo_items):
         og_item = copy.deepcopy(og_item)
@@ -103,9 +104,11 @@ def main(args):
     # 2. redo completions
     manager.evaluate_completions(redo_items)
 
+    assert len(og_items) == len(redo_items)
     # 3. merge in redone completions to original items
     for og_item, redo_item in zip(og_items, redo_items):
         completion_to_res = {}
+        assert len(redo_item.completions) == len(redo_item.results)
         for c, r in zip(redo_item.completions, redo_item.results):
             completion_to_res[c] = r
 
