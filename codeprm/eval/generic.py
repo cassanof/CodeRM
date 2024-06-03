@@ -6,11 +6,24 @@ from pathlib import Path
 from tqdm import tqdm
 from codeprm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
 from codeprm.prompts import Prompt
-from codeprm.utils import chunkify, gunzip_json_write, gunzip_json_read
+from codeprm.utils import chunkify, gunzip_json_write, gunzip_json_read, container_restart
 from codeprm.model import BaseModel, Completion
 import os
-import json
 from codeprm.model import model_factory
+
+
+def start_anti_congestion_routine(every=1800, runtime="docker"):
+    import threading
+    import time
+
+    def anti_congestion_routine():
+        while True:
+            time.sleep(every)
+            container_restart(runtime=runtime)
+
+    t = threading.Thread(target=anti_congestion_routine)
+    t.daemon = True
+    t.start()
 
 
 def read_completions_from_disk(path: str) -> Optional[List[Dict[str, Any]]]:

@@ -3,7 +3,7 @@ import copy
 import json
 import datasets
 import os
-from codeprm.eval.generic import CompletionResult, EvaluationManager, make_items_from_ds
+from codeprm.eval.generic import CompletionResult, EvaluationManager, make_items_from_ds, start_anti_congestion_routine
 from codeprm.model import BaseModel, Completion
 from codeprm.prompts import Prompt
 
@@ -95,7 +95,10 @@ def main(args):
     if any(len(og_item.results) == 0 for og_item in og_items):
         print("Warning: some items were not evaluated in the original completion file. Filling with None")
         for og_item in og_items:
-            og_item.results = [None] * len(og_item.completions) # type: ignore
+            og_item.results = [None] * len(og_item.completions)  # type: ignore
+
+    if args.anti_congestion:
+        start_anti_congestion_routine()
 
     # 2. redo completions
     manager.evaluate_completions(redo_items)
@@ -126,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=True,
                         help="Path to the output completion file")
     parser.add_argument("--no-prefix-starter-code", action="store_true")
+    parser.add_argument("--anti-congestion", action="store_true")
     parser.add_argument("--exec-batch-size", type=int, default=os.cpu_count())
     parser.add_argument(
         "--redo", type=str, choices=["failed", "timeout", "all"], default="timeout")
