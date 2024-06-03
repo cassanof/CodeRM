@@ -78,5 +78,6 @@ if __name__ == "__main__":
                         help="The split for the pushed dataset")
     parser.add_argument("--max-per-class", type=int, default=50,
                         help="Max number of examples per class")
+    # parser.add_argument("--subsample-timeouts", type=int, default=0.25, help="Subsample timeouts. By default we include only 25% of the timeouts")
     args = parser.parse_args()
     main(args)
