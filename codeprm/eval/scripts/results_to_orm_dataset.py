@@ -11,6 +11,7 @@ def main(args):
     for ex in ds:
         passing = []
         failing = []
+        failing_reasons = []
 
         for r in ex["results"]:
             code = r["code"]
@@ -18,6 +19,7 @@ def main(args):
                 passing.append(code)
             else:
                 failing.append(code)
+                failing_reasons.append(r["output"])
 
         to_sample = min(len(passing), len(failing), args.max_per_class)
         # sample one if there is only one
@@ -28,12 +30,17 @@ def main(args):
             code = ex["starter_code"] + code
             return py_prompt(ex["prompt"], code)
 
+        defs = {
+            "question": ex["prompt"],
+            "starter_code": ex["starter_code"],
+        }
+
         for code in passing[:to_sample_pass]:
             new_ds.append({"content": code_to_content(
-                code), "score": 1, "solution": code})
-        for code in failing[:to_sample_fail]:
+                code), "score": 1, "solution": code, "output": None, **defs})
+        for code, o in zip(failing[:to_sample_fail], failing_reasons[:to_sample_fail]):
             new_ds.append({"content": code_to_content(
-                code), "score": 0, "solution": code})
+                code), "score": 0, "solution": code, "output": o, **defs})
 
     # print stats
     print(f"Total examples: {len(ds)}")
