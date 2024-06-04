@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export WANDB_PROJECT="codeprm-orm"
-export WANDB_NAME="starcoder2_15b_orm_mutated"
+export WANDB_NAME="starcoder2_7b_orm_mutated"
 pushd ../code-scorer/
 python3 -m torch.distributed.launch \
   --nproc_per_node 4 \
