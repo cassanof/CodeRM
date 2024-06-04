@@ -1,6 +1,7 @@
 from typing import Any, List, Optional, TypeVar
 from pathlib import Path
 import json
+import re
 import gzip
 
 
@@ -38,6 +39,7 @@ def gunzip_json_write(path: Path, data: dict) -> None:
     with gzip.open(path, "wt") as f:
         json.dump(data, f)
 
+
 def markdown_codeblock_extract(response: str) -> str:
     lines = response.split("\n")
     buf = ""
@@ -51,3 +53,7 @@ def markdown_codeblock_extract(response: str) -> str:
         elif in_codeblock:
             buf += ln + "\n"
     return buf
+
+
+def strip_python_comments(code: str) -> str:
+    return re.sub(r"#.*", "", code)
