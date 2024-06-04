@@ -16,7 +16,7 @@ python3 -m torch.distributed.launch \
   --dataset "codegenning/orm_dataset_mutated" \
   --eval_dataset "codegenning/orm_eval_dataset" \
   --model "codegenning/generator-sc2-15b" \
-  --deepspeed "./deepspeed_cfgs/no_offload.json" \
+  --deepspeed "./deepspeed_cfgs/offload_cpu_only_optimizer.json" \
   --num_labels 2 \
   --bf16 \
   --no_fp16 \
