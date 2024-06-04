@@ -1,4 +1,3 @@
 # syntax=docker/dockerfile:1.3
 
-FROM public.ecr.aws/docker/library/python:3.8-slim-buster
-
+FROM nvcr.io/nvidia/pytorch:24.04-py3
