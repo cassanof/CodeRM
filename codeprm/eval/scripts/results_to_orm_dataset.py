@@ -1,4 +1,5 @@
 from codeprm.prompts import py_prompt
+from codeprm.utils import strip_python_comments
 import random
 import datasets
 
@@ -28,6 +29,8 @@ def main(args):
 
         def code_to_content(code):
             code = ex["starter_code"] + code
+            if args.strip_comments:
+                code = strip_python_comments(code)
             return py_prompt(ex["prompt"], code)
 
         defs = {
@@ -78,6 +81,8 @@ if __name__ == "__main__":
                         help="The split for the pushed dataset")
     parser.add_argument("--max-per-class", type=int, default=50,
                         help="Max number of examples per class")
+    parser.add_argument("--strip-comments", action="store_true",
+                        help="Strip comments from the code")
     # parser.add_argument("--subsample-timeouts", type=int, default=0.25, help="Subsample timeouts. By default we include only 25% of the timeouts")
     args = parser.parse_args()
     main(args)
