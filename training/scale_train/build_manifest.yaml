@@ -3,9 +3,7 @@ build_configs:
     build_context:
       root: ../../
       include_paths: 
-        - ./codeprm
-        - ./training
-        - ./results
+        - ./
       dockerfile: ./training/scale_train/Dockerfile
       dockerignore: ./training/scale_train/.dockerignore
     local:
