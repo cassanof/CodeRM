@@ -153,5 +153,7 @@ venv.bak
 
 # Other common options
 # tests
-**/on_disk
-**/model_
+/on_disk/
+**/model_*
+/mnt/efs/federicocassano/codeprm/codeprm/dataset/on_disk/*
+/mnt/efs/federicocassano/codeprm/codeprm/code_exec_server/MultiPL-E/

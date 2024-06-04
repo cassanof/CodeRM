@@ -1,5 +1,6 @@
 job_type: k8s-preset
 preset_instance_type: p5.48xlarge
+num_instances: 1
 job_name: federico
 image: ${image}
 team: gen_ai

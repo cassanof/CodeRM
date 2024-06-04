@@ -3,8 +3,8 @@ build_configs:
     build_context:
       root: ../../
       include_paths: 
-        - ./training
         - ./codeprm
+        - ./training
         - ./results
       dockerfile: ./training/scale_train/Dockerfile
       dockerignore: ./training/scale_train/.dockerignore
@@ -19,4 +19,4 @@ interactive_configs:
   echo: # key must match a build config in the build_configs dict
     mounts:
       - host_path: /mnt/efs/federicocassano/codeprm
-        container_path: /workspace
+        container_path: /iworkspace
