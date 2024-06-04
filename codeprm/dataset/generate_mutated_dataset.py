@@ -1,7 +1,6 @@
 from typing import Optional, List, Tuple
 import difflib
 import json
-from pyarrow.ipc import pa
 from codeprm.mutation import mutate
 import os
 from codeprm.execution import smart_exec_tests, parse_time_limit
@@ -62,7 +61,7 @@ def mutate_until_fail(code, tests, timeout, max_tries=10, executor="http://127.0
     return None
 
 
-def get_mutated_step(code, mutated) -> Tuple[int, int]:
+def get_mutated_step(code, mutated) -> Optional[Tuple[int, int]]:
     # get line number of the mutation
     steps = get_reasoning_steps_indexed(code)
     ranges = [step[1] for step in steps]
@@ -79,9 +78,7 @@ def get_mutated_step(code, mutated) -> Tuple[int, int]:
     for r in ranges:
         if r[0] <= line_number <= r[1]+1:
             return r
-    mutdiff = "\n".join(diff)
-    raise ValueError(f"No range found for line number: {line_number}\n" +
-                     f"Ranges: {ranges}\nMutation:\n{mutdiff}")
+    return None
 
 
 def mutate_example(ex, args):
@@ -95,8 +92,10 @@ def mutate_example(ex, args):
         mutated_code = mutate_until_fail(
             code, tests, executor=args.executor, timeout=timeout)
         if mutated_code:
-            mutated.append(mutated_code)
-            mutated_steps.append(get_mutated_step(code, mutated_code))
+            step = get_mutated_step(code, mutated_code)
+            if step:
+                mutated.append(mutated_code)
+                mutated_steps.append(step)
 
     return {"mutated": mutated, "mutation_step": mutated_steps}
 
