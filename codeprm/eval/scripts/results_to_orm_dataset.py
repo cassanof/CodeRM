@@ -9,6 +9,8 @@ def main(args):
     ds = datasets.load_from_disk(args.input)
 
     new_ds = []
+    total_passing = 0
+    total_failing = 0
     for ex in ds:
         passing = []
         failing = []
@@ -21,6 +23,9 @@ def main(args):
             else:
                 failing.append(code)
                 failing_reasons.append(r["output"])
+
+        total_passing += len(passing)
+        total_failing += len(failing)
 
         to_sample = min(len(passing), len(failing), args.max_per_class)
         # sample one if there is only one
@@ -44,6 +49,9 @@ def main(args):
         for code, o in zip(failing[:to_sample_fail], failing_reasons[:to_sample_fail]):
             new_ds.append({"content": code_to_content(
                 code), "score": 0, "solution": code, "output": o, **defs})
+
+    print(f"Total passing examples before partial sampling: {total_passing}")
+    print(f"Total failing examples before partial sampling: {total_failing}")
 
     # print stats
     print(f"Total examples: {len(ds)}")
