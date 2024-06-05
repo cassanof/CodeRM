@@ -12,3 +12,7 @@ RUN pip install packaging
 RUN pip install pytorch==2.2.1
 RUN pip install flash-attn --no-build-isolation
 RUN pip install -r requirements.txt
+
+RUN git config --global credential.helper store
+
+ENV WANDB_BASE_URL=https://scaleai.wandb.io/
