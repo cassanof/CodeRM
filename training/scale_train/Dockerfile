@@ -28,3 +28,6 @@ RUN pip install -e .
 
 # install huggingface token
 RUN bash -c "huggingface-cli login --token $(cat /workspace/codeprm/training/scale_train/hf_token) --add-to-git-credential"
+
+# copy wandb netrc
+RUN cp /workspace/codeprm/training/scale_train/wandb_netrc /root/.netrc
