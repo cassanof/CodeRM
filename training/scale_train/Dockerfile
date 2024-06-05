@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-devel-ubuntu20.04
+FROM 2.2.1-cuda12.1-cudnn8-devel
 
 # create dir
 RUN mkdir -p /workspace/codeprm
@@ -21,16 +21,11 @@ RUN apt-get update && apt-get install -y tmux \
       libsqlite3-dev \
       wget \
       curl \
-      python3 \
-      python3-pip \
-      python3-venv \
-      python3-dev \
       ninja-build
 
 # needs to be in this specific order
 RUN pip install wheel 
 RUN pip install packaging
-RUN pip install torch==2.2.1
 RUN pip install flash-attn --no-build-isolation
 
 # copy requirements.txt and install them
