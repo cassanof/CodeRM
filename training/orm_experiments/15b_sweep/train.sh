@@ -30,7 +30,7 @@ python3 -m torch.distributed.launch \
   --fa2
 
 # upload all checkpoints
-python3 push_checkpoints --dir "$OUTDIR" --base_repo "$HF_ORG/$WANDB_NAME"
+python3 push_checkpoints.py --dir "$OUTDIR" --base_repo "$HF_ORG/$WANDB_NAME"
 # delete checkpoints
 rm -fr "$OUTDIR"
 popd
