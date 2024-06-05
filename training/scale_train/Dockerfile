@@ -4,7 +4,20 @@ FROM nvidia/cuda:12.1.0-devel-ubuntu20.04
 RUN mkdir -p /workspace/codeprm
 WORKDIR /workspace/codeprm
 
-RUN apt-get update && apt-get install -y tmux jq cargo git-lfs nvtop htop libaio-dev bsdmainutils
+RUN apt-get update && apt-get install -y tmux \
+      jq \
+      cargo \
+      git-lfs \
+      nvtop \
+      htop \
+      libaio-dev \
+      bsdmainutils \
+      python3-pip \
+      python3-dev \
+      python3-venv \
+      python3-wheel \
+      python3-setuptools \
+      python3-tk
 
 # needs to be in this specific order
 RUN pip install wheel 
