@@ -7,11 +7,11 @@ build_configs:
       dockerfile: ./training/scale_train/Dockerfile
       dockerignore: ./training/scale_train/.dockerignore
     local:
-      repository: scale_train/shared/training/tmp
+      repository: scale_train/shared/training/fedetmp
       tag: latest
     remote:
       registry: 692474966980.dkr.ecr.us-west-2.amazonaws.com
-      repository: scale_train/shared/training/tmp
+      repository: scale_train/shared/training/fedetmp
 
 interactive_configs:
   echo: # key must match a build config in the build_configs dict
