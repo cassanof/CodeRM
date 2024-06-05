@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y tmux jq cargo git-lfs nvtop htop libaio
 # prefer ipv4 over ipv6
 RUN echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf
 
+# set default pip repo
+RUN pip config set global.index-url https://pypi.org/simple
+
 # needs to be in this specific order
 RUN pip install wheel 
 RUN pip install packaging
