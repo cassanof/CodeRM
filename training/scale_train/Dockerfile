@@ -47,3 +47,6 @@ RUN bash -c "huggingface-cli login --token $(cat /workspace/codeprm/training/sca
 
 # copy wandb netrc
 RUN cp /workspace/codeprm/training/scale_train/wandb_netrc /root/.netrc
+
+# TODO copy to top
+RUN apt-get install -y vim
