@@ -14,6 +14,8 @@ RUN pip install flash-attn --no-build-isolation
 
 # copy requirements.txt and install them
 COPY requirements.txt requirements.txt
+# remove torch line from requirements.txt
+RUN sed -i '/torch/d' requirements.txt
 RUN pip install -r requirements.txt
 
 RUN git config --global credential.helper store
