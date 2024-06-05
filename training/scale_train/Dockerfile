@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y tmux \
       python3 \
       python3-pip \
       python3-venv \
-      python3-dev
+      python3-dev \
+      ninja-build
 
 # needs to be in this specific order
 RUN pip install wheel 
