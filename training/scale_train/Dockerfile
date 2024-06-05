@@ -1,26 +1,19 @@
-# syntax=docker/dockerfile:1.3
+FROM nvidia/cuda:12.1.0-devel-ubuntu20.04
 
-FROM nvcr.io/nvidia/pytorch:24.04-py3
 # create dir
 RUN mkdir -p /workspace/codeprm
 WORKDIR /workspace/codeprm
 
 RUN apt-get update && apt-get install -y tmux jq cargo git-lfs nvtop htop libaio-dev bsdmainutils
 
-# prefer ipv4 over ipv6
-RUN echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf
-
-# set default pip repo
-RUN pip config set global.index-url https://pypi.org/simple
-
 # needs to be in this specific order
 RUN pip install wheel 
 RUN pip install packaging
+RUN pip install torch==2.2.1
 RUN pip install flash-attn --no-build-isolation
 
 # copy requirements.txt and install them
 COPY requirements.txt requirements.txt
-RUN grep -v torch requirements.txt > requirements2.txt && mv requirements2.txt requirements.txt
 RUN pip install -r requirements.txt
 
 RUN git config --global credential.helper store
