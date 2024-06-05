@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y tmux jq cargo git-lfs nvtop htop libaio
 # needs to be in this specific order
 RUN pip install wheel 
 RUN pip install packaging
-RUN pip install torch==2.2.1
 RUN pip install flash-attn --no-build-isolation
 
 # copy requirements.txt and install them
