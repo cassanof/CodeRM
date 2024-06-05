@@ -12,12 +12,19 @@ RUN apt-get update && apt-get install -y tmux \
       htop \
       libaio-dev \
       bsdmainutils \
+      make \
+      build-essential \
+      libssl-dev \
+      zlib1g-dev \
+      libbz2-dev \
+      libreadline-dev \
+      libsqlite3-dev \
+      wget \
+      curl \
+      python3 \
       python3-pip \
-      python3-dev \
       python3-venv \
-      python3-wheel \
-      python3-setuptools \
-      python3-tk
+      python3-dev
 
 # needs to be in this specific order
 RUN pip install wheel 
