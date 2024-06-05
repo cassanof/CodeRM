@@ -5,7 +5,8 @@ LR=$2
 
 export WANDB_PROJECT="codeprm-orm-15b-sweep"
 export WANDB_NAME="sweep_starcoder2_15b_orm_raw10_${GRAD_ACC}_${LR}"
-OUTDIR="./model_starcoder2_15b_orm_raw10_${GRAD_ACC}_${LR}"
+OUTDIR="/dev/shm/model_starcoder2_15b_orm_raw10_${GRAD_ACC}_${LR}"
+HF_ORG="federico-staging"
 
 pushd ../../code-scorer
 
@@ -28,7 +29,8 @@ python3 -m torch.distributed.launch \
   --no_fp16 \
   --fa2
 
-# delete deepspeed checkpoints for saving space
-rm -fr "$OUTDIR/*/global_step*"
-
+# upload all checkpoints
+python3 push_checkpoints --dir "$OUTDIR" --base_repo "$HF_ORG/$WANDB_NAME"
+# delete checkpoints
+rm -fr "$OUTDIR"
 popd
