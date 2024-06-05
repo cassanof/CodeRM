@@ -27,4 +27,4 @@ COPY . /workspace/codeprm
 RUN pip install -e .
 
 # install huggingface token
-RUN bash -c "huggingface-cli login --api-key $(cat /workspace/codeprm/training/scale_train/hf_token)"
+RUN bash -c "huggingface-cli login --token $(cat /workspace/codeprm/training/scale_train/hf_token) --add-to-git-credential"
