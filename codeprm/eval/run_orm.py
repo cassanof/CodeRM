@@ -36,6 +36,8 @@ def main(args):
                 c["results"][i]["orm_label"] = label
                 c["results"][i]["orm_score"] = score
 
+    obj["orm_model"] = str(args.model)
+
     gunzip_json_write(Path(args.output), obj)
 
 
