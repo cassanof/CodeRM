@@ -190,6 +190,11 @@ class OutcomeRewardModel(ClassificationModel):
             use_flash_attention_2=True,
             use_cache=False,
         ).to(self.device).eval()
+        # figure out if it's a 2-label classification or regression model
+        if self.model.config.num_labels == 2:
+            self.is_classification = True
+        else:
+            self.is_classification = False
 
     def score(self, contents: List[str], **kwargs) -> List[Tuple[float, float]]:
         max_length = kwargs.get("max_length", 4096)
@@ -203,11 +208,19 @@ class OutcomeRewardModel(ClassificationModel):
             ).to(self.device)
             outputs = self.model(**inputs)
             logits = outputs.logits
-            probs = torch.nn.functional.softmax(logits, dim=-1)
-            probs = probs.cpu().to(torch.float32).numpy()
             scores = []
-            for prob in probs:
-                scores.append((float(prob[0]), float(prob[1])))
+            if self.is_classification:
+                probs = torch.nn.functional.softmax(logits, dim=-1)
+                probs = probs.cpu().to(torch.float32).numpy()
+                for prob in probs:
+                    scores.append((float(prob[0]), float(prob[1])))
+            else:
+                # model is trained with MSE loss, so we can interpret the output as a probability
+                # (since it's a single scalar value), should be in [0, 1]
+                probs = logits.cpu().to(torch.float32).numpy()
+                for prob in probs:
+                    scores.append((float(1 - prob), float(prob)))
+
             return scores
 
 
