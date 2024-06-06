@@ -57,11 +57,11 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
             results = results[:consider]
 
         for result in results:
-            if "orm_score" not in result:
+            if "orm_1_score" not in result:
                 return None  # ORM score not found
 
-            if result["orm_label"] == 1 and result["orm_score"] > max_score:
-                score = result["orm_score"]
+            score = result["orm_1_score"]
+            if score > max_score:
                 if prod == "unnormalized":
                     score *= np.exp(result["cumulative_logprob"])
                 elif prod == "normalized":

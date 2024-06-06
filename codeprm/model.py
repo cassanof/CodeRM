@@ -207,7 +207,7 @@ class OutcomeRewardModel(ClassificationModel):
             probs = probs.cpu().to(torch.float32).numpy()
             scores = []
             for prob in probs:
-                scores.append((prob[1], prob[0]))
+                scores.append((float(prob[0]), float(prob[1])))
             return scores
 
 
