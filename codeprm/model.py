@@ -100,7 +100,7 @@ class ClassificationModel(ABC):
         return self.model_name
 
     @abstractmethod
-    def score(self, contents: List[str]) -> List[Tuple[int, float]]:
+    def score(self, contents: List[str]) -> List[Tuple[float, float]]:
         pass
 
 
@@ -191,7 +191,7 @@ class OutcomeRewardModel(ClassificationModel):
             use_cache=False,
         ).to(self.device).eval()
 
-    def score(self, contents: List[str], **kwargs) -> List[Tuple[int, float]]:
+    def score(self, contents: List[str], **kwargs) -> List[Tuple[float, float]]:
         max_length = kwargs.get("max_length", 4096)
         with torch.no_grad():
             inputs = self.tokenizer(
@@ -201,15 +201,13 @@ class OutcomeRewardModel(ClassificationModel):
                 truncation=True,
                 max_length=max_length,
             ).to(self.device)
-            # goal of this function is to return class id and probability of the class
             outputs = self.model(**inputs)
             logits = outputs.logits
             probs = torch.nn.functional.softmax(logits, dim=-1)
             probs = probs.cpu().to(torch.float32).numpy()
             scores = []
-            for i in range(len(probs)):
-                score = probs[i]
-                scores.append((int(np.argmax(score)), float(np.max(score))))
+            for prob in probs:
+                scores.append((prob[1], prob[0]))
             return scores
 
 

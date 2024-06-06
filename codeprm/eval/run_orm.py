@@ -32,11 +32,18 @@ def main(args):
                 contents.append(py_prompt(c["prompt"], code))
 
             scores = model.score(contents)
-            for i, (label, score) in zip(indices, scores):
+            for i, (negative, positive) in zip(indices, scores):
+                if negative > positive:
+                    label = 0
+                else:
+                    label = 1
+
                 c["results"][i]["orm_label"] = label
-                c["results"][i]["orm_score"] = score
+                c["results"][i]["orm_0_score"] = score
+                c["results"][i]["orm_1_score"] = negative
 
     obj["orm_model"] = str(args.model)
+    obj["strip_comments"] = args.strip_comments
 
     gunzip_json_write(Path(args.output), obj)
 
