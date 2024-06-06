@@ -39,8 +39,8 @@ def main(args):
                     label = 1
 
                 c["results"][i]["orm_label"] = label
-                c["results"][i]["orm_0_score"] = score
-                c["results"][i]["orm_1_score"] = negative
+                c["results"][i]["orm_0_score"] = negative
+                c["results"][i]["orm_1_score"] = positive
 
     obj["orm_model"] = str(args.model)
     obj["strip_comments"] = args.strip_comments
