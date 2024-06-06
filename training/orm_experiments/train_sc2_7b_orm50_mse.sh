@@ -12,7 +12,7 @@ python3 -m torch.distributed.launch \
   --epochs 3 \
   --lr 1e-5 \
   --weight_decay 0.01 \
-  --save_dir "./model_starcoder2_7b_orm50" \
+  --save_dir "./model_starcoder2_7b_orm50_mse" \
   --dataset "codegenning/orm_dataset_raw50" \
   --eval_dataset "codegenning/orm_eval_dataset" \
   --model "<MODEL HERE>" \
