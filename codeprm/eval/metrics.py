@@ -50,8 +50,6 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
     for item in items:
         max_score = -1
         max_res = None
-        min_score = 1
-        min_res = None
 
         results = item["results"]
         if consider is not None:
@@ -59,11 +57,11 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
             results = results[:consider]
 
         for result in results:
-            if "orm_score" not in result:
+            if "orm_1_score" not in result:
                 return None  # ORM score not found
 
-            if result["orm_label"] == 1 and result["orm_score"] > max_score:
-                score = result["orm_score"]
+            score = result["orm_1_score"]
+            if score > max_score:
                 if prod == "unnormalized":
                     score *= np.exp(result["cumulative_logprob"])
                 elif prod == "normalized":
@@ -71,23 +69,12 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
                                     result["num_tokens"])
                 max_score = score
                 max_res = result
-            elif result["orm_label"] == 0 and result["orm_score"] < min_score:
-                score = result["orm_score"]
-                if prod == "unnormalized":
-                    score /= np.exp(result["cumulative_logprob"])
-                elif prod == "normalized":
-                    score /= np.exp(result["cumulative_logprob"] /
-                                    result["num_tokens"])
-                min_score = score
-                min_res = result
 
-        if max_res is None:
-            # use min_res
-            assert min_res is not None, "No results found"
-            max_res = min_res
+        assert max_res is not None, "No ORM labels found"
 
         if max_res["passing"]:
             correct += 1
+
         total += 1
 
     return correct / total
