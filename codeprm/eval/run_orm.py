@@ -44,6 +44,7 @@ def main(args):
 
     obj["orm_model"] = str(args.model)
     obj["strip_comments"] = args.strip_comments
+    obj["prefix_starter"] = not args.no_prefix_starter
 
     gunzip_json_write(Path(args.output), obj)
 
