@@ -34,6 +34,6 @@ python3 -m torch.distributed.launch \
         --bf16 \
         --eval_freq 0.0 \
         --perc_valid_set 0.0 \
-        --save_total_limit 20
+        --save_total_limit 1
 popd
 rm -fr $OUTDIR/*/*global_step*
