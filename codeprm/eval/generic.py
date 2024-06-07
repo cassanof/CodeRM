@@ -408,12 +408,14 @@ def generic_eval_main(
     )
     # save before exec
     manager.save_completions(items, args.output, fmt=args.output_format)
-    # clean GPU memory, model not needed anymore
-    model.free_memory()
-    # evaluate
-    manager.evaluate_completions(items, use_tqdm=True)
-    # save after exec
-    manager.save_completions(items, args.output, fmt=args.output_format)
+
+    if not args.no_exec:  # execution can be disabled
+        # clean GPU memory, model not needed anymore
+        model.free_memory()
+        # evaluate
+        manager.evaluate_completions(items, use_tqdm=True)
+        # save after exec
+        manager.save_completions(items, args.output, fmt=args.output_format)
 
 
 def get_generic_argparser(dataset_default: str, split="test"):
@@ -500,6 +502,11 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=str,
         default="http://127.0.0.1:8000",
         help="Server URL for executing the code"
+    )
+    parser.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="Don't execute the completions"
     )
     parser.add_argument(
         "--output",

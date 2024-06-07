@@ -362,12 +362,3 @@ def parse_time_limit(limit: str, default=30, scaling_factor=2) -> int:
     split = limit.split()
     num = float(split[0])
     return (int(num) + 1) * scaling_factor  # add 1 second to be safe
-
-
-def check_executor_alive(executor="http://127.0.0.1:8000") -> bool:
-    import requests
-    try:
-        r = requests.get(executor)
-        return r.status_code == 200 or r.status_code == 404
-    except requests.exceptions.ConnectionError:
-        return False
