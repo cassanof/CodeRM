@@ -15,7 +15,7 @@ python3 -m torch.distributed.launch \
   --save_dir "./model_starcoder2_7b_orm_mutated" \
   --dataset "codegenning/orm_dataset_mutated" \
   --eval_dataset "codegenning/orm_eval_dataset" \
-  --model "<MODEL HERE>" \
+  --model "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068" \
   --deepspeed "./deepspeed_cfgs/no_offload.json" \
   --num_labels 2 \
   --bf16 \
