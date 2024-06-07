@@ -228,26 +228,42 @@ def exec_named_test(code, inps, outs, entrypoint, executor="http://127.0.0.1:800
         return False, f"errored with {outs!r}"
 
 
+def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    instru = SOL_DEPS + code
+    tests = tests + "\n\n\nprint('___SENTINEL___')\n"
+    passing, outs = exec_test(executor, instru, tests,
+                              timeout=timeout, timeout_on_client=False)
+    if passing:
+        if "___SENTINEL___" not in outs:
+            return False, "missing ___SENTINEL___ in output"
+        return True, ""
+    else:
+        return False, f"errored with {outs!r}"
+
+
 def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, batched_io=False) -> Tuple[bool, str]:
     """
     Supports various test formats:
         - simple I/O tests that use stdin and stdout
         - named tests that use assert statements
-        - stringified tests that use a custom format (TODO)
+        - stringified tests that use a custom format
     """
-    inputs = tests["inputs"]
-    outputs = tests["outputs"]
 
     if batched_io:
         exec_io_test_fn = exec_io_test_batched
     else:
         exec_io_test_fn = exec_io_test_instrumented
 
-    if "fn_name" in tests:
-        name = tests["fn_name"]
-        return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
+    if isinstance(tests, str):
+        return exec_test_stringified(code, tests, executor=executor, timeout=timeout)
     else:
-        return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
+        inputs = tests["inputs"]
+        outputs = tests["outputs"]
+        if "fn_name" in tests:
+            name = tests["fn_name"]
+            return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
+        else:
+            return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
 
 
 def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8000", timeouts=None) -> List[Tuple[bool, str]]:
