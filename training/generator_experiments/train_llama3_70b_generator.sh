@@ -7,7 +7,6 @@ fi
 DS=$(realpath $1)
 export WANDB_PROJECT="codeprm"
 export WANDB_NAME=$(basename $0 .sh)
-export DS_SKIP_CUDA_CHECK=1
 OUTDIR="./model_llama3_70b_generator"
 pushd ../finetuning-harness/
 # 128006: AddedToken("<|start_header_id|>"
