@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y tmux \
 # needs to be in this specific order
 RUN pip install wheel 
 RUN pip install packaging
-RUN pip install flash-attn --no-build-isolation
+RUN pip install flash-attn==2.5.8 --no-build-isolation
 
 # copy requirements.txt and install them
 COPY requirements.txt requirements.txt
