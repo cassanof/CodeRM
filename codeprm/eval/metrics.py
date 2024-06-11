@@ -33,7 +33,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
+def get_orm_acc(items, prod=None, consider=None, ensemble="min") -> Optional[float]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -44,6 +44,8 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
     - "normalized": math.exp(cumulative_logprob / num_tokens) * orm_score is used
 
     The consider parameter allows to consider only the first N samples for ORM accuracy.
+
+    The ensemble parameter allows to combine multiple ORM scores in a single result.
     """
     correct = 0
     total = 0
@@ -57,10 +59,22 @@ def get_orm_acc(items, prod=None, consider=None) -> Optional[float]:
             results = results[:consider]
 
         for result in results:
-            if "orm_1_score" not in result:
-                return None  # ORM score not found
+            if "orm_1_score" in result:  # single ORM
+                score = result["orm_1_score"]
+            elif "orms" in result:  # multiple ORMs
+                scores = []
+                for r in result["orms"]:
+                    scores.append(r["orm_1_score"])
 
-            score = result["orm_1_score"]
+                if ensemble == "min":
+                    score = min(scores)
+                elif ensemble == "mean":
+                    score = np.mean(scores)
+                else:
+                    raise ValueError(f"Unknown ensemble method {ensemble}")
+            else:
+                return None  # No ORM labels found
+
             if score > max_score:
                 if prod == "unnormalized":
                     score *= np.exp(result["cumulative_logprob"])
@@ -135,6 +149,11 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="How many samples should be considered for ORM accuracy",
+    )
+    parser.add_argument(
+        "--orm-ensemble",
+        type=str,
+        choices=["min", "mean"],
     )
     args = parser.parse_args()
     main(args)
