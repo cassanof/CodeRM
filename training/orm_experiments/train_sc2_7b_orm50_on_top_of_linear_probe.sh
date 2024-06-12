@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export WANDB_PROJECT="codeprm-orm"
-export WANDB_NAME="starcoder2_7b_orm50"
+export WANDB_NAME="starcoder2_7b_orm50_on_top_of_linear_probe"
 pushd ../code-scorer/
 python3 -m torch.distributed.launch \
   --nproc_per_node 4 \
@@ -12,10 +12,10 @@ python3 -m torch.distributed.launch \
   --epochs 3 \
   --lr 1e-5 \
   --weight_decay 0.01 \
-  --save_dir "./model_starcoder2_7b_orm50_og" \
+  --save_dir "./model_starcoder2_7b_orm50" \
   --dataset "codegenning/orm_dataset_raw50" \
   --eval_dataset "codegenning/orm_eval_dataset" \
-  --model "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068" \
+  --model "./model_starcoder2_7b_orm50_linear_probe/checkpoint-1782/" \
   --deepspeed "./deepspeed_cfgs/no_offload.json" \
   --num_labels 2 \
   --bf16 \
