@@ -39,7 +39,6 @@ class MockModel(BaseModel):
 
 
 def main(args):
-    assert ".json.gz" not in args.input, "Please provide the completion file in datasets format"
     dataset = datasets.load_dataset(args.dataset, split=args.split)
     # convert dataset to list
     dataset = dataset.to_list()
@@ -117,7 +116,11 @@ def main(args):
                 og_item.results[i] = completion_to_res[c.code]
 
     # 4. save output
-    manager.save_completions(og_items, args.output, fmt="datasets")
+    manager.save_completions(
+        og_items,
+        args.output,
+        fmt="gzjson" if args.input.endswith("json.gz") else "datasets",
+    )
 
 
 if __name__ == "__main__":
