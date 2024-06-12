@@ -60,22 +60,9 @@ def main(args):
     print(f"Failing examples: {sum(ex['score'] == 0 for ex in new_ds)}")
     print()
 
-    # balance the dataset
-    passing_examples = [ex for ex in new_ds if ex['score'] == 1]
-    failing_examples = [ex for ex in new_ds if ex['score'] == 0]
-    min_examples = min(len(passing_examples), len(failing_examples))
-
-    balanced_ds = random.sample(
-        passing_examples, min_examples) + random.sample(failing_examples, min_examples)
-    random.shuffle(balanced_ds)
-    print(f"Total examples in balanced dataset: {len(balanced_ds)}")
-    print("Passing examples in balanced dataset: " +
-          f"{sum(ex['score'] == 1 for ex in balanced_ds)}")
-    print("Failing examples in balanced dataset: " +
-          f"{sum(ex['score'] == 0 for ex in balanced_ds)}")
-
-    final_ds = datasets.Dataset.from_list(balanced_ds)
+    final_ds = datasets.Dataset.from_list(new_ds)
     final_ds.push_to_hub(args.push, private=True, split=args.push_split)
+    print(f"IMORTANT: Remember to dedup the dataset and then balance it before training the model")
 
 
 if __name__ == "__main__":
