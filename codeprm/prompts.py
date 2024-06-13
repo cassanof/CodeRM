@@ -5,6 +5,7 @@ Message = Dict[str, str]
 Conversation = List[Message]
 Prompt = Union[str, Conversation]
 
+
 def py_prompt(question: str, code=""):
     # escape any triple quotes in the question
     question = question.replace('"""', r'\"""')
@@ -12,6 +13,12 @@ def py_prompt(question: str, code=""):
 {question}
 """
 {code}'''.strip()
+
+
+def py_prompt_evolve(before: str, after=""):
+    return f'''{before}
+# ==== EVOLVED CODE ====
+{after}'''.strip()
 
 
 # few-shots taken from: https://github.com/LiveCodeBench/LiveCodeBench/tree/45db82290ef929811e21d4cdb67c8db43010c1e0/lcb_runner/prompts/few_shot_examples/generation
