@@ -127,7 +127,8 @@ class HFModel(BaseModel):
         from vllm import SamplingParams
         kwargs = kwargs.copy()
         stop = kwargs.pop("stop", [])
-        stop.append("# START NEW CODE")  # for few-shot prompts
+        stop.append("# START NEW CODE")  # for few-shot prompts 
+        stop.append("# ==== EVOLVED CODE ====") # for evol approach
         gens = self.model.generate(
             prompts=prompts,
             sampling_params=SamplingParams(
