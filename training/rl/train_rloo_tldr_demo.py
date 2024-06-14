@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # Training
     ################
     if Accelerator().process_index == 0:
-        wandb.init(project="rloo_tldr", config=config)
+        wandb.init(name="rloo_tldr" + config.output_dir.replace("/", "_"))
 
     trainer = RLOOTrainer(
         config=config,
