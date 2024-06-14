@@ -13,7 +13,7 @@ from transformers import (
 from trl import ModelConfig
 from trl.trainer.rloo_trainer import RLOOConfig, RLOOTrainer
 from trl.trainer.utils import SIMPLE_QUERY_CHAT_TEMPLATE
-from transformers.trainer_callback import ProgressCallback
+from transformers.trainer_callback import PrinterCallback
 
 """
 python examples/scripts/rloo/rloo_tldr.py \
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
     )
-    trainer.add_callback(ProgressCallback)
+    trainer.add_callback(PrinterCallback)
     trainer.train()
     trainer.save_model(config.output_dir)
     trainer.push_to_hub()
