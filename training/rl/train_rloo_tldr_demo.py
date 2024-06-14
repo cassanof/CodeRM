@@ -74,7 +74,8 @@ class MakeShiftWandbCallback(TrainerCallback):
         if state.is_local_process_zero:
             wandb.init(
                 project=os.getenv("WANDB_PROJECT", "rl"),
-                **init_args
+                **init_args,
+                config=args.to_dict() + model_config.to_dict(),
             )
 
     def on_log(
