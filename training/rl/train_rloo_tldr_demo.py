@@ -72,10 +72,15 @@ class MakeShiftWandbCallback(TrainerCallback):
                 init_args["name"] = args.run_name
 
         if state.is_local_process_zero:
+            config = args.to_dict()
+            for key in model_config.to_dict():
+                if key not in config:
+                    config[key] = model_config.to_dict()[key]
+
             wandb.init(
                 project=os.getenv("WANDB_PROJECT", "rl"),
                 **init_args,
-                config=args.to_dict() + model_config.to_dict(),
+                config=config,
             )
             wandb.define_metric("train/global_step")
             wandb.define_metric(
