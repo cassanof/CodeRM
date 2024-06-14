@@ -1,6 +1,5 @@
 import multiprocessing
-import shutil
-import wandb
+from generic import MakeShiftWandbCallback
 
 from datasets import load_dataset
 from transformers import (
@@ -13,76 +12,85 @@ from transformers import (
 from trl import ModelConfig
 from trl.trainer.rloo_trainer import RLOOConfig, RLOOTrainer
 from trl.trainer.utils import SIMPLE_QUERY_CHAT_TEMPLATE
+from transformers.trainer_callback import PrinterCallback, DefaultFlowCallback
+from dataclasses import dataclass
+
+
+@dataclass
+class Args:
+    train_dataset: str = "codegenning/taco-rl"
+    test_dataset: str = "codegenning/taco-rl"
+    train_split: str = "train"
+    test_split: str = "test"
+
+    max_prompt_length: int = 2048
+
 
 if __name__ == "__main__":
-    parser = HfArgumentParser((RLOOConfig, ModelConfig))
-    config, model_config = parser.parse_args_into_dataclasses()
-    # remove output_dir if exists
-    shutil.rmtree(config.output_dir, ignore_errors=True)
+    parser = HfArgumentParser((Args, RLOOConfig, ModelConfig))
+    args, rloo_config, model_config = parser.parse_args_into_dataclasses()
 
-    ################
-    # Model & Tokenizer
-    ################
     tokenizer = AutoTokenizer.from_pretrained(
         model_config.model_name_or_path,
         padding_side="left",
         trust_remote_code=True,
     )
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+
     if tokenizer.chat_template is None:
         tokenizer.chat_template = SIMPLE_QUERY_CHAT_TEMPLATE
     reward_model = AutoModelForSequenceClassification.from_pretrained(
-        config.reward_model_path, num_labels=1)
-    ref_policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
-    policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
-    ################
-    # Dataset
-    ################
-    raw_datasets = load_dataset(
-        "trl-internal-testing/tldr-preference-sft-trl-style")
-    if config.sanity_check:
-        for key in raw_datasets:
-            raw_datasets[key] = raw_datasets[key].select(range(1000))
-    train_dataset = raw_datasets["train"]
-    eval_dataset = raw_datasets["validation"]
+        rloo_config.reward_model_path, num_labels=1)
+    ref_policy = AutoModelForCausalLM.from_pretrained(
+        rloo_config.sft_model_path)
+    policy = AutoModelForCausalLM.from_pretrained(rloo_config.sft_model_path)
+
+    train_dataset = load_dataset(args.train_dataset, args.train_split)
+    eval_dataset = load_dataset(args.test_dataset, args.test_split)
 
     def prepare_dataset(dataset, tokenizer):
         """pre-tokenize the dataset before training; only collate during training"""
 
         def tokenize(element):
-            input_ids = tokenizer.apply_chat_template(
-                element["messages"][:1],
+            input_ids = tokenizer.encode(
+                element["prompt"],
                 padding=False,
-                add_generation_prompt=True,
+                add_special_tokens=True,
             )
             return {"input_ids": input_ids, "lengths": len(input_ids)}
 
         return dataset.map(
             tokenize,
             remove_columns=dataset.column_names,
-            num_proc=1 if config.sanity_check else multiprocessing.cpu_count(),
-            load_from_cache_file=not config.sanity_check,
+            num_proc=1 if rloo_config.sanity_check else multiprocessing.cpu_count(),
+            load_from_cache_file=not rloo_config.sanity_check,
         )
 
     train_dataset = prepare_dataset(train_dataset, tokenizer)
     eval_dataset = prepare_dataset(eval_dataset, tokenizer)
-    # filtering
-    train_dataset = train_dataset.filter(lambda x: x["lengths"] <= 512)
-    eval_dataset = eval_dataset.filter(lambda x: x["lengths"] <= 512)
+
+    train_dataset = train_dataset.filter(
+        lambda x: x["lengths"] <= args.max_prompt_length)
+    eval_dataset = eval_dataset.filter(
+        lambda x: x["lengths"] <= args.max_prompt_length)
     assert train_dataset[0]["input_ids"][-1] != tokenizer.eos_token_id, "The last token should not be an EOS token"
-    ################
-    # Training
-    ################
+
     trainer = RLOOTrainer(
-        config=config,
+        config=rloo_config,
         tokenizer=tokenizer,
         policy=policy,
         ref_policy=ref_policy,
         reward_model=reward_model,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
+        callbacks=[
+            DefaultFlowCallback,
+            PrinterCallback,
+            MakeShiftWandbCallback,
+        ],
     )
     trainer.train()
-    trainer.save_model(config.output_dir)
+    trainer.save_model(rloo_config.output_dir)
     trainer.push_to_hub()
     trainer.generate_completions()
