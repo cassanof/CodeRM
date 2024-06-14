@@ -1,5 +1,6 @@
 BASE_MODEL="codegenning/generator-sc2-7b"
-REWARD_MODEL="/mnt/efs/federicocassano/codeprm/training/code-scorer/model_starcoder2_7b_orm50_mse"
+# TODO: switch out to BCE model once code is good
+REWARD_MODEL="/mnt/efs/federicocassano/codeprm/training/code-scorer/model_starcoder2_7b_orm50_mse/checkpoint-1782"
 OUTDIR="./sc2_7b_rl_testing"
 
 CUDA_VISIBLE_DEVICES="4,5,6,7" accelerate launch --config_file ./z2.yaml --gpu_ids 4,5,6,7 --num_processes 4 train_rloo.py \
