@@ -112,7 +112,6 @@ if __name__ == "__main__":
         reward_model=reward_model,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        logging_steps=25,
     )
     trainer.train()
     trainer.save_model(config.output_dir)
