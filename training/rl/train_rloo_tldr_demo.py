@@ -54,10 +54,6 @@ if __name__ == "__main__":
     # remove output_dir if exists
     shutil.rmtree(config.output_dir, ignore_errors=True)
 
-    print("logging config")
-    print(config.logging_steps)
-    print(config.report_to)
-
     ################
     # Model & Tokenizer
     ################
