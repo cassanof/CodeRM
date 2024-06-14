@@ -1,5 +1,6 @@
 import multiprocessing
 import shutil
+import wandb
 
 from datasets import load_dataset
 from transformers import (
@@ -12,7 +13,6 @@ from transformers import (
 from trl import ModelConfig
 from trl.trainer.rloo_trainer import RLOOConfig, RLOOTrainer
 from trl.trainer.utils import SIMPLE_QUERY_CHAT_TEMPLATE
-
 
 """
 python examples/scripts/rloo/rloo_tldr.py \
@@ -52,6 +52,10 @@ if __name__ == "__main__":
     config, model_config = parser.parse_args_into_dataclasses()
     # remove output_dir if exists
     shutil.rmtree(config.output_dir, ignore_errors=True)
+
+    print("logging config")
+    print(config.logging_steps)
+    print(config.report_to)
 
     ################
     # Model & Tokenizer
