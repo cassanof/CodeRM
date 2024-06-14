@@ -77,6 +77,9 @@ class MakeShiftWandbCallback(TrainerCallback):
                 **init_args,
                 config=args.to_dict() + model_config.to_dict(),
             )
+            wandb.define_metric("train/global_step")
+            wandb.define_metric(
+                "*", step_metric="train/global_step", step_sync=True)
 
     def on_log(
             self,
