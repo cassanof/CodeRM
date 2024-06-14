@@ -1,6 +1,5 @@
 import multiprocessing
 import shutil
-import os
 from generic import MakeShiftWandbCallback
 
 from datasets import load_dataset

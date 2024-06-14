@@ -11,6 +11,7 @@ class MakeShiftWandbCallback(TrainerCallback):
             self,
             args: TrainingArguments,
             state: TrainerState,
+            model=None,
     ):
         trial_name = state.trial_name
         init_args = {}
@@ -23,9 +24,11 @@ class MakeShiftWandbCallback(TrainerCallback):
 
         if state.is_local_process_zero:
             config = args.to_dict()
-            for key in model_config.to_dict():
-                if key not in config:
-                    config[key] = model_config.to_dict()[key]
+            if model is not None and hasattr(model, "config") and model.config is not None and hasattr(model.config, "to_dict"):
+                model_config = model.config
+                for key in model_config.to_dict():
+                    if key not in config:
+                        config[key] = model_config.to_dict()[key]
 
             wandb.init(
                 project=os.getenv("WANDB_PROJECT", "rl"),
@@ -42,10 +45,11 @@ class MakeShiftWandbCallback(TrainerCallback):
             state: TrainerState,
             control: TrainerControl,
             logs=None,
+            model=None,
             **kwargs,
     ):
         if not self._initialized:
-            self.setup(args, state)
+            self.setup(args, state, model=model)
             self._initialized = True
 
         if logs is None:
