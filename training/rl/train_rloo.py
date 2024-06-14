@@ -46,8 +46,8 @@ if __name__ == "__main__":
         rloo_config.sft_model_path)
     policy = AutoModelForCausalLM.from_pretrained(rloo_config.sft_model_path)
 
-    train_dataset = load_dataset(args.train_dataset, args.train_split)
-    eval_dataset = load_dataset(args.test_dataset, args.test_split)
+    train_dataset = load_dataset(args.train_dataset, split=args.train_split)
+    eval_dataset = load_dataset(args.test_dataset, split=args.test_split)
 
     def prepare_dataset(dataset, tokenizer):
         """pre-tokenize the dataset before training; only collate during training"""
