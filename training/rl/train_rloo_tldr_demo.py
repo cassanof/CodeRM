@@ -1,6 +1,7 @@
 import multiprocessing
 import shutil
 import wandb
+from accelerate import Accelerator
 
 from datasets import load_dataset
 from transformers import (
@@ -107,6 +108,9 @@ if __name__ == "__main__":
     ################
     # Training
     ################
+    if Accelerator().process_index == 0:
+        wandb.init(project="rloo_tldr", config=config)
+
     trainer = RLOOTrainer(
         config=config,
         tokenizer=tokenizer,
