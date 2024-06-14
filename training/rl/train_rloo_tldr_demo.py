@@ -1,7 +1,7 @@
 import multiprocessing
 import shutil
 import wandb
-from accelerate import Accelerator
+import os
 
 from datasets import load_dataset
 from transformers import (
@@ -9,12 +9,16 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
     HfArgumentParser,
+    TrainerCallback,
+    TrainerControl,
+    TrainerState,
+    TrainingArguments,
 )
 
 from trl import ModelConfig
 from trl.trainer.rloo_trainer import RLOOConfig, RLOOTrainer
 from trl.trainer.utils import SIMPLE_QUERY_CHAT_TEMPLATE
-from transformers.trainer_callback import PrinterCallback
+from transformers.trainer_callback import PrinterCallback, DefaultFlowCallback
 
 """
 python examples/scripts/rloo/rloo_tldr.py \
@@ -47,6 +51,50 @@ accelerate launch --config_file examples/accelerate_configs/deepspeed_zero2.yaml
     --non_eos_penalty \
     --stop_token eos \
 """
+
+
+class MakeShiftWandbCallback(TrainerCallback):
+    def __init__(self):
+        self._initialized = False
+
+    def setup(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+    ):
+        trial_name = state.trial_name
+        init_args = {}
+        if trial_name is not None:
+            init_args["name"] = trial_name
+            init_args["group"] = args.run_name
+        else:
+            if not (args.run_name is None or args.run_name == args.output_dir):
+                init_args["name"] = args.run_name
+
+        if state.is_local_process_zero:
+            wandb.init(
+                project=os.getenv("WANDB_PROJECT", "rl"),
+                **init_args
+            )
+
+    def on_log(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            logs=None,
+            **kwargs,
+    ):
+        if not self._initialized:
+            self.setup(args, state)
+            self._initialized = True
+
+        if logs is None:
+            logs = {}
+
+        if state.is_world_process_zero:
+            wandb.log(
+                {**logs, "train/global_step": state.global_step})
 
 
 if __name__ == "__main__":
@@ -108,9 +156,6 @@ if __name__ == "__main__":
     ################
     # Training
     ################
-    if Accelerator().process_index == 0:
-        wandb.init(name="rloo_tldr" + config.output_dir.replace("/", "_"))
-
     trainer = RLOOTrainer(
         config=config,
         tokenizer=tokenizer,
@@ -119,8 +164,12 @@ if __name__ == "__main__":
         reward_model=reward_model,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
+        callbacks=[
+            DefaultFlowCallback,
+            PrinterCallback,
+            MakeShiftWandbCallback,
+        ],
     )
-    trainer.add_callback(PrinterCallback)
     trainer.train()
     trainer.save_model(config.output_dir)
     trainer.push_to_hub()
