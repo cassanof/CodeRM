@@ -13,6 +13,7 @@ from transformers import (
 from trl import ModelConfig
 from trl.trainer.rloo_trainer import RLOOConfig, RLOOTrainer
 from trl.trainer.utils import SIMPLE_QUERY_CHAT_TEMPLATE
+from transformers.trainer_callback import ProgressCallback
 
 """
 python examples/scripts/rloo/rloo_tldr.py \
@@ -68,13 +69,15 @@ if __name__ == "__main__":
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     if tokenizer.chat_template is None:
         tokenizer.chat_template = SIMPLE_QUERY_CHAT_TEMPLATE
-    reward_model = AutoModelForSequenceClassification.from_pretrained(config.reward_model_path, num_labels=1)
+    reward_model = AutoModelForSequenceClassification.from_pretrained(
+        config.reward_model_path, num_labels=1)
     ref_policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
     policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
     ################
     # Dataset
     ################
-    raw_datasets = load_dataset("trl-internal-testing/tldr-preference-sft-trl-style")
+    raw_datasets = load_dataset(
+        "trl-internal-testing/tldr-preference-sft-trl-style")
     if config.sanity_check:
         for key in raw_datasets:
             raw_datasets[key] = raw_datasets[key].select(range(1000))
@@ -117,6 +120,7 @@ if __name__ == "__main__":
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
     )
+    trainer.add_callback(ProgressCallback)
     trainer.train()
     trainer.save_model(config.output_dir)
     trainer.push_to_hub()
