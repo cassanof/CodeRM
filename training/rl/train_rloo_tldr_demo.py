@@ -66,9 +66,9 @@ if __name__ == "__main__":
     if tokenizer.chat_template is None:
         tokenizer.chat_template = SIMPLE_QUERY_CHAT_TEMPLATE
     reward_model = AutoModelForSequenceClassification.from_pretrained(
-        config.reward_model_path, num_labels=1)
-    ref_policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
-    policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path)
+        config.reward_model_path, num_labels=1, attn_implementation="flash_attention_2")
+    ref_policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path, attn_implementation="flash_attention_2")
+    policy = AutoModelForCausalLM.from_pretrained(config.sft_model_path, attn_implementation="flash_attention_2")
     ################
     # Dataset
     ################
