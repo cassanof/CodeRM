@@ -3,7 +3,7 @@ BASE_MODEL="codegenning/generator-sc2-7b"
 REWARD_MODEL="codegenning/orm-sc2-7b-mse-v0"
 OUTDIR="./sc2_7b_rl_testing"
 
-accelerate launch --config_file ./z2.yaml --num_processes 8 train_rloo.py \
+accelerate launch --config_file ./z3.yaml --num_processes 8 train_rloo.py \
     --output_dir $OUTDIR \
     --num_ppo_epochs 2 \
     --num_mini_batches 2 \
@@ -15,7 +15,7 @@ accelerate launch --config_file ./z2.yaml --num_processes 8 train_rloo.py \
     --sft_model_path $BASE_MODEL \
     --reward_model_path $REWARD_MODEL \
     --local_rollout_forward_batch_size 4 \
-    --response_length 1028 \
+    --response_length 2048 \
     --non_eos_penalty \
     --fp16 \
     --stop_token eos \
