@@ -1,4 +1,5 @@
 import multiprocessing
+import torch
 from generic import MakeShiftWandbCallback, convert_2_label_rm_to_1_label_rm
 
 from datasets import load_dataset
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         tokenizer.chat_template = SIMPLE_QUERY_CHAT_TEMPLATE
 
     reward_model = AutoModelForSequenceClassification.from_pretrained(
-        rloo_config.reward_model_path, num_labels=args.num_labels)
+        rloo_config.reward_model_path, num_labels=args.num_labels, use_flash_attention_2=True, torch_dtype=torch.float16)
     if args.num_labels == 2:
         reward_model = convert_2_label_rm_to_1_label_rm(reward_model)
     elif args.num_labels != 1:
@@ -60,8 +61,8 @@ if __name__ == "__main__":
             f"Only binary classification or regression is supported, got {args.num_labels} labels")
 
     ref_policy = AutoModelForCausalLM.from_pretrained(
-        rloo_config.sft_model_path)
-    policy = AutoModelForCausalLM.from_pretrained(rloo_config.sft_model_path)
+        rloo_config.sft_model_path, use_flash_attention_2=True, torch_dtype=torch.float16)
+    policy = AutoModelForCausalLM.from_pretrained(rloo_config.sft_model_path, use_flash_attention_2=True, torch_dtype=torch.float16)
 
     train_dataset = load_dataset(args.train_dataset, split=args.train_split)
     eval_dataset = load_dataset(args.test_dataset, split=args.test_split)
