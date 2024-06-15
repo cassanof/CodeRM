@@ -1,5 +1,5 @@
 import multiprocessing
-from generic import MakeShiftWandbCallback
+from generic import MakeShiftWandbCallback, convert_2_label_rm_to_1_label_rm
 
 from datasets import load_dataset
 from transformers import (
@@ -19,11 +19,21 @@ from dataclasses import dataclass
 @dataclass
 class Args:
     train_dataset: str = "codegenning/taco-rl"
+    """the dataset to train on"""
     test_dataset: str = "codegenning/taco-rl"
+    """the dataset to evaluate on"""
     train_split: str = "train"
+    """the split to train on"""
     test_split: str = "test"
+    """the split to evaluate on"""
+
+    num_labels: int = 1
+    """the number of labels in the reward model. 1 or 2 supported"""
+    pos_idx: int = 1
+    """if using two labels, the index of the positive label"""
 
     max_prompt_length: int = 2048
+    """the maximum length of the prompt"""
 
 
 if __name__ == "__main__":
@@ -40,8 +50,15 @@ if __name__ == "__main__":
 
     if tokenizer.chat_template is None:
         tokenizer.chat_template = SIMPLE_QUERY_CHAT_TEMPLATE
+
     reward_model = AutoModelForSequenceClassification.from_pretrained(
-        rloo_config.reward_model_path, num_labels=1)
+        rloo_config.reward_model_path, num_labels=args.num_labels)
+    if args.num_labels == 2:
+        reward_model = convert_2_label_rm_to_1_label_rm(reward_model)
+    elif args.num_labels != 1:
+        raise ValueError(
+            f"Only binary classification or regression is supported, got {args.num_labels} labels")
+
     ref_policy = AutoModelForCausalLM.from_pretrained(
         rloo_config.sft_model_path)
     policy = AutoModelForCausalLM.from_pretrained(rloo_config.sft_model_path)
