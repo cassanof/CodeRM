@@ -1,6 +1,6 @@
-BASE_MODEL="codegenning/generator-sc2-7b"
+BASE_MODEL=${$1:-"codegenning/generator-sc2-7b"}
 # TODO: switch out to BCE model once code is good
-REWARD_MODEL="codegenning/orm-sc2-7b-mse-v0"
+REWARD_MODEL=${$2:-"codegenning/orm-sc2-7b-bce-v0"}
 OUTDIR="./sc2_7b_rl_testing"
 
 set -x 
