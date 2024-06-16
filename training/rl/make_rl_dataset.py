@@ -16,11 +16,17 @@ def main(args):
     test_fmt = []
 
     for ex in train_dataset:
-        p = py_prompt(ex["question"], ex["starter_code"])
+        post = ""
+        if "starter_code" not in ex:
+            post = "\n"
+        p = py_prompt(ex["question"], ex["starter_code"]) + post
         train_fmt.append({"prompt": p})
 
     for ex in test_dataset:
-        p = py_prompt(ex["question"], ex["starter_code"])
+        post = ""
+        if "starter_code" not in ex:
+            post = "\n"
+        p = py_prompt(ex["question"], ex["starter_code"]) + post
         test_fmt.append({"prompt": p})
 
     ds = {
