@@ -10,7 +10,7 @@
         "temperature": 1.0
       }
     },
-    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/15b_orm", "is_training": false, "pos_idx": 1}
+    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/15b_orm", "is_training": false, "pos_idx": 1, "num_labels": 2}
   },
   "dataset": "codegenning/taco-rl",
   "save_strategy": "steps",
