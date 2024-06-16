@@ -59,9 +59,12 @@ def train(args):
     )
 
     # configure tokenizer
-    tokenizer = get_tokenizer(args.pretrain, actor.model, "left", strategy, use_fast=not args.disable_fast_tokenizer)
-    get_tokenizer(args.reward_pretrain, critic, "left", strategy, use_fast=not args.disable_fast_tokenizer)
-    get_tokenizer(args.reward_pretrain, reward_model, "left", strategy, use_fast=not args.disable_fast_tokenizer)
+    tokenizer = get_tokenizer(args.pretrain, actor.model, "left",
+                              strategy, use_fast=not args.disable_fast_tokenizer)
+    get_tokenizer(args.reward_pretrain, critic, "left", strategy,
+                  use_fast=not args.disable_fast_tokenizer)
+    get_tokenizer(args.reward_pretrain, reward_model, "left",
+                  strategy, use_fast=not args.disable_fast_tokenizer)
 
     strategy.print(actor)
     strategy.print(critic)
@@ -76,8 +79,10 @@ def train(args):
     )
     get_tokenizer(args.pretrain, initial_model.model, "left", strategy)
 
-    strategy.print("reward normalization status: {}".format(args.normalize_reward))
-    strategy.print("mean: {}, std {}".format(reward_model.mean, reward_model.std))
+    strategy.print("reward normalization status: {}".format(
+        args.normalize_reward))
+    strategy.print("mean: {}, std {}".format(
+        reward_model.mean, reward_model.std))
 
     if args.enable_ema:
         ema_model = Actor(
@@ -107,9 +112,12 @@ def train(args):
         max_count=args.max_samples,
         return_eval=False,
     )
-    prompts_data = prompts_data.select(range(min(args.max_samples, len(prompts_data))))
-    prompts_dataset = PromptDataset(prompts_data, tokenizer, strategy, input_template=args.input_template)
-    prompts_dataloader = strategy.setup_dataloader(prompts_dataset, args.micro_rollout_batch_size, True, True)
+    prompts_data = prompts_data.select(
+        range(min(args.max_samples, len(prompts_data))))
+    prompts_dataset = PromptDataset(
+        prompts_data, tokenizer, strategy, input_template=args.input_template)
+    prompts_dataloader = strategy.setup_dataloader(
+        prompts_dataset, args.micro_rollout_batch_size, True, True)
 
     if args.pretrain_data:
         pretrain_data = blending_datasets(
@@ -119,9 +127,11 @@ def train(args):
             args.seed,
             return_eval=False,
         )
-        pretrain_max_len = args.max_len if args.max_len else args.prompt_max_len + args.generate_max_len
+        pretrain_max_len = args.max_len if args.max_len else args.prompt_max_len + \
+            args.generate_max_len
         pretrain_dataset = SFTDataset(
-            pretrain_data.select(range(min(len(pretrain_data), args.max_epochs * len(prompts_dataset)))),
+            pretrain_data.select(
+                range(min(len(pretrain_data), args.max_epochs * len(prompts_dataset)))),
             tokenizer,
             pretrain_max_len,
             strategy,
@@ -143,7 +153,8 @@ def train(args):
 
     # configure scheduler
     num_update_steps_per_episodes = (
-        int(len(prompts_dataloader) * (args.micro_rollout_batch_size / args.micro_train_batch_size))
+        int(len(prompts_dataloader) *
+            (args.micro_rollout_batch_size / args.micro_train_batch_size))
         * args.max_epochs
         // strategy.accumulated_gradient
     )
@@ -167,10 +178,12 @@ def train(args):
     # gradient_checkpointing
     if args.gradient_checkpointing:
         actor.gradient_checkpointing_enable(
-            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
+            gradient_checkpointing_kwargs={
+                "use_reentrant": args.gradient_checkpointing_use_reentrant}
         )
         critic.gradient_checkpointing_enable(
-            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
+            gradient_checkpointing_kwargs={
+                "use_reentrant": args.gradient_checkpointing_use_reentrant}
         )
 
     # prepare models/optimizers...
@@ -270,7 +283,8 @@ if __name__ == "__main__":
     parser.add_argument("--save_steps", type=int, default=-1)
     parser.add_argument("--logging_steps", type=int, default=1)
     parser.add_argument("--eval_steps", type=int, default=-1)
-    parser.add_argument("--ckpt_path", type=str, default="./ckpt/checkpoints_ppo")
+    parser.add_argument("--ckpt_path", type=str,
+                        default="./ckpt/checkpoints_ppo")
     parser.add_argument("--max_ckpt_num", type=int, default=3)
     parser.add_argument("--max_ckpt_mem", type=int, default=1000)  # 1000GB
     parser.add_argument("--num_episodes", type=int, default=1)
@@ -290,46 +304,58 @@ if __name__ == "__main__":
     parser.add_argument("--gamma", type=float, default=1)
     parser.add_argument("--micro_train_batch_size", type=int, default=4)
     parser.add_argument("--train_batch_size", type=int, default=128)
-    parser.add_argument("--load_checkpoint", action="store_true", default=False)
-    parser.add_argument("--normalize_reward", action="store_true", default=False)
-    parser.add_argument("--top_p", type=float, default=1.0)
-    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--load_checkpoint",
+                        action="store_true", default=False)
+    parser.add_argument("--normalize_reward",
+                        action="store_true", default=False)
+    parser.add_argument("--top_p", type=float, default=0.95)
+    parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--seed", type=int, default=42)
 
-    parser.add_argument("--local_rank", type=int, default=-1, help="local_rank for deepspeed")
+    parser.add_argument("--local_rank", type=int, default=-
+                        1, help="local_rank for deepspeed")
     parser.add_argument("--zero_stage", type=int, default=2)
-    parser.add_argument("--gradient_checkpointing", action="store_true", default=False)
+    parser.add_argument("--gradient_checkpointing",
+                        action="store_true", default=False)
     parser.add_argument("--bf16", action="store_true", default=False)
     parser.add_argument("--actor_learning_rate", type=float, default=1e-6)
     parser.add_argument("--critic_learning_rate", type=float, default=9e-6)
     parser.add_argument("--kl_target", type=float, default=None)
     parser.add_argument("--init_kl_coef", type=float, default=0.02)
-    ## Make EMA as an optional feature
-    parser.add_argument("--enable_ema", action="store_true", help="Enable EMA checkpoint for the model.")
-    parser.add_argument("--zpg", type=int, default=1, help="ZeRO++ max partition size")
+    # Make EMA as an optional feature
+    parser.add_argument("--enable_ema", action="store_true",
+                        help="Enable EMA checkpoint for the model.")
+    parser.add_argument("--zpg", type=int, default=1,
+                        help="ZeRO++ max partition size")
     parser.add_argument("--adam_offload", action="store_true", default=False)
-    parser.add_argument("--actor_init_on_gpu", action="store_true", default=False)
+    parser.add_argument("--actor_init_on_gpu",
+                        action="store_true", default=False)
     parser.add_argument("--flash_attn", action="store_true", default=False)
     parser.add_argument("--aux_loss_coef", type=float, default=0)
     parser.add_argument("--grad_accum_dtype", type=str, default=None)
-    parser.add_argument("--disable_trace_cache", action="store_true", default=False)
+    parser.add_argument("--disable_trace_cache",
+                        action="store_true", default=False)
     parser.add_argument("--load_in_4bit", action="store_true", default=False)
     parser.add_argument("--lora_rank", type=int, default=0)
     parser.add_argument("--lora_alpha", type=int, default=16)
-    parser.add_argument("--target_modules", type=str, nargs="*", default="all-linear")
+    parser.add_argument("--target_modules", type=str,
+                        nargs="*", default="all-linear")
     parser.add_argument("--lora_dropout", type=float, default=0)
-    parser.add_argument("--input_template", type=str, default="Human: {}\nAssistant: ")
-    parser.add_argument("--gradient_checkpointing_use_reentrant", action="store_true")
-    parser.add_argument("--disable_fast_tokenizer", action="store_true", default=False)
+    parser.add_argument("--input_template", type=str, default=None)
+    parser.add_argument(
+        "--gradient_checkpointing_use_reentrant", action="store_true")
+    parser.add_argument("--disable_fast_tokenizer",
+                        action="store_true", default=False)
 
     # custom dataset key name
-    parser.add_argument("--input_key", type=str, default=None)
+    parser.add_argument("--input_key", type=str, default="prompt")
 
     # wandb pamameters
-    parser.add_argument("--use_wandb", type=str, default=None)
+    parser.add_argument("--use_wandb", type=str, default="True")
     parser.add_argument("--wandb_org", type=str, default=None)
     parser.add_argument("--wandb_group", type=str, default=None)
-    parser.add_argument("--wandb_project", type=str, default="openrlhf_train_ppo")
+    parser.add_argument("--wandb_project", type=str,
+                        default="openrlhf_train_ppo")
     parser.add_argument(
         "--wandb_run_name",
         type=str,

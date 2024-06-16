@@ -25,13 +25,9 @@ deepspeed ./train_code_ppo.py     \
     --critic_learning_rate 9e-6 \
     --init_kl_coef 0.01 \
     --prompt_data "codegenning/taco-rl" \
-    --prompt_data_probs 1.0 \
     --max_samples 80000 \
     --normalize_reward \
     --actor_init_on_gpu \
     --adam_offload \
     --flash_attn \
-    --gradient_checkpointing \
-    --use_wandb True \
-    --input_template="" \
-    --input_key="prompt"
+    --gradient_checkpointing
