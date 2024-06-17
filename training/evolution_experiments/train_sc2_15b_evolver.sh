@@ -21,7 +21,7 @@ python3 -m torch.distributed.launch \
         --no_approx_tokens \
         --output_dir="$OUTDIR" \
         --seq_length 8192 \
-        --epochs 3 \
+        --epochs 5 \
         --fa2 \
         --batch_size 1 \
         --gradient_accumulation_steps 4 \
@@ -32,7 +32,5 @@ python3 -m torch.distributed.launch \
         --bf16 \
         --eval_freq 0.0 \
         --perc_valid_set 0.0 \
-        --push_to_hub "federico-staging/$WANDB_NAME" \
         --save_total_limit 20
 popd
-rm -fr $OUTDIR/*/*global_steps*
