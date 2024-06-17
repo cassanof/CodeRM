@@ -16,17 +16,16 @@
   "save_strategy": "steps",
   "save_steps": 0.2,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/rloo_sc_7b_orm_7b",
+  "save_location": "/mnt/efs/federicocassano/t_models/reinf_sc_7b_orm_7b_3",
   "hyperparams":
   {
     "online": true,
-    "kl_coef": 0.02,
-    "reward_normalization": "oo",
+    "reward_normalization": "gaussian",
     "global_batch_size": 256,
     "per_device_train_batch_size": 1,
     "num_train_epochs": 1,
     "gradient_accumulation_steps": 16,
-    "learning_rate": 5e-6,
+    "learning_rate": 3e-6,
     "lr_scheduler_type": "linear",
     "max_length": 8129,
     "logging_steps": 1,
@@ -36,6 +35,6 @@
   {
     "group": "rloo",
     "project": "code_rl",
-    "name": "sc2_7b_orm_7b_rloo"
+    "name": "sc2_7b_orm_7b_reinf"
   }
 }
