@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODELS_PATH=${MODELS_PATH:-"~/src/models/"}
+MODELS_PATH=${MODELS_PATH:-"$HOME/src/models/"}
 
 if [ ! -d $MODELS_PATH ]; then
     echo "Error: $MODELS_PATH does not exist. Set MODELS_PATH to the correct path."
