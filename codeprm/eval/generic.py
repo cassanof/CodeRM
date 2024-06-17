@@ -457,7 +457,7 @@ def get_generic_argparser(dataset_default: str, split="test"):
     parser.add_argument(
         "--max-tokens",
         type=int,
-        default=2048,
+        default=4096,
         help="Max new tokens in the generated text"
     )
     parser.add_argument(
