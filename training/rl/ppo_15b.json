@@ -1,5 +1,5 @@
 {
-  "task": "reinf",
+  "task": "ppo",
   "model_squad": {
     "lm": {
       "model_path": "/mnt/efs/federicocassano/t_models/generator-sc2-15b",
@@ -16,12 +16,11 @@
   "save_strategy": "steps",
   "save_steps": 0.2,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/rloo_sc_15b_orm_15b",
+  "save_location": "/mnt/efs/federicocassano/t_models/ppo_sc_15b_orm_15b",
   "hyperparams":
   {
     "online": true,
     "kl_coef": 0.005,
-    "reward_normalization": "oo",
     "global_batch_size": 128,
     "per_device_train_batch_size": 4,
     "num_train_epochs": 3,
@@ -34,8 +33,8 @@
   },
   "wandb":
   {
-    "group": "rloo",
+    "group": "ppo",
     "project": "code_rl",
-    "name": "sc2_15b_orm_15b"
+    "name": "sc2_15b_orm_15b_ppo"
   }
 }

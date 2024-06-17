@@ -36,6 +36,6 @@
   {
     "group": "rloo",
     "project": "code_rl",
-    "name": "sc2_15b_orm_15b"
+    "name": "sc2_7b_orm_7b_rloo"
   }
 }
