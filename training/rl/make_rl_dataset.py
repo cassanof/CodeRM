@@ -79,7 +79,7 @@ def main(args):
         "test": datasets.Dataset.from_list(test_fmt),
     }
     ds = datasets.DatasetDict(ds)
-    # ds.push_to_hub(args.push, private=True)
+    ds.push_to_hub(args.push, private=True)
 
 
 if __name__ == "__main__":
