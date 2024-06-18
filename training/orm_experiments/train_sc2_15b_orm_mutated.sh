@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export WANDB_PROJECT="codeprm-orm"
+export WANDB_PROJECT="coderm-orm"
 export WANDB_NAME="starcoder2_15b_orm_mutated"
 pushd ../code-scorer/
 python3 -m torch.distributed.launch \

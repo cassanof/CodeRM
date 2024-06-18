@@ -5,7 +5,7 @@ if [ $# -eq 0 ]
     exit 1
 fi
 DS=$(realpath $1)
-export WANDB_PROJECT="codeprm"
+export WANDB_PROJECT="coderm"
 export WANDB_NAME=$(basename $0 .sh)
 OUTDIR="./model_codeqwen_7b_generator"
 # 92301: AddedToken("<|extra_0|>"

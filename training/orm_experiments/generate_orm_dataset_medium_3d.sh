@@ -44,7 +44,7 @@ function kill_all_subprocesses() {
 }
 trap kill_all_subprocesses SIGINT SIGTERM
 
-OUTDIR="./codeprm/dataset/orm_dataset_raw${NUM_COMPS}_og_chunked_${G_START_IDX}_${G_END_IDX}/"
+OUTDIR="./coderm/dataset/orm_dataset_raw${NUM_COMPS}_og_chunked_${G_START_IDX}_${G_END_IDX}/"
 mkdir -p $OUTDIR
 
 TOTAL_MAX=0
@@ -56,7 +56,7 @@ for ((i=0; i<NUM_GPUS; i++)); do
   TOTAL_MAX=$((TOTAL_MAX + MAX_ITEMS))
   
   echo "Processing chunk $i: start_idx=$START_IDX, max_items=$MAX_ITEMS"
-  CUDA_VISIBLE_DEVICES=$i python3 codeprm/eval/taco_eval.py \
+  CUDA_VISIBLE_DEVICES=$i python3 coderm/eval/taco_eval.py \
     --dataset cassanof/taco_cleaned_all \
     --split train \
     --model "codegenning/generator-sc2-15b" \

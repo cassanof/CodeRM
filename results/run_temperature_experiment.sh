@@ -4,7 +4,7 @@ if [ "$#" -ne 1 ]; then
 fi
 TEMP=$1
 mkdir -p ./temperature_experiment
-python3 ../codeprm/eval/livecodebench_eval.py \
+python3 ../coderm/eval/livecodebench_eval.py \
   --model "codegenning/generator-sc2-15b" \
   --temperature $TEMP \
   --completion-limit 250 \

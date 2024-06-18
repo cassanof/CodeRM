@@ -1,5 +1,5 @@
 #!/bin/bash
-export WANDB_PROJECT="codeprm"
+export WANDB_PROJECT="coderm"
 export WANDB_NAME=$(basename $0 .sh)
 export DS_SKIP_CUDA_CHECK=1
 OUTDIR="./model_llama3_8b_generator"

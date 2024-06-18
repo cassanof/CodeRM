@@ -1,4 +1,4 @@
-python3 ../codeprm/eval/livecodebench_eval.py \
+python3 ../coderm/eval/livecodebench_eval.py \
   --model "codegenning/generator-sc2-15b" \
   --dataset "cassanof/livecodebench_lite_contaminated" \
   --temperature 0.8 \

@@ -3,7 +3,7 @@
 GRAD_ACC=$1
 LR=$2
 
-export WANDB_PROJECT="codeprm-orm-15b-sweep"
+export WANDB_PROJECT="coderm-orm-15b-sweep"
 export WANDB_NAME="sweep_starcoder2_15b_orm_raw50_${GRAD_ACC}_${LR}"
 OUTDIR="/dev/shm/model_starcoder2_15b_orm_raw50_${GRAD_ACC}_${LR}"
 HF_ORG="federico-staging"

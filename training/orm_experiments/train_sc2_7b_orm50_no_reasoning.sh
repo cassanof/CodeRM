@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export WANDB_PROJECT="codeprm-orm"
+export WANDB_PROJECT="coderm-orm"
 export WANDB_NAME="starcoder2_7b_orm50_no_reasoning"
 pushd ../code-scorer/
 python3 -m torch.distributed.launch \
@@ -15,7 +15,7 @@ python3 -m torch.distributed.launch \
   --save_dir "./model_starcoder2_7b_orm50_no_reasoning" \
   --dataset "codegenning/orm_dataset_raw50_no_reasoning" \
   --eval_dataset "codegenning/orm_eval_dataset" \
-  --model "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068" \
+  --model "/mnt/efs/federicocassano/coderm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068" \
   --deepspeed "./deepspeed_cfgs/no_offload.json" \
   --num_labels 2 \
   --bf16 \

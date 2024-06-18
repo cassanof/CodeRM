@@ -14,7 +14,7 @@ LRS=("1e-5" "2e-5" "4e-5")
 
 echo "Total configurations: ${#LRS[@]} x ${#GRAD_ACCS[@]} = $(( ${#LRS[@]} * ${#GRAD_ACCS[@]} ))"
 
-export WANDB_PROJECT="codeprm-sweep-15b"
+export WANDB_PROJECT="coderm-sweep-15b"
 export WANDB_JOB_TYPE="sweep"
 
 # loop over all configurations
