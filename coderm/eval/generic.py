@@ -381,6 +381,9 @@ def generic_eval_main(
         args.model_kind,
         args.model,
         num_gpus=args.num_gpus,
+        evolver_e=args.e,
+        evolver_t=args.t,
+        rm=args.rm,
     )
     items = partition_items(
         base_items, start_idx=args.start_idx, max_items=args.max_items)
@@ -471,7 +474,25 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=str,
         default="base",
         help="Model kind",
-        choices=["base", "few-shot", "openai"]
+        choices=["base", "few-shot", "openai", "evolver"]
+    )
+    parser.add_argument(
+        "-e",
+        type=int,
+        default=25,
+        help="Number of samples to evolve from"
+    )
+    parser.add_argument(
+        "-t",
+        type=float,
+        default=0.95,
+        help="Threshold for positive label to stop evolution"
+    )
+    parser.add_argument(
+        "--rm",
+        type=str,
+        default=None,
+        help="Reward model to use for the evolver"
     )
     parser.add_argument(
         "--num-gpus",

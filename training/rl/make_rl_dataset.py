@@ -1,6 +1,6 @@
 import datasets
 from transformers import AutoTokenizer
-from codeprm.prompts import py_prompt
+from coderm.prompts import py_prompt
 
 ORDER = ["EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"]
 
@@ -65,14 +65,15 @@ def main(args):
         if "starter_code" not in ex:
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
-        train_fmt.append({"prompt": p})
+        train_fmt.append(
+            {"prompt": p, "difficulty": ex["difficulty"]})
 
     for ex in test_dataset:
         post = ""
         if "starter_code" not in ex:
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
-        test_fmt.append({"prompt": p})
+        test_fmt.append({"prompt": p, "difficulty": ex["difficulty"]})
 
     ds = {
         "train": datasets.Dataset.from_list(train_fmt),

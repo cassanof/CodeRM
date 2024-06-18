@@ -2,7 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import threading
-from coderm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt
+from coderm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt, py_prompt_evolve
 from coderm.utils import markdown_codeblock_extract
 import torch
 
@@ -52,6 +52,9 @@ def model_factory(
         kind: str,
         name: str,
         num_gpus=1,
+        evolver_e=25,
+        evolver_t=0.95,
+        rm=None,
 ):
     if kind == "base":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
@@ -59,6 +62,11 @@ def model_factory(
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
     elif kind == "openai":
         return OpenAIChatModel(name, prompt_fn=py_prompt_2shot_lcb_chat)
+    elif kind == "evolver":
+        if rm is None:
+            raise ValueError(
+                "OutcomeRewardModel is required for evolver model. Set with the 'rm' parameter.")
+
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
@@ -127,8 +135,8 @@ class HFModel(BaseModel):
         from vllm import SamplingParams
         kwargs = kwargs.copy()
         stop = kwargs.pop("stop", [])
-        stop.append("# START NEW CODE")  # for few-shot prompts 
-        stop.append("# ==== EVOLVED CODE ====") # for evol approach
+        stop.append("# START NEW CODE")  # for few-shot prompts
+        stop.append("# ==== EVOLVED CODE ====")  # for evaluating base evolver
         gens = self.model.generate(
             prompts=prompts,
             sampling_params=SamplingParams(
@@ -223,6 +231,35 @@ class OutcomeRewardModel(ClassificationModel):
                     scores.append((float(1 - prob), float(prob)))
 
             return scores
+
+
+class EvolverModel(BaseModel):
+    def __init__(
+        self,
+        model_name: str,
+        rm_name: str,
+        num_gpus=1,
+        evolver_e=25,
+        evolver_t=0.95,
+        rm_device=None,
+        prompt_fn=py_prompt_evolve,
+    ):
+        super().__init__(model_name)
+        from vllm import LLM
+        self.model = LLM(
+            model_name,
+            tensor_parallel_size=num_gpus,
+            enforce_eager=True,
+            dtype=autodetect_dtype_str(),
+        )
+        self.rm = OutcomeRewardModel(rm_name, device=rm_device)
+        self.evolver_e = evolver_e
+        self.evolver_t = evolver_t
+        self.num_gpus = num_gpus
+        self.prompt_fn = prompt_fn
+
+    def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
+        raise NotImplementedError("TODO")
 
 
 def post_process_markdown(new: str) -> str:
