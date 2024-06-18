@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
 import threading
 from coderm.prompts import py_prompt, py_prompt_2shot_lcb, py_prompt_2shot_lcb_chat, Conversation, Prompt, py_prompt_evolve
@@ -9,18 +9,27 @@ import torch
 from abc import ABC, abstractmethod
 
 
+EVOLVED_SEP = "# ==== EVOLVED CODE ===="
+
+
 class Completion:
-    def __init__(self, code: str, cumulative_logprob: float, num_tokens: int):
+    def __init__(self, code: str, cumulative_logprob: float, num_tokens: int, orm_score: Optional[float] = None):
         self.code = code
         self.cumulative_logprob = cumulative_logprob
         self.num_tokens = num_tokens
+        self.orm_score = orm_score
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "code": self.code,
             "cumulative_logprob": self.cumulative_logprob,
             "num_tokens": self.num_tokens,
         }
+
+        if self.orm_score is not None:
+            d["orm_score"] = self.orm_score
+
+        return d
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "Completion":
@@ -31,6 +40,7 @@ class Completion:
             d["code"],
             d["cumulative_logprob"],
             d["num_tokens"],
+            orm_score=d.get("orm_score", None),
         )
 
 
@@ -66,7 +76,7 @@ def model_factory(
         if rm is None:
             raise ValueError(
                 "OutcomeRewardModel is required for evolver model. Set with the 'rm' parameter.")
-
+        return EvolverModel(name, rm, num_gpus=num_gpus, evolver_e=evolver_e, evolver_t=evolver_t)
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
@@ -136,13 +146,13 @@ class HFModel(BaseModel):
         kwargs = kwargs.copy()
         stop = kwargs.pop("stop", [])
         stop.append("# START NEW CODE")  # for few-shot prompts
-        stop.append("# ==== EVOLVED CODE ====")  # for evaluating base evolver
+        stop.append(EVOLVED_SEP)  # for evaluating base evolver
         gens = self.model.generate(
             prompts=prompts,
             sampling_params=SamplingParams(
-                top_p=kwargs.pop("top_p", 1.0),
+                top_p=kwargs.pop("top_p", 0.95),
                 temperature=kwargs.pop("temperature", 0.0),
-                max_tokens=kwargs.pop("max_tokens", 2048),
+                max_tokens=kwargs.pop("max_tokens", 4096),
                 stop=stop,
             ),
             use_tqdm=kwargs.pop("use_tqdm", False),
@@ -185,7 +195,7 @@ def detect_first_unused_device() -> str:
 
 
 class OutcomeRewardModel(ClassificationModel):
-    def __init__(self, model_name: str, device=None):
+    def __init__(self, model_name: str, device=None, pos_idx=1):
         super().__init__(model_name)
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
         if device is None:
@@ -204,6 +214,7 @@ class OutcomeRewardModel(ClassificationModel):
             self.is_classification = True
         else:
             self.is_classification = False
+        self.pos_idx = pos_idx
 
     def score(self, contents: List[str], **kwargs) -> List[Tuple[float, float]]:
         max_length = kwargs.get("max_length", 4096)
@@ -233,33 +244,71 @@ class OutcomeRewardModel(ClassificationModel):
             return scores
 
 
-class EvolverModel(BaseModel):
+EvolutionStrategy = Literal["cma", "es", "random"]
+
+
+class EvolverModel(HFModel):
     def __init__(
         self,
         model_name: str,
         rm_name: str,
         num_gpus=1,
-        evolver_e=25,
-        evolver_t=0.95,
+        evolver_e=25,  # maximum number of iterations
+        evolver_t=0.95,  # target reward rate. early stopping if reached
         rm_device=None,
-        prompt_fn=py_prompt_evolve,
+        prompt_fn=py_prompt,
+        evol_prompt_fn=py_prompt_evolve,
     ):
-        super().__init__(model_name)
-        from vllm import LLM
-        self.model = LLM(
-            model_name,
-            tensor_parallel_size=num_gpus,
-            enforce_eager=True,
-            dtype=autodetect_dtype_str(),
-        )
+        super().__init__(model_name, num_gpus=num_gpus, prompt_fn=prompt_fn)
         self.rm = OutcomeRewardModel(rm_name, device=rm_device)
         self.evolver_e = evolver_e
         self.evolver_t = evolver_t
-        self.num_gpus = num_gpus
-        self.prompt_fn = prompt_fn
+        self.evol_prompt_fn = evol_prompt_fn
+
+    def evolve(self, prompt: Prompt, program: Optional[str], **kwargs) -> Completion:
+        """
+        Evolves a program for the given task (from the prompt) into another program and 
+        scores the completion with the reward model.
+
+        If program is None, the model will generate the program from scratch.
+        """
+        assert isinstance(
+            prompt, str), "Prompt must be a string for evolver model"
+
+        if program is None:
+            evol_prompt = prompt
+        else:
+            evol_prompt = self.evol_prompt_fn(prompt + program)
+
+        completion = super().generate_with_info([evol_prompt], **kwargs)[0]
+        to_score = prompt + completion.code
+        scores = self.rm.score([to_score])[0][self.rm.pos_idx]
+        completion.orm_score = scores
+        return completion
+
+    def evol_generate(self, prompt: Prompt, **kwargs) -> Completion:
+        pool = []
+        for _ in range(self.evolver_e):
+            completion = self.evolve(prompt, None, **kwargs)
+            pool.append(completion)
+
+            assert completion.orm_score is not None, "ORM score is missing"
+            if completion.orm_score >= self.evolver_t:
+                break
+
+        best = max(pool, key=lambda c: c.orm_score)
+        return best
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        raise NotImplementedError("TODO")
+        # TODO: spend a weekend batching this
+        outs = []
+        for prompt in prompts:
+            res = self.evol_generate(prompt, **kwargs)
+            outs.append(res)
+        return outs
+
+    def format_prompt(self, question: str, code="") -> str:
+        return self.prompt_fn(question, code)  # not the evolve one!
 
 
 def post_process_markdown(new: str) -> str:
