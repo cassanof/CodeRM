@@ -4,3 +4,9 @@
 [submodule "training/code-scorer"]
 	path = training/code-scorer
 	url = git@github.com:cassanof/code-scorer
+[submodule "coderm/code_exec_server"]
+	path = coderm/code_exec_server
+	url = git@github.com:cassanof/code_exec_server
+[submodule "coderm/dataset/code-dedup"]
+	path = coderm/dataset/code-dedup
+	url = git@github.com:cassanof/code-dedup
