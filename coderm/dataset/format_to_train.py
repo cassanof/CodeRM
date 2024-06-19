@@ -33,14 +33,31 @@ def main(args):
         else:
             raise ValueError("Invalid strategy: " + args.strategy)
 
-    ds = datasets.Dataset.from_dict(
-        {"content": content, "solutions": solutions})
-    print("Printing one example:")
-    print(ds[0]["content"])
+    if args.rlxf:
+        # split prompt from solution
+        prompts = []
+        for c in content:
+            # find index of second '"""'
+            first = c.find('"""')
+            assert first != -1
+            second = c.find('"""', first + 3)
+            assert second != -1
+            prompts.append(c[:second + 3])
+        ds = datasets.Dataset.from_dict(
+            {"prompt": prompts, "response": solutions})
+        print("Printing one example:")
+        print(ds[0]["prompt"])
+        print(ds[0]["response"])
+    else:
+        ds = datasets.Dataset.from_dict(
+            {"content": content, "solution": solutions})
+        print("Printing one example:")
+        print(ds[0]["content"])
+
     print("New ds:")
     print(ds)
     ds.push_to_hub(args.push, private=True)
-    print("IMPORTANT: Remember to MinHash-dedup the dataset before training! Only dedup based on 'solutions' column.")
+    print("IMPORTANT: Remember to MinHash-dedup the dataset before training! Only dedup based on 'solution' (or 'response' for rlxf) column.")
 
 
 if __name__ == "__main__":
@@ -50,6 +67,7 @@ if __name__ == "__main__":
     parser.add_argument("--push", type=str, required=True)
     parser.add_argument("--mask_loss_mark", type=str, default=None)
     parser.add_argument("--sols_col", type=str, default="solutions")
+    parser.add_argument("--rlxf", action="store_true")
     parser.add_argument("--strategy", type=str, default="all",
                         choices=["all", "random", "high-loc"])
     args = parser.parse_args()
