@@ -136,7 +136,8 @@ class HFModel(BaseModel):
             tensor_parallel_size=num_gpus,
             enforce_eager=True,
             dtype=autodetect_dtype_str(),
-            # max_model_len=4096,
+            max_model_len=16384,
+            trust_remote_code=True,
         )
         self.num_gpus = num_gpus
         self.prompt_fn = prompt_fn
