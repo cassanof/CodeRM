@@ -564,6 +564,7 @@ class DeepseekV2MoE(nn.Module):
             )
 
     def forward(self, hidden_states):
+        dtype = hidden_states.dtype
         identity = hidden_states
         orig_shape = hidden_states.shape
         topk_idx, topk_weight, aux_loss = self.gate(hidden_states)
@@ -583,7 +584,7 @@ class DeepseekV2MoE(nn.Module):
             y = self.moe_infer(hidden_states, topk_idx, topk_weight).view(*orig_shape)
         if self.config.n_shared_experts is not None:
             y = y + self.shared_experts(identity)
-        return y
+        return y.to(dtype)
 
     @torch.no_grad()
     def moe_infer(self, x, topk_ids, topk_weight):
