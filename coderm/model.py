@@ -71,7 +71,7 @@ def model_factory(
     elif kind == "few-shot":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
     elif kind == "few-shot-chat":
-        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb_chat)
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb_chat, is_chat=True)
     elif kind == "openai":
         return OpenAIChatModel(name, prompt_fn=py_prompt_2shot_lcb_chat)
     elif kind == "evolver":
@@ -130,6 +130,7 @@ class HFModel(BaseModel):
             model_name: str,
             num_gpus=1,
             prompt_fn=py_prompt,
+            is_chat=False,
     ):
         super().__init__(model_name)
         from vllm import LLM
@@ -146,6 +147,7 @@ class HFModel(BaseModel):
         self.tokenizer = self.model.get_tokenizer()
         self.num_gpus = num_gpus
         self.prompt_fn = prompt_fn
+        self.is_chat = is_chat
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         from vllm import SamplingParams
@@ -167,7 +169,8 @@ class HFModel(BaseModel):
         for gen in gens:
             gen = gen.outputs[0]
             outs.append(Completion(
-                gen.text,
+                post_process_markdown(
+                    gen.text) if not self.is_chat else gen.text,
                 gen.cumulative_logprob,
                 len(gen.token_ids),
             ))
@@ -192,8 +195,12 @@ class HFModel(BaseModel):
         if isinstance(prompt, list):  # Conversation
             prompt = self.tokenizer.apply_chat_template(
                 prompt, add_generation_prompt=True, tokenize=False)
+            self.is_chat = True  # if it wasn't true before
 
         return prompt
+
+    def prefix_starter_code(self) -> bool:
+        return not self.is_chat
 
 
 def detect_first_unused_device() -> str:
