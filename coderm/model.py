@@ -70,6 +70,8 @@ def model_factory(
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
     elif kind == "few-shot":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
+    elif kind == "few-shot-chat":
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb_chat)
     elif kind == "openai":
         return OpenAIChatModel(name, prompt_fn=py_prompt_2shot_lcb_chat)
     elif kind == "evolver":
@@ -131,14 +133,17 @@ class HFModel(BaseModel):
     ):
         super().__init__(model_name)
         from vllm import LLM
+        model_lower = model_name.lower()
         self.model = LLM(
             model_name,
             tensor_parallel_size=num_gpus,
             enforce_eager=True,
             dtype=autodetect_dtype_str(),
-            max_model_len=16384,
+            max_model_len=8192 if "deepseek" in model_lower else 16384,
+            gpu_memory_utilization=1.0 if "deepseek" in model_lower else 0.9,
             trust_remote_code=True,
         )
+        self.tokenizer = model.get_tokenizer()
         self.num_gpus = num_gpus
         self.prompt_fn = prompt_fn
 
@@ -183,7 +188,12 @@ class HFModel(BaseModel):
             ray.shutdown()
 
     def format_prompt(self, question: str, code="") -> str:
-        return self.prompt_fn(question, code)
+        prompt = self.prompt_fn(question, code)
+        if isinstance(prompt, list):  # Conversation
+            prompt = self.tokenizer.apply_chat_template(
+                prompt, add_generation_prompt=True, tokenize=False)
+
+        return prompt
 
 
 def detect_first_unused_device() -> str:
