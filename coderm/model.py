@@ -143,7 +143,7 @@ class HFModel(BaseModel):
             gpu_memory_utilization=1.0 if "deepseek" in model_lower else 0.9,
             trust_remote_code=True,
         )
-        self.tokenizer = model.get_tokenizer()
+        self.tokenizer = self.model.get_tokenizer()
         self.num_gpus = num_gpus
         self.prompt_fn = prompt_fn
 
