@@ -170,7 +170,7 @@ class HFModel(BaseModel):
             gen = gen.outputs[0]
             outs.append(Completion(
                 post_process_markdown(
-                    gen.text) if not self.is_chat else gen.text,
+                    gen.text) if self.is_chat else gen.text,
                 gen.cumulative_logprob,
                 len(gen.token_ids),
             ))
