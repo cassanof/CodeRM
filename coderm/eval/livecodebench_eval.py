@@ -10,6 +10,9 @@ def main(args):
     # json loads all tests
     for i, item in enumerate(dataset):
         dataset[i]["input_output"] = json.loads(item["input_output"])
+        if "public_input_output" in item:
+            dataset[i]["public_input_output"] = json.loads(
+                item["public_input_output"])
 
     items = make_items_from_ds(
         dataset,
@@ -28,6 +31,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = get_generic_argparser("cassanof/livecodebench_lite_filtered")
+    parser = get_generic_argparser("codegenning/livecodebench_lite_filtered")
     args = parser.parse_args()
     main(args)
