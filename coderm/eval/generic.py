@@ -7,7 +7,7 @@ from tqdm import tqdm
 from coderm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
 from coderm.prompts import Prompt
 from coderm.utils import chunkify, gunzip_json_write, gunzip_json_read, container_restart
-from coderm.model import BaseModel, Completion
+from coderm.model import BaseModel, Completion, EvolverModel
 import os
 from coderm.model import model_factory
 
@@ -344,6 +344,12 @@ class EvaluationManager:
                 "dataset_name": self.dataset_name,
                 "items": [item.to_dict() for item in items],
             }
+
+            if isinstance(self.model, EvolverModel):
+                d["evolver_e"] = self.model.evolver_e
+                d["evolver_t"] = self.model.evolver_t
+                d["rm"] = self.model.rm
+
             gunzip_json_write(outpath, d)
         elif fmt == "datasets":
             import datasets
