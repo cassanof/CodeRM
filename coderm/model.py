@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
 import threading
@@ -262,7 +263,7 @@ class OutcomeRewardModel(ClassificationModel):
             return scores
 
 
-EvolutionStrategy = Literal["cma", "es", "random"]
+EvolutionStrategy = Literal["cma", "es", "random", "best"]
 
 
 class EvolverModel(HFModel):
@@ -273,6 +274,7 @@ class EvolverModel(HFModel):
         num_gpus=1,
         evolver_e=25,  # maximum number of iterations
         evolver_t=0.95,  # target reward rate. early stopping if reached
+        evolver_strategy: EvolutionStrategy = "random",
         rm_device=None,
         prompt_fn=py_prompt,
         evol_prompt_fn=py_prompt_evolve,
@@ -282,14 +284,9 @@ class EvolverModel(HFModel):
         self.evolver_e = evolver_e
         self.evolver_t = evolver_t
         self.evol_prompt_fn = evol_prompt_fn
+        self.evolver_strategy = evolver_strategy
 
-    def evolve(self, prompt: Prompt, program: Optional[str], **kwargs) -> Completion:
-        """
-        Evolves a program for the given task (from the prompt) into another program and 
-        scores the completion with the reward model.
-
-        If program is None, the model will generate the program from scratch.
-        """
+    def evolve_prompt(self, prompt: Prompt, program: Optional[str]) -> str:
         assert isinstance(
             prompt, str), "Prompt must be a string for evolver model"
 
@@ -298,32 +295,86 @@ class EvolverModel(HFModel):
         else:
             evol_prompt = self.evol_prompt_fn(prompt + program)
 
-        completion = super().generate_with_info([evol_prompt], **kwargs)[0]
-        to_score = prompt + completion.code
-        scores = self.rm.score([to_score])[0][self.rm.pos_idx]
-        completion.orm_score = scores
-        return completion
+        return evol_prompt
 
-    def evol_generate(self, prompt: Prompt, **kwargs) -> Completion:
-        pool = []
-        for _ in range(self.evolver_e):
-            completion = self.evolve(prompt, None, **kwargs)
-            pool.append(completion)
-
-            assert completion.orm_score is not None, "ORM score is missing"
-            if completion.orm_score >= self.evolver_t:
-                break
-
-        best = max(pool, key=lambda c: c.orm_score)
-        return best
+#
+#    def evol_generate(self, prompt: Prompt, **kwargs) -> Completion:
+#        pool = []
+#        for _ in range(self.evolver_e):
+#            to_evolve = None
+#            if len(pool) > 0:
+#                if self.evolver_strategy == "random":
+#                    to_evolve = np.random.choice(pool).code
+#                elif self.evolver_strategy == "best":
+#                    to_evolve = max(pool, key=lambda c: c.orm_score).code
+#                else:
+#                    raise NotImplementedError(
+#                        f"Evolution strategy {self.evolver_strategy} not implemented")
+#            else:
+#                to_evolve = None
+#
+#            completion = self.evolve(prompt, to_evolve, **kwargs)
+#            pool.append(completion)
+#
+#            assert completion.orm_score is not None, "ORM score is missing"
+#            if completion.orm_score >= self.evolver_t:
+#                break
+#
+#        best = max(pool, key=lambda c: c.orm_score)
+#        return best
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        # TODO: spend a weekend batching this
-        outs = []
-        for prompt in prompts:
-            res = self.evol_generate(prompt, **kwargs)
-            outs.append(res)
-        return outs
+        state = [{"pool": [], "early_stop": False}] * len(prompts)
+
+        for _ in tqdm(range(self.evolver_e), desc="Evolver iterations"):
+            evolve_prompts = []
+            og_prompts = []
+            for j, prompt in enumerate(prompts):
+                if state[j]["early_stop"]:
+                    evolve_prompts.append(None)
+                    og_prompts.append(None)
+                    continue
+
+                pool = state[j]["pool"]
+
+                to_evolve = None
+                if len(pool) > 0:
+                    if self.evolver_strategy == "random":
+                        to_evolve = np.random.choice(pool).code
+                    elif self.evolver_strategy == "best":
+                        to_evolve = max(pool, key=lambda c: c.orm_score).code
+                    else:
+                        raise NotImplementedError(
+                            f"Evolution strategy {self.evolver_strategy} not implemented")
+                else:
+                    to_evolve = None
+
+                evolve_prompt = self.evolve_prompt(prompt, to_evolve, **kwargs)
+                evolve_prompts.append(evolve_prompt)
+
+            completions = super().generate_with_info(
+                [p for p in evolve_prompts if p is not None], **kwargs)
+
+            for j, (completion, og_prompt) in enumerate(zip(completions, og_prompts)):
+                if og_prompt is None:
+                    continue
+
+                pool = state[j]["pool"]
+                to_score = og_prompt + completion.code
+                score = self.rm.score([to_score])[0][self.rm.pos_idx]
+                completion.orm_score = score
+                pool.append(completion)
+
+                if score >= self.evolver_t:
+                    state[j]["early_stop"] = True
+
+        bests = []
+        for i in range(len(prompts)):
+            pool = state[i]["pool"]
+            best = max(pool, key=lambda c: c.orm_score)
+            bests.append(best)
+
+        return bests
 
     def format_prompt(self, question: str, code="") -> str:
         return self.prompt_fn(question, code)  # not the evolve one!
