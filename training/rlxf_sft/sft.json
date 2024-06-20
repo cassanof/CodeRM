@@ -3,19 +3,20 @@
   "base": "codegenning/DeepSeek-Coder-V2-Lite-Base",
   "dataset": "codegenning/finetuning-taco-plain300k-rlxf-dedup",
   "save_model": true,
-  "save_strategy": "epoch",
+  "save_strategy": "steps",
+  "save_steps": 0.2,
   "save_final_model_output": true,
   "save_location": "/mnt/efs/federicocassano/t_models/deepseekcoder_22b_taco_plain300k",
   "hyperparams":
   {
       "mask_instruct": true,
       "packed": true,
-      "per_device_train_batch_size": 4,
-      "gradient_accumulation_steps": 4,
+      "per_device_train_batch_size": 8,
+      "gradient_accumulation_steps": 2,
       "num_train_epochs": 5,
       "learning_rate": 2e-5,
       "max_length": 8192,
-      "warmup_ratio": 0.1,
+      "warmup_ratio": 0.01,
       "lr_scheduler_type": "linear"
   },
   "wandb":
