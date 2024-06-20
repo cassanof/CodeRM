@@ -45,7 +45,7 @@ def markdown_codeblock_extract(response: str) -> str:
     buf = ""
     in_codeblock = False
     for ln in lines:
-        if ln.startswith("```"):
+        if ln.strip().startswith("```"):
             if in_codeblock:
                 break
             else:
