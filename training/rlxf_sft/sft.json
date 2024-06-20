@@ -1,6 +1,6 @@
 {
   "task": "sft",
-  "base": "deepseek-ai/DeepSeek-Coder-V2-Lite-Base",
+  "base": "codegenning/DeepSeek-Coder-V2-Lite-Base",
   "dataset": "codegenning/finetuning-taco-plain300k-rlxf-dedup",
   "save_model": true,
   "save_strategy": "epoch",
