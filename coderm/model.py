@@ -332,11 +332,10 @@ class EvolverModel(HFModel):
                 if og_prompt is None:
                     continue
 
-                pool = state[j]["pool"]
                 to_score = og_prompt + completion.code
                 score = self.rm.score([to_score])[0][self.rm.pos_idx]
                 completion.orm_score = score
-                pool.append(completion)
+                state[j]["pool"].append(completion)
 
                 if score >= self.evolver_t:
                     state[j]["early_stop"] = True
