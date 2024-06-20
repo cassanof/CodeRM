@@ -297,32 +297,6 @@ class EvolverModel(HFModel):
 
         return evol_prompt
 
-#
-#    def evol_generate(self, prompt: Prompt, **kwargs) -> Completion:
-#        pool = []
-#        for _ in range(self.evolver_e):
-#            to_evolve = None
-#            if len(pool) > 0:
-#                if self.evolver_strategy == "random":
-#                    to_evolve = np.random.choice(pool).code
-#                elif self.evolver_strategy == "best":
-#                    to_evolve = max(pool, key=lambda c: c.orm_score).code
-#                else:
-#                    raise NotImplementedError(
-#                        f"Evolution strategy {self.evolver_strategy} not implemented")
-#            else:
-#                to_evolve = None
-#
-#            completion = self.evolve(prompt, to_evolve, **kwargs)
-#            pool.append(completion)
-#
-#            assert completion.orm_score is not None, "ORM score is missing"
-#            if completion.orm_score >= self.evolver_t:
-#                break
-#
-#        best = max(pool, key=lambda c: c.orm_score)
-#        return best
-
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         state = [{"pool": [], "early_stop": False}] * len(prompts)
 
