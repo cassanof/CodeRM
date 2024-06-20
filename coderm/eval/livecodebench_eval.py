@@ -18,6 +18,7 @@ def main(args):
         dataset,
         "question",
         "input_output",
+        public_tests_col="public_input_output",
         starter_code_col="starter_code",
         difficulty_col="difficulty",
         random_sample=args.random_sample,

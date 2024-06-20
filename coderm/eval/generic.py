@@ -43,15 +43,30 @@ def read_completions_from_disk(path: str) -> Optional[List[Dict[str, Any]]]:
 
 
 class CompletionResult:
-    def __init__(self, passing: bool, output: str):
+    def __init__(
+            self,
+            passing: bool,
+            output: str,
+            passing_public: Optional[bool] = None,
+            output_public: Optional[str] = None
+    ):
         self.passing = passing
         self.output = output
+        self.passing_public = passing_public
+        self.output_public = output_public
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "passing": self.passing,
             "output": self.output,
         }
+
+        if self.passing_public is not None:
+            d["passing_public"] = self.passing_public
+        if self.output_public is not None:
+            d["output_public"] = self.output_public
+
+        return d
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "CompletionResult":
@@ -60,6 +75,8 @@ class CompletionResult:
         return CompletionResult(
             d["passing"],
             d["output"],
+            passing_public=d.get("passing_public"),
+            output_public=d.get("output_public"),
         )
 
 
@@ -70,12 +87,14 @@ class CompletionItem:
             prompt_col: str,
             tests_col: str,
             item: Dict[str, Any],
+            public_tests_col: Optional[str] = None,
             starter_code_col: Optional[str] = None,
             difficulty_col: Optional[str] = None,
     ):
         self.prompt_col = prompt_col
         self.starter_code_col = starter_code_col
         self.tests_col = tests_col
+        self.public_tests_col = public_tests_col
         self.item = item
         self.unique_name = unique_name
         self.difficulty_col = difficulty_col
@@ -88,6 +107,11 @@ class CompletionItem:
 
     def get_tests(self) -> Any:  # TODO: proper types
         return self.item[self.tests_col]
+
+    def get_public_tests(self) -> Any:
+        if self.public_tests_col is not None:
+            return self.item[self.public_tests_col]
+        return None
 
     def get_difficulty(self) -> Optional[str]:
         if self.difficulty_col is not None:
@@ -129,6 +153,7 @@ def make_items_from_ds(
         dataset,
         prompt_col: str,
         tests_col: str,
+        public_tests_col: Optional[str] = None,
         difficulty_col: Optional[str] = None,
         starter_code_col: Optional[str] = None,
         random_sample: Optional[int] = None,
@@ -166,6 +191,7 @@ def make_items_from_ds(
                 prompt_col,
                 tests_col,
                 item,
+                public_tests_col=public_tests_col,
                 starter_code_col=starter_code_col,
                 difficulty_col=difficulty_col,
             )
@@ -174,7 +200,7 @@ def make_items_from_ds(
     return items
 
 
-def partition_items(items: List[CompletionItem], start_idx: Optional[int], max_items: Optional[int]) -> List[CompletionItem]:
+def maybe_partition_items(items: List[CompletionItem], start_idx: Optional[int], max_items: Optional[int]) -> List[CompletionItem]:
     # warning if start_idx is not None and max_items is None and vice versa
     if (start_idx is not None and max_items is None) or (start_idx is None and max_items is not None):
         print("WARNING: start_idx and max_items should be used together for parallel processing. Ignoring them.")
@@ -261,8 +287,22 @@ class EvaluationManager:
                 self.save_completions(
                     items, save_path, fmt=save_fmt, verbose=False)
 
-    def evaluate_completions(self, items: List[CompletionItem], use_tqdm=True):
+    def evaluate_completions(self, items: List[CompletionItem], use_tqdm=True, exec_public=False):
         indexed_completions: List[Tuple[int, str]] = []
+
+        def exec_tests(tests):
+            time_limits = [items[i].get_timeout(
+                default=self.timeout) for i, _ in indexed_completions]
+            results = smart_exec_tests_queuebatched(
+                codes,
+                tests_per_code,
+                timeouts=time_limits,
+                executor=self.executor,
+                workers=self.exec_batch_size,
+                use_tqdm=use_tqdm,
+            )
+            return results
+
         for i, item in enumerate(items):
             for completion in item.completions:
                 indexed_completions.append((i, completion.code))
@@ -274,50 +314,30 @@ class EvaluationManager:
             codes = [completion for _, completion in indexed_completions]
 
         tests_per_code = [
-            items[i].get_tests() for i, _ in indexed_completions]
-        time_limits = [items[i].get_timeout(
-            default=self.timeout) for i, _ in indexed_completions]
-        results = smart_exec_tests_queuebatched(
-            codes,
-            tests_per_code,
-            timeouts=time_limits,
-            executor=self.executor,
-            workers=self.exec_batch_size,
-            use_tqdm=use_tqdm,
-        )
+            items[i].get_tests()
+            for i, _ in indexed_completions]
 
-        strugglers = []
-        for (i, c), (passing, output) in zip(indexed_completions, results):
+        results = exec_tests(tests_per_code)
+
+        comps = []
+        for (i, _), (passing, output) in zip(indexed_completions, results):
             if not passing and "Failed to execute program:" in output:
-                strugglers.append((i, c))
-            else:
-                items[i].results.append(CompletionResult(passing, output))
+                print(
+                    f"WARNING: Failed to execute program for item: {items[i].unique_name}")
 
-        if strugglers:
-            # wait for container to be alive (if not already)
-            max_retries = 5
-            for _ in range(max_retries):
-                if check_executor_alive(self.executor):
-                    break
-                time.sleep(1)
+            comp = CompletionResult(passing, output)
+            items[i].results.append(comp)
+            comps.append(comp)
 
-            # retry strugglers one by one
-            if use_tqdm:
-                strugglers = tqdm(
-                    strugglers,
-                    total=len(strugglers),
-                    desc="Container runtime failed, retrying one by one",
-                )
+        if exec_public:
+            public_tests_per_code = [
+                items[i].get_public_tests()
+                for i, _ in indexed_completions]
+            public_results = exec_tests(public_tests_per_code)
 
-            for i, c in strugglers:
-                result = smart_exec_tests(
-                    items[i].get_starter_code() + c,
-                    items[i].get_tests(),
-                    timeout=items[i].get_timeout(default=self.timeout),
-                    executor=self.executor,
-                )
-                passing, output = result
-                items[i].results.append(CompletionResult(passing, output))
+            for comp, (passing, output) in zip(comps, public_results):
+                comp.passing_public = passing
+                comp.output_public = output
 
         return results
 
@@ -391,7 +411,7 @@ def generic_eval_main(
         evolver_t=args.t,
         rm=args.rm,
     )
-    items = partition_items(
+    items = maybe_partition_items(
         base_items, start_idx=args.start_idx, max_items=args.max_items)
     manager = EvaluationManager(
         model=model,
@@ -422,7 +442,8 @@ def generic_eval_main(
         # clean GPU memory, model not needed anymore
         model.free_memory()
         # evaluate
-        manager.evaluate_completions(items, use_tqdm=True)
+        manager.evaluate_completions(
+            items, use_tqdm=True, exec_public=args.exec_public)
         # save after exec
         manager.save_completions(items, args.output, fmt=args.output_format)
 
@@ -534,6 +555,11 @@ def get_generic_argparser(dataset_default: str, split="test"):
         "--no-exec",
         action="store_true",
         help="Don't execute the completions"
+    )
+    parser.add_argument(
+        "--exec-public",
+        action="store_true",
+        help="Executes public test cases separately. Adds a 'passing_public' key to the results."
     )
     parser.add_argument(
         "--output",
