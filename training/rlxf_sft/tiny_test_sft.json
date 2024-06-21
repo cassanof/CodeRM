@@ -1,7 +1,7 @@
 {
   "task": "sft",
   "base": "TinyLlama/TinyLlama_v1.1_math_code",
-  "dataset": "codegenning/finetuning-taco-plain300k-rlxf-dedup",
+  "dataset": "cassanof/testing_subset",
   "save_model": false,
   "save_final_model_output": false,
   "hyperparams": {
