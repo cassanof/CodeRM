@@ -18,6 +18,8 @@ def get_err_kind(r: Union[dict, CompletionResult]) -> str:
         t = "Timeout"
     elif "expected" in o and "but got" in o or "AssertionError" in o:
         t = "Failed"
+    elif "Failed to execute program:" in o:
+        t = "Error"
     else:
         t = "Exception"
     return t
@@ -86,12 +88,14 @@ def main(args):
         og_item = copy.deepcopy(og_item)
         if args.redo == "all":
             redo_item.completions = og_item.completions
-        elif args.redo in ["failed", "timeout"]:
+        elif args.redo in ["failed", "timeout", "error"]:
             # if "failed", redo all, if "timeout", redo only timeouts
             completions_to_redo = []
             for c, r in zip(og_item.completions, og_item.results):
                 if not r.passing:
-                    if args.redo == "failed" or (args.redo == "timeout" and get_err_kind(r) == "Timeout"):
+                    if args.redo == "failed" or \
+                            (args.redo == "timeout" and get_err_kind(r) == "Timeout") or \
+                            (args.redo == "error" and get_err_kind(r) == "Error"):
                         completions_to_redo.append(c)
             redo_item.completions = completions_to_redo
 
@@ -143,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("--exec-public", action="store_true")
     parser.add_argument("--exec-batch-size", type=int, default=os.cpu_count())
     parser.add_argument(
-        "--redo", type=str, choices=["failed", "timeout", "all"], default="timeout")
+        "--redo", type=str, choices=["failed", "timeout", "error", "all"], default="error")
     parser.add_argument("--executor", type=str,
                         default="http://127.0.0.1:8000")
     parser.add_argument("--timeout", type=int,
