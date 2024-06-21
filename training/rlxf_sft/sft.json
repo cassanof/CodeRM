@@ -4,7 +4,7 @@
   "dataset": "codegenning/finetuning-taco-plain300k-rlxf-dedup",
   "save_model": true,
   "save_strategy": "steps",
-  "save_steps": 0.2,
+  "save_steps": 0.1,
   "save_final_model_output": true,
   "save_location": "/mnt/efs/federicocassano/t_models/deepseekcoder_22b_taco_plain300k",
   "hyperparams":
