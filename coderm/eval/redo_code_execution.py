@@ -101,7 +101,7 @@ def main(args):
         start_anti_congestion_routine()
 
     # 2. redo completions
-    manager.evaluate_completions(redo_items)
+    manager.evaluate_completions(redo_items, exec_public=args.exec_public)
 
     assert len(og_items) == len(redo_items)
     # 3. merge in redone completions to original items
@@ -136,6 +136,7 @@ if __name__ == "__main__":
                         help="Path to the output completion file")
     parser.add_argument("--no-prefix-starter-code", action="store_true")
     parser.add_argument("--anti-congestion", action="store_true")
+    parser.add_argument("--exec-public", action="store_true")
     parser.add_argument("--exec-batch-size", type=int, default=os.cpu_count())
     parser.add_argument(
         "--redo", type=str, choices=["failed", "timeout", "all"], default="timeout")
