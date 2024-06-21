@@ -1,8 +1,14 @@
-# LLMS for Competitive Programming
+# LLMs for Competitive Programming
 
 **IMPORTANT**: after cloning the repo install the submodules by running `git submodule update --init --recursive`.
 
 Then install the package with `pip install -e .`.
+
+#### Magic incantation for DeepSeekCoder V2
+
+```
+CUDACXX=/usr/local/cuda-12.1/bin/nvcc CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=native" FORCE_CMAKE=1 pip3 install git+https://github.com/seungduk-yanolja/vllm-deepseek.git@main
+```
 
 ## Evaluation
 
