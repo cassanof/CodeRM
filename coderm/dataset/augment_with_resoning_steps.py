@@ -1031,9 +1031,11 @@ def main(args):
 
     dataset = datasets.load_dataset(args.dataset, split="train")
 
-
     if args.sample:
-        dataset = dataset.select(range(args.sample))
+        dataset = dataset.select(
+            range(args.start_idx, args.start_idx + args.sample))
+    else:
+        dataset = dataset.select(range(args.start_idx, len(dataset)))
 
     def shuffle_solutions(ex):
         solns = ex["solutions"]
@@ -1041,7 +1043,8 @@ def main(args):
         return {"solutions": solns}
 
     # randomize solutions. there is some order in the solutions, so we shuffle them
-    dataset = dataset.map(lambda ex: shuffle_solutions(ex), desc="Shuffling solutions")
+    dataset = dataset.map(lambda ex: shuffle_solutions(ex),
+                          desc="Shuffling solutions")
 
     indexed_prompts = []
     for i, ex in tqdm(enumerate(dataset), desc="Processing dataset"):
@@ -1113,7 +1116,10 @@ def main(args):
                 with_steps[i][j] = out
 
     dataset = dataset.add_column("reasoning_steps", with_steps)
-    dataset.push_to_hub(args.push, private=True)
+    if args.push:
+        dataset.push_to_hub(args.output, private=True)
+    else:
+        dataset.save_to_disk(args.output)
 
 
 if __name__ == "__main__":
@@ -1124,13 +1130,15 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--dataset", type=str,
-                        default="cassanof/taco_cleaned_exec_filtered_v4")
+                        default="codegenning/taco_cleaned_exec_filtered")
     parser.add_argument("--sample", type=int, default=None)
+    parser.add_argument("--start-idx", type=int, default=0)
     parser.add_argument("--max-shots", type=int, default=3)
     parser.add_argument("--max-solns", type=int, default=10)
     parser.add_argument("--retry-k", type=int, default=5)
     parser.add_argument("--retry-temp", type=float, default=0.45)
-    parser.add_argument("--push", type=str, required=True)
+    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--push", action="store_true")
     parser.add_argument(
         "--no_prefix_caching",
         dest="no_prefix_caching",
