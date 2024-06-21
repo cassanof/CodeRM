@@ -13,7 +13,7 @@
       "packed": false,
       "per_device_train_batch_size": 8,
       "gradient_accumulation_steps": 2,
-      "num_train_epochs": 5,
+      "num_train_epochs": 2,
       "learning_rate": 2e-5,
       "max_length": 8192,
       "warmup_ratio": 0.01,
