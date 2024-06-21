@@ -29,7 +29,6 @@ for ((i=0; i<NUM_GPUS; i++)); do
   CUDA_VISIBLE_DEVICES=$i python3 coderm/dataset/augment_with_resoning_steps.py \
     --batch-size 1024 \
     --output "$OUTDIR/chunk_$i" \
-    --output-format datasets \
     --max-solns $MAX_SOLNS \
     --retry-k 3 \
     --start-idx $START_IDX \
