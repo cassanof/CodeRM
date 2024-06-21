@@ -14,6 +14,22 @@ COMPLETION_LIMIT=${COMPLETION_LIMIT:-1}
 BATCH_SIZE=${BATCH_SIZE:-256}
 EXEC_BATCH_SIZE=${EXEC_BATCH_SIZE:-$(nproc)}
 
+
+
+# if the SCRIPT contains livecodebench
+if [[ $SCRIPT == *"livecodebench"* ]]; then
+    DATASET=${DATASET:-"codegenning/livecodebench_lite_filtered"}
+elif [[ $SCRIPT == *"humaneval"* ]]; then
+    DATASET=${DATASET:-"cassanof/humanevalplus_formatted"}
+else
+  # error out if the dataset is not set
+  if [ -z "$DATASET" ]; then
+      echo "DATASET must be set for the script $SCRIPT"
+      exit 1
+  fi
+fi
+echo "IMPORTANT: running with the dataset $DATASET - make sure this is the right dataset for the checkpoints you are evaluating"
+
 # string version of TEMPERATURE, without the dot
 TEMPERATURE_STR=$(echo $TEMPERATURE | tr -d . | tr - _)
 
@@ -66,6 +82,7 @@ for (( gi=0; gi<${#CHECKPOINT_GROUPS[@]}; gi++ )); do
         --completion-limit $COMPLETION_LIMIT \
         --batch-size $BATCH_SIZE \
         --exec-batch-size $EXEC_BATCH_SIZE \
+        --dataset $DATASET \
         --output $OUTPUT_PATH &
       PIDS+=($!)
   done
