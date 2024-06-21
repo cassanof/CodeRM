@@ -45,6 +45,9 @@ def main(args):
     # json loads all tests
     for i, og_item in enumerate(dataset):
         dataset[i]["input_output"] = json.loads(og_item["input_output"])
+        if "public_input_output" in og_item:
+            dataset[i]["public_input_output"] = json.loads(
+                og_item["public_input_output"])
 
     manager = EvaluationManager(
         model=MockModel(not args.no_prefix_starter_code),
@@ -64,6 +67,7 @@ def main(args):
             dataset,
             "question",
             "input_output",
+            public_tests_col="public_input_output",
             starter_code_col="starter_code",
             difficulty_col="difficulty",
             random_sample=None,
