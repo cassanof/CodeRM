@@ -349,7 +349,7 @@ class EvaluationManager:
             verbose=True,
     ):
         if fmt == "gzjson":
-            outpath = Path(output_path + ".json.gz")
+            outpath = Path(output_path)
             if outpath.exists():
                 outpath.unlink()
             outpath.parent.mkdir(parents=True, exist_ok=True)
