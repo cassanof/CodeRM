@@ -111,8 +111,9 @@ def get_public_acc(items, n=None) -> Optional[float]:
             results = results[:n]
 
         for result in results:
-            if "passing_public" is None:
+            if "passing_public" not in result:
                 return None  # No public labels found
+
             if result["passing_public"]:
                 passing_public = result
 
