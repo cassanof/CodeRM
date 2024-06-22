@@ -85,8 +85,8 @@ def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[flo
 
                 score = result["orm_1_score"]
 
-                # reshape score
-                if prod is not None:
+                # reshape score if needed
+                if prod == "unnormalized":
                     score *= np.exp(result["cumulative_logprob"])
                 elif prod == "normalized":
                     score *= np.exp(result["cumulative_logprob"] /
