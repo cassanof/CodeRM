@@ -2,7 +2,7 @@
 Takes in a result file and spits out the pass@k metrics.
 """
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 import numpy as np
 from coderm.utils import gunzip_json_read
 
@@ -33,7 +33,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Optional[float]:
+def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[float], Optional[float]]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -47,11 +47,24 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Optional[float]:
 
     The ensemble parameter allows to combine multiple ORM scores in a single result.
     """
+    def shape_score(score, result):
+        if prod == "unnormalized":
+            score *= np.exp(result["cumulative_logprob"])
+        elif prod == "normalized":
+            score *= np.exp(result["cumulative_logprob"] /
+                            result["num_tokens"])
+        return score
+
     correct = 0
+    correct_with_public = 0
     total = 0
+
     for item in items:
         max_score = -1
         max_res = None
+
+        max_score_with_public = -1
+        max_res_with_public = None
 
         results = item["results"]
         if n is not None:
@@ -65,7 +78,6 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Optional[float]:
                 scores = []
                 for r in result["orms"]:
                     scores.append(r["orm_1_score"])
-
                 if ensemble == "min":
                     score = min(scores)
                 elif ensemble == "mean":
@@ -73,25 +85,32 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Optional[float]:
                 else:
                     raise ValueError(f"Unknown ensemble method {ensemble}")
             else:
-                return None  # No ORM labels found
+                return None, None  # No labels found
 
+            score = shape_score(score, result)
             if score > max_score:
-                if prod == "unnormalized":
-                    score *= np.exp(result["cumulative_logprob"])
-                elif prod == "normalized":
-                    score *= np.exp(result["cumulative_logprob"] /
-                                    result["num_tokens"])
                 max_score = score
                 max_res = result
+
+            if "passing_public" not in result:
+                correct_with_public = None
+            elif result["passing_public"]:
+                if score > max_score_with_public:
+                    max_score_with_public = score
+                    max_res_with_public = result
 
         assert max_res is not None, "No ORM labels found"
 
         if max_res["passing"]:
             correct += 1
 
+        if max_res_with_public and max_res_with_public["passing"]:
+            assert correct_with_public is not None
+            correct_with_public += 1
+
         total += 1
 
-    return correct / total
+    return correct / total, ((correct_with_public / total) if correct_with_public is not None else None)
 
 
 def get_public_acc(items, n=None) -> Optional[float]:
@@ -140,18 +159,20 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
     pass_ks = get_pass_ks(items, k)
     mean_pass_k = round(np.mean(pass_ks) * 100, 4)
 
-    orm_acc = get_orm_acc(items, prod=orm_prod, n=orm_n)
+    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=orm_n)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
+    orm_acc_public = round(orm_acc_public * 100,
+                           4) if orm_acc_public is not None else "N/A"
 
     public_acc = get_public_acc(items, n=public_n)
     public_acc = round(
         public_acc * 100, 4) if public_acc is not None else "N/A"
 
-    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc}"
+    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public}"
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm@{1|n},public@{1|n}"
+    header = "name,dataset size,n,k,avg pass@k,orm@{1|n},public@{1|n},orm+public@{1|n}"
     print(header)
     for file in args.inputs:
         print(
