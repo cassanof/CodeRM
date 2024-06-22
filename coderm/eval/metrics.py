@@ -33,7 +33,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None, consider=None, ensemble="min") -> Optional[float]:
+def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Optional[float]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -54,9 +54,9 @@ def get_orm_acc(items, prod=None, consider=None, ensemble="min") -> Optional[flo
         max_res = None
 
         results = item["results"]
-        if consider is not None:
-            assert consider > 0, "orm consider parameter should be > 0"
-            results = results[:consider]
+        if n is not None:
+            assert n > 0, "orm consider parameter should be > 0"
+            results = results[:n]
 
         for result in results:
             if "orm_1_score" in result:  # single ORM
@@ -94,7 +94,37 @@ def get_orm_acc(items, prod=None, consider=None, ensemble="min") -> Optional[flo
     return correct / total
 
 
-def per_file_metrics(file: Path, k: int, orm_prod=None, orm_consider=None) -> str:
+def get_public_acc(items, n=None) -> Optional[float]:
+    """
+    Calculates the public@n accuracy, if the results contain public labels.
+
+    The consider parameter allows to consider only the first N samples for public accuracy.
+    """
+    correct = 0
+    total = 0
+    for item in items:
+        passing_public = None
+
+        results = item["results"]
+        if n is not None:
+            assert n > 0, "public consider parameter should be > 0"
+            results = results[:n]
+
+        for result in results:
+            if "passing_public" is None:
+                return None  # No public labels found
+            if result["passing_public"]:
+                passing_public = result
+
+        if passing_public and passing_public["passing"]:
+            correct += 1
+
+        total += 1
+
+    return correct / total
+
+
+def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=None) -> str:
     if file.is_dir():
         import datasets
         ds = datasets.load_from_disk(file)
@@ -108,18 +138,29 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_consider=None) -> st
 
     pass_ks = get_pass_ks(items, k)
     mean_pass_k = round(np.mean(pass_ks) * 100, 4)
-    orm_acc = get_orm_acc(items, prod=orm_prod, consider=orm_consider)
+
+    orm_acc = get_orm_acc(items, prod=orm_prod, n=orm_n)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
 
-    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc}"
+    public_acc = get_public_acc(items, n=public_n)
+    public_acc = round(
+        public_acc * 100, 4) if public_acc is not None else "N/A"
+
+    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc}"
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm pass@{1|n}"
+    header = "name,dataset size,n,k,avg pass@k,orm@{1|n},public@{1|n}"
     print(header)
     for file in args.inputs:
-        print(per_file_metrics(Path(file), args.k,
-              orm_prod=args.orm_prod, orm_consider=args.orm_consider))
+        print(
+            per_file_metrics(
+                file=Path(file),
+                k=args.k,
+                orm_prod=args.orm_prod,
+                orm_n=args.orm_n,
+            )
+        )
 
 
 if __name__ == "__main__":
@@ -145,10 +186,16 @@ if __name__ == "__main__":
         help="Product of logprobs for ORM accuracy"
     )
     parser.add_argument(
-        "--orm-consider",
+        "--orm-n",
         type=int,
         default=None,
         help="How many samples should be considered for ORM accuracy",
+    )
+    parser.add_argument(
+        "--public-n",
+        type=int,
+        default=None,
+        help="How many samples should be considered for public@n accuracy",
     )
     parser.add_argument(
         "--orm-ensemble",
