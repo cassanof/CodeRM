@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional, Tuple
 import numpy as np
 from coderm.utils import gunzip_json_read
-from queue import PriorityQueue
 
 
 def pass_at_k(n: int, c: int, k: int) -> float:
@@ -34,7 +33,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc_old(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Optional[float]]:
+def get_orm_acc(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Optional[float]]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -46,22 +45,17 @@ def get_orm_acc_old(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Opt
 
     The n parameter allows to consider only the first N samples for ORM accuracy.
     """
-    correct = 0
-    correct_with_public = 0
-    total = 0
+    correct_pass = []
+    correct_with_public_pass = []
 
     for item in items:
-        max_score = -1
-        max_res = None
-
-        max_score_with_public = -1
-        max_res_with_public = None
-
         results = item["results"]
         if n is not None:
-            assert n > 0, "orm consider parameter should be > 0"
+            assert n > 0, "n parameter should be > 0"
             results = results[:n]
 
+        score_results = []
+        score_results_with_public = []
         for result in results:
             if "orm_1_score" not in result:
                 return None, None  # No labels found
@@ -75,42 +69,34 @@ def get_orm_acc_old(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Opt
                 score *= np.exp(result["cumulative_logprob"] /
                                 result["num_tokens"])
 
-            if score > max_score:  # normal case
-                max_score = score
-                max_res = result
-
+            score_results.append((score, result["passing"]))
             if "passing_public" not in result:  # case combined with public execution labels
-                correct_with_public = None
+                score_results_with_public = None
             elif result["passing_public"]:
-                if score > max_score_with_public:
-                    max_score_with_public = score
-                    max_res_with_public = result
+                assert score_results_with_public is not None
+                score_results_with_public.append((score, result["passing"]))
 
-        assert max_res is not None, "No ORM labels found"
+        score_results.sort(key=lambda x: x[0], reverse=True)
+        top_k = score_results[:k]
+        correct_pass.append(any(passing for _, passing in top_k))
 
-        if max_res["passing"]:
-            correct += 1
+        if score_results_with_public is not None:
+            score_results_with_public.sort(key=lambda x: x[0], reverse=True)
+            top_k_with_public = score_results_with_public[:k]
+            correct_with_public_pass.append(
+                any(passing for _, passing in top_k_with_public))
 
-        if max_res_with_public and max_res_with_public["passing"]:
-            assert correct_with_public is not None
-            correct_with_public += 1
-
-        total += 1
-
-    return correct / total, ((correct_with_public / total) if correct_with_public is not None else None)
+    return np.mean(correct_pass), np.mean(correct_with_public_pass) if correct_with_public_pass else None
 
 
-def get_public_acc(items, n=None) -> Optional[float]:
+def get_public_acc(items, n=None, k=1) -> Optional[float]:
     """
     Calculates the public@n accuracy, if the results contain public labels.
 
     The consider parameter allows to consider only the first N samples for public accuracy.
     """
-    correct = 0
-    total = 0
+    correct = []
     for item in items:
-        passing_public = None
-
         results = item["results"]
         if n is not None:
             assert n > 0, "public consider parameter should be > 0"
@@ -120,15 +106,19 @@ def get_public_acc(items, n=None) -> Optional[float]:
             if "passing_public" not in result:
                 return None  # No public labels found
 
-            if result["passing_public"]:
-                passing_public = result
+            passing_public = []
+            not_passing_public = []
+            for result in results:
+                if result["passing_public"]:
+                    passing_public.append(result)
+                else:
+                    not_passing_public.append(result)
 
-        if passing_public and passing_public["passing"]:
-            correct += 1
+            res = passing_public + not_passing_public
+            top_k = res[:k]
+            correct.append(any(result["passing"] for result in top_k))
 
-        total += 1
-
-    return correct / total
+    return np.mean(correct)
 
 
 def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=None) -> str:
@@ -146,12 +136,12 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
     pass_ks = get_pass_ks(items, k)
     mean_pass_k = round(np.mean(pass_ks) * 100, 4)
 
-    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=orm_n)
+    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=orm_n, k=k)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
     orm_acc_public = round(orm_acc_public * 100,
                            4) if orm_acc_public is not None else "N/A"
 
-    public_acc = get_public_acc(items, n=public_n)
+    public_acc = get_public_acc(items, n=public_n, k=k)
     public_acc = round(
         public_acc * 100, 4) if public_acc is not None else "N/A"
 
@@ -159,7 +149,7 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm@{1|n},public@{1|n},orm+public@{1|n}"
+    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n}"
     print(header)
     for file in args.inputs:
         print(
