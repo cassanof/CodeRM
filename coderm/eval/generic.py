@@ -295,7 +295,7 @@ class EvaluationManager:
                 default=self.timeout) for i, _ in indexed_completions]
             results = smart_exec_tests_queuebatched(
                 codes,
-                tests_per_code,
+                tests,
                 timeouts=time_limits,
                 executor=self.executor,
                 workers=self.exec_batch_size,
