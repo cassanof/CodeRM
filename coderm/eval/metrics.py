@@ -4,6 +4,7 @@ Takes in a result file and spits out the pass@k metrics.
 from pathlib import Path
 from typing import Optional, Tuple
 import numpy as np
+import random
 from coderm.utils import gunzip_json_read
 
 
@@ -33,7 +34,21 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Optional[float]]:
+def approximate_perms(n, max_n, max_perms=100):
+    # we average multiple random permutations for n > 1
+    # we approximate the number of permutations required based on n and len(items[0]["results"])
+    # the closer n is to len(items[0]["results"]), the less permutations are required
+    max_perms = 100
+    if n is None or n == max_n:
+        perms = 1
+    else:
+        perms = int(max_perms * (1 - (n / max_n)) + 1)
+        perms = min(perms, max_perms)
+
+    return perms
+
+
+def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[float], Optional[float]]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -45,80 +60,105 @@ def get_orm_acc(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Optiona
 
     The n parameter allows to consider only the first N samples for ORM accuracy.
     """
-    correct_pass = []
-    correct_with_public_pass = []
 
-    for item in items:
-        results = item["results"]
-        if n is not None:
-            assert n > 0, "n parameter should be > 0"
-            results = results[:n]
+    random.seed(42)
+    if perms is None:
+        perms = approximate_perms(n, len(items[0]["results"]))
 
-        score_results = []
-        score_results_with_public = []
-        for result in results:
-            if "orm_1_score" not in result:
-                return None, None  # No labels found
+    orm_acc = 0
+    public_acc = 0
+    for _ in range(perms):
+        correct_pass = []
+        correct_with_public_pass = []
 
-            score = result["orm_1_score"]
+        for item in items:
+            results = item["results"]
+            if n is not None:
+                assert n > 0, "n parameter should be > 0"
+                results = random.sample(results, n)
 
-            # reshape score
-            if prod is not None:
-                score *= np.exp(result["cumulative_logprob"])
-            elif prod == "normalized":
-                score *= np.exp(result["cumulative_logprob"] /
-                                result["num_tokens"])
+            score_results = []
+            score_results_with_public = []
+            for result in results:
+                if "orm_1_score" not in result:
+                    return None, None  # No labels found
 
-            score_results.append((score, result["passing"]))
-            if "passing_public" not in result:  # case combined with public execution labels
-                score_results_with_public = None
-            elif result["passing_public"]:
-                assert score_results_with_public is not None
-                score_results_with_public.append((score, result["passing"]))
+                score = result["orm_1_score"]
 
-        score_results.sort(key=lambda x: x[0], reverse=True)
-        top_k = score_results[:k]
-        correct_pass.append(any(passing for _, passing in top_k))
+                # reshape score
+                if prod is not None:
+                    score *= np.exp(result["cumulative_logprob"])
+                elif prod == "normalized":
+                    score *= np.exp(result["cumulative_logprob"] /
+                                    result["num_tokens"])
 
-        if score_results_with_public is not None:
-            score_results_with_public.sort(key=lambda x: x[0], reverse=True)
-            top_k_with_public = score_results_with_public[:k]
-            correct_with_public_pass.append(
-                any(passing for _, passing in top_k_with_public))
+                score_results.append((score, result["passing"]))
+                if "passing_public" not in result:  # case combined with public execution labels
+                    score_results_with_public = None
+                elif result["passing_public"]:
+                    assert score_results_with_public is not None
+                    score_results_with_public.append(
+                        (score, result["passing"]))
 
-    return np.mean(correct_pass), np.mean(correct_with_public_pass) if correct_with_public_pass else None
+            score_results.sort(key=lambda x: x[0], reverse=True)
+            top_k = score_results[:k]
+            correct_pass.append(any(passing for _, passing in top_k))
+
+            if score_results_with_public is not None:
+                score_results_with_public.sort(
+                    key=lambda x: x[0], reverse=True)
+                top_k_with_public = score_results_with_public[:k]
+                correct_with_public_pass.append(
+                    any(passing for _, passing in top_k_with_public))
+
+        orm_acc += np.mean(correct_pass)
+        if correct_with_public_pass:
+            public_acc += np.mean(correct_with_public_pass)
+        else:
+            public_acc = None
+
+    return orm_acc / perms, public_acc / perms if public_acc is not None else None
 
 
-def get_public_acc(items, n=None, k=1) -> Optional[float]:
+def get_public_acc(items, n=None, k=1, perms=None) -> Optional[float]:
     """
     Calculates the public@n accuracy, if the results contain public labels.
 
     The consider parameter allows to consider only the first N samples for public accuracy.
     """
-    correct = []
-    for item in items:
-        results = item["results"]
-        if n is not None:
-            assert n > 0, "public consider parameter should be > 0"
-            results = results[:n]
+    random.seed(42)
+    public_acc = 0
 
-        for result in results:
-            if "passing_public" not in result:
-                return None  # No public labels found
+    if perms is None:
+        perms = approximate_perms(n, len(items[0]["results"]))
 
-            passing_public = []
-            not_passing_public = []
+    for _ in range(perms):
+        correct = []
+        for item in items:
+            results = item["results"]
+            if n is not None:
+                assert n > 0, "public consider parameter should be > 0"
+                results = results[:n]
+
             for result in results:
-                if result["passing_public"]:
-                    passing_public.append(result)
-                else:
-                    not_passing_public.append(result)
+                if "passing_public" not in result:
+                    return None  # No public labels found
 
-            res = passing_public + not_passing_public
-            top_k = res[:k]
-            correct.append(any(result["passing"] for result in top_k))
+                passing_public = []
+                not_passing_public = []
+                for result in results:
+                    if result["passing_public"]:
+                        passing_public.append(result)
+                    else:
+                        not_passing_public.append(result)
 
-    return np.mean(correct)
+                res = passing_public + not_passing_public
+                top_k = res[:k]
+                correct.append(any(result["passing"] for result in top_k))
+
+        public_acc += np.mean(correct)
+
+    return public_acc / perms
 
 
 def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=None) -> str:
