@@ -160,6 +160,7 @@ def main(args):
                 k=args.k,
                 orm_prod=args.orm_prod,
                 orm_n=args.orm_n,
+                public_n=args.public_n
             )
         )
 
