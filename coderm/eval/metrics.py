@@ -47,14 +47,6 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[floa
 
     The ensemble parameter allows to combine multiple ORM scores in a single result.
     """
-    def shape_score(score, result):
-        if prod == "unnormalized":
-            score *= np.exp(result["cumulative_logprob"])
-        elif prod == "normalized":
-            score *= np.exp(result["cumulative_logprob"] /
-                            result["num_tokens"])
-        return score
-
     correct = 0
     correct_with_public = 0
     total = 0
@@ -87,12 +79,18 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[floa
             else:
                 return None, None  # No labels found
 
-            score = shape_score(score, result)
-            if score > max_score:
+            # reshape score
+            if prod is not None:
+                score *= np.exp(result["cumulative_logprob"])
+            elif prod == "normalized":
+                score *= np.exp(result["cumulative_logprob"] /
+                                result["num_tokens"])
+
+            if score > max_score:  # normal case
                 max_score = score
                 max_res = result
 
-            if "passing_public" not in result:
+            if "passing_public" not in result:  # case combined with public execution labels
                 correct_with_public = None
             elif result["passing_public"]:
                 if score > max_score_with_public:
