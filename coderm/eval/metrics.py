@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 import numpy as np
 from coderm.utils import gunzip_json_read
+from queue import PriorityQueue
 
 
 def pass_at_k(n: int, c: int, k: int) -> float:
@@ -33,7 +34,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[float], Optional[float]]:
+def get_orm_acc_old(items, prod=None, n=None, k=1) -> Tuple[Optional[float], Optional[float]]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -43,9 +44,7 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[floa
     - "unnormalized": math.exp(cumulative_logprob) * orm_score is used
     - "normalized": math.exp(cumulative_logprob / num_tokens) * orm_score is used
 
-    The consider parameter allows to consider only the first N samples for ORM accuracy.
-
-    The ensemble parameter allows to combine multiple ORM scores in a single result.
+    The n parameter allows to consider only the first N samples for ORM accuracy.
     """
     correct = 0
     correct_with_public = 0
@@ -64,20 +63,10 @@ def get_orm_acc(items, prod=None, n=None, ensemble="min") -> Tuple[Optional[floa
             results = results[:n]
 
         for result in results:
-            if "orm_1_score" in result:  # single ORM
-                score = result["orm_1_score"]
-            elif "orms" in result:  # multiple ORMs
-                scores = []
-                for r in result["orms"]:
-                    scores.append(r["orm_1_score"])
-                if ensemble == "min":
-                    score = min(scores)
-                elif ensemble == "mean":
-                    score = np.mean(scores)
-                else:
-                    raise ValueError(f"Unknown ensemble method {ensemble}")
-            else:
+            if "orm_1_score" not in result:
                 return None, None  # No labels found
+
+            score = result["orm_1_score"]
 
             # reshape score
             if prod is not None:
@@ -217,11 +206,6 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="How many samples should be considered for public@n accuracy",
-    )
-    parser.add_argument(
-        "--orm-ensemble",
-        type=str,
-        choices=["min", "mean"],
     )
     args = parser.parse_args()
     main(args)
