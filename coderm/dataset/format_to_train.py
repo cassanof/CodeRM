@@ -17,7 +17,10 @@ def main(args):
     mark = args.mask_loss_mark if args.mask_loss_mark else ""
     for ex in ds:
         sols = ex[args.sols_col]
-        if args.strategy == "all":
+        if args.strategy == "all" or args.strategy == "clip":
+            if args.strategy == "clip":
+                sols = sols[:args.clip_n]
+
             for sol in sols:
                 content.append(py_prompt(ex["question"], mark + sol))
                 solutions.append(sol)
@@ -74,7 +77,8 @@ if __name__ == "__main__":
     parser.add_argument("--sols_col", type=str, default="solutions")
     parser.add_argument("--rlxf", action="store_true")
     parser.add_argument("--strategy", type=str, default="all",
-                        choices=["all", "random", "high-loc"])
+                        choices=["all", "clip", "random", "high-loc"])
+    parser.add_argument("--clip-n", type=int, default=500)
     args = parser.parse_args()
     random.seed(42)
     main(args)
