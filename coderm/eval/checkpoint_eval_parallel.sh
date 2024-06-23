@@ -69,7 +69,7 @@ for (( gi=0; gi<${#CHECKPOINT_GROUPS[@]}; gi++ )); do
   do
       CHECKPOINT=${ADDR[$i]}
       BASEDIR=$(basename $CHECKPOINT)
-      OUTPUT_PATH="${CHECKPOINT}/${SCRIPT_NAME}_${BASEDIR}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}"
+      OUTPUT_PATH="${CHECKPOINT}/${SCRIPT_NAME}_${BASEDIR}_temp${TEMPERATURE_STR}_comps${COMPLETION_LIMIT}.json.gz"
       if [ -f "${OUTPUT_PATH}.json.gz" ]; then
           echo "Output file $OUTPUT_PATH.json.gz already exists, skipping. Delete to re-run."
           continue
