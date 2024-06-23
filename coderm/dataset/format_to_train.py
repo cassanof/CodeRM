@@ -1,10 +1,15 @@
 import datasets
 from coderm.model import py_prompt
 import random
+from pathlib import Path
 
 
 def main(args):
-    ds = datasets.load_from_disk(args.dataset_path)
+    if Path(args.dataset_path).exists():
+        ds = datasets.load_from_disk(args.dataset_path)
+    else:
+        ds = datasets.load_dataset(args.dataset_path, split="train")
+
     print("Original ds:")
     print(ds)
     content = []
