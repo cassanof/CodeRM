@@ -23,6 +23,6 @@
   {
     "group": "sft",
     "project": "code_sft",
-    "name": "deepseekcoder-v2-16b"
+    "name": "deepseekcoder-v2-16b-instruct-800k"
   }
 }
