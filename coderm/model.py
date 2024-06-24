@@ -272,6 +272,7 @@ class EvolverModel(HFModel):
         rm_name: str,
         num_gpus=1,
         evolver_e=5,  # maximum number of iterations
+        evolver_n=1,  # number of candidates to generate from each prompt
         evolver_strategy: EvolutionStrategy = "random",
         rm_device=None,
         prompt_fn=py_prompt,
@@ -280,6 +281,7 @@ class EvolverModel(HFModel):
         super().__init__(model_name, num_gpus=num_gpus, prompt_fn=prompt_fn)
         self.rm = OutcomeRewardModel(rm_name, device=rm_device)
         self.evolver_e = evolver_e
+        self.evolver_n = evolver_n
         self.evol_prompt_fn = evol_prompt_fn
         self.evolver_strategy = evolver_strategy
 
@@ -318,8 +320,7 @@ class EvolverModel(HFModel):
                 evolve_prompts.append(self.evolve_prompt(prompt, to_evolve))
                 og_prompts.append(prompt)
 
-            completions = super().generate_with_info(
-                [p for p in evolve_prompts if p is not None], **kwargs)
+            completions = super().generate_with_info(evolve_prompts, **kwargs)
 
             for j, (completion, og_prompt) in enumerate(zip(completions, og_prompts)):
                 to_score = og_prompt + completion.code
