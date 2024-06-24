@@ -295,7 +295,7 @@ class EvolverModel(HFModel):
         return evol_prompt
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        state = [{"pool": []}] * len(prompts)
+        state = [{"pool": []} for _ in prompts]
 
         for _ in tqdm(range(self.evolver_e), desc="Evolver iterations"):
             evolve_prompts = []
