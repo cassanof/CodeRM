@@ -63,7 +63,7 @@ def model_factory(
         kind: str,
         name: str,
         num_gpus=1,
-        evolver_e=25,
+        evolver_e=5,
         rm=None,
 ):
     if kind == "base":
@@ -271,7 +271,7 @@ class EvolverModel(HFModel):
         model_name: str,
         rm_name: str,
         num_gpus=1,
-        evolver_e=25,  # maximum number of iterations
+        evolver_e=5,  # maximum number of iterations
         evolver_strategy: EvolutionStrategy = "random",
         rm_device=None,
         prompt_fn=py_prompt,
@@ -315,7 +315,7 @@ class EvolverModel(HFModel):
                 else:
                     to_evolve = None
 
-                evolve_prompts.append(self.evol_prompt_fn(prompt, to_evolve))
+                evolve_prompts.append(self.evolve_prompt(prompt, to_evolve))
                 og_prompts.append(prompt)
 
             completions = super().generate_with_info(

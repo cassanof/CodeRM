@@ -504,7 +504,7 @@ def get_generic_argparser(dataset_default: str, split="test"):
     parser.add_argument(
         "-e",
         type=int,
-        default=25,
+        default=5,
         help="Number of samples to evolve from"
     )
     parser.add_argument(
