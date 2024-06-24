@@ -299,6 +299,11 @@ class EvolverModel(HFModel):
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         state = [{"pool": []} for _ in prompts]
 
+        # warn if temperature=0.0 and self.evolver_n > 1
+        if self.evolver_n > 1 and kwargs.get("temperature", 0.0) == 0.0:
+            print(
+                "WARNING: temperature=0.0 and evolver_n > 1 may result in duplicate completions")
+
         for _ in tqdm(range(self.evolver_e), desc="Evolver iterations"):
             evolve_prompts = []
             og_prompts = []
