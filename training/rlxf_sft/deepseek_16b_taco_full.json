@@ -6,7 +6,7 @@
   "save_strategy": "steps",
   "save_steps": 0.1,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/deepseekcoder_22b_taco_plain",
+  "save_location": "/mnt/efs/federicocassano/t_models/deepseekcoder_16b_taco_plain",
   "hyperparams":
   {
       "mask_instruct": true,
@@ -23,6 +23,6 @@
   {
     "group": "sft",
     "project": "code_sft",
-    "name": "deepseekcoder-v2-22b"
+    "name": "deepseekcoder-v2-16b"
   }
 }

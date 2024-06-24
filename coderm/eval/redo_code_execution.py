@@ -101,9 +101,11 @@ def main(args):
 
     # edge case: if len(og_items[...].results) == 0, then the eval was not done. fill with None
     if any(len(og_item.results) == 0 for og_item in og_items):
-        print("Warning: some items were not evaluated in the original completion file. Filling with None")
+        print("Warning: some items were not evaluated in the original completion file. Filling with None and forcing --redo to 'all'")
         for og_item in og_items:
             og_item.results = [None] * len(og_item.completions)  # type: ignore
+
+        args.redo = "all"
 
     if args.anti_congestion:
         start_anti_congestion_routine()
