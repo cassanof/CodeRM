@@ -273,7 +273,7 @@ class EvolverModel(HFModel):
         num_gpus=1,
         evolver_e=5,  # maximum number of iterations
         evolver_n=1,  # number of candidates to generate from each prompt
-        evolver_strategy: EvolutionStrategy = "random",
+        evolver_strategy: EvolutionStrategy = "best",
         rm_device=None,
         prompt_fn=py_prompt,
         evol_prompt_fn=py_prompt_evolve,
