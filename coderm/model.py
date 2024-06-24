@@ -316,6 +316,7 @@ class EvolverModel(HFModel):
                     to_evolve = None
 
                 evolve_prompts.append(self.evol_prompt_fn(prompt, to_evolve))
+                og_prompts.append(prompt)
 
             completions = super().generate_with_info(
                 [p for p in evolve_prompts if p is not None], **kwargs)
