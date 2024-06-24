@@ -185,7 +185,8 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
     public_acc = round(
         public_acc * 100, 4) if public_acc is not None else "N/A"
 
-    return f"{file.stem},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public}"
+    name = file.stem.split(".json")[0]
+    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public}"
 
 
 def main(args):
