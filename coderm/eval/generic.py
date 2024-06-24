@@ -367,7 +367,6 @@ class EvaluationManager:
 
             if isinstance(self.model, EvolverModel):
                 d["evolver_e"] = self.model.evolver_e
-                d["evolver_t"] = self.model.evolver_t
                 d["rm"] = self.model.rm
 
             gunzip_json_write(outpath, d)
@@ -408,7 +407,6 @@ def generic_eval_main(
         args.model,
         num_gpus=args.num_gpus,
         evolver_e=args.e,
-        evolver_t=args.t,
         rm=args.rm,
     )
     items = maybe_partition_items(
@@ -508,12 +506,6 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=int,
         default=25,
         help="Number of samples to evolve from"
-    )
-    parser.add_argument(
-        "-t",
-        type=float,
-        default=0.95,
-        help="Threshold for positive label to stop evolution"
     )
     parser.add_argument(
         "--rm",

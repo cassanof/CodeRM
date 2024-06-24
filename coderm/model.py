@@ -64,7 +64,6 @@ def model_factory(
         name: str,
         num_gpus=1,
         evolver_e=25,
-        evolver_t=0.95,
         rm=None,
 ):
     if kind == "base":
@@ -79,7 +78,7 @@ def model_factory(
         if rm is None:
             raise ValueError(
                 "OutcomeRewardModel is required for evolver model. Set with the 'rm' parameter.")
-        return EvolverModel(name, rm, num_gpus=num_gpus, evolver_e=evolver_e, evolver_t=evolver_t)
+        return EvolverModel(name, rm, num_gpus=num_gpus, evolver_e=evolver_e)
     else:
         raise ValueError(f"Unknown model kind: {kind}")
 
@@ -273,7 +272,6 @@ class EvolverModel(HFModel):
         rm_name: str,
         num_gpus=1,
         evolver_e=25,  # maximum number of iterations
-        evolver_t=0.95,  # target reward rate. early stopping if reached
         evolver_strategy: EvolutionStrategy = "random",
         rm_device=None,
         prompt_fn=py_prompt,
@@ -282,7 +280,6 @@ class EvolverModel(HFModel):
         super().__init__(model_name, num_gpus=num_gpus, prompt_fn=prompt_fn)
         self.rm = OutcomeRewardModel(rm_name, device=rm_device)
         self.evolver_e = evolver_e
-        self.evolver_t = evolver_t
         self.evol_prompt_fn = evol_prompt_fn
         self.evolver_strategy = evolver_strategy
 
@@ -298,17 +295,12 @@ class EvolverModel(HFModel):
         return evol_prompt
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
-        state = [{"pool": [], "early_stop": False}] * len(prompts)
+        state = [{"pool": []}] * len(prompts)
 
         for _ in tqdm(range(self.evolver_e), desc="Evolver iterations"):
             evolve_prompts = []
             og_prompts = []
             for j, prompt in enumerate(prompts):
-                if state[j]["early_stop"]:
-                    evolve_prompts.append(None)
-                    og_prompts.append(None)
-                    continue
-
                 pool = state[j]["pool"]
 
                 to_evolve = None
@@ -329,16 +321,10 @@ class EvolverModel(HFModel):
                 [p for p in evolve_prompts if p is not None], **kwargs)
 
             for j, (completion, og_prompt) in enumerate(zip(completions, og_prompts)):
-                if og_prompt is None:
-                    continue
-
                 to_score = og_prompt + completion.code
                 score = self.rm.score([to_score])[0][self.rm.pos_idx]
                 completion.orm_score = score
                 state[j]["pool"].append(completion)
-
-                if score >= self.evolver_t:
-                    state[j]["early_stop"] = True
 
         bests = []
         for i in range(len(prompts)):
