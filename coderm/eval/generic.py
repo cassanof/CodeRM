@@ -367,7 +367,7 @@ class EvaluationManager:
 
             if isinstance(self.model, EvolverModel):
                 d["evolver_e"] = self.model.evolver_e
-                d["rm"] = self.model.rm
+                d["rm"] = self.model.rm.get_name()
 
             gunzip_json_write(outpath, d)
         elif fmt == "datasets":
@@ -406,7 +406,7 @@ def generic_eval_main(
         args.model_kind,
         args.model,
         num_gpus=args.num_gpus,
-        evolver_e=args.e,
+        evolver_e=args.evolver_e,
         rm=args.rm,
     )
     items = maybe_partition_items(
@@ -502,10 +502,10 @@ def get_generic_argparser(dataset_default: str, split="test"):
         choices=["base", "few-shot", "few-shot-chat", "openai", "evolver"]
     )
     parser.add_argument(
-        "-e",
+        "--evolver-e",
         type=int,
-        default=25,
-        help="Number of samples to evolve from"
+        default=5,
+        help="Number of evolution iterations for the evolver"
     )
     parser.add_argument(
         "--rm",

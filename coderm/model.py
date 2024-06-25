@@ -63,7 +63,7 @@ def model_factory(
         kind: str,
         name: str,
         num_gpus=1,
-        evolver_e=25,
+        evolver_e=5,
         rm=None,
 ):
     if kind == "base":
@@ -271,8 +271,9 @@ class EvolverModel(HFModel):
         model_name: str,
         rm_name: str,
         num_gpus=1,
-        evolver_e=25,  # maximum number of iterations
-        evolver_strategy: EvolutionStrategy = "random",
+        evolver_e=5,  # maximum number of iterations
+        evolver_n=1,  # number of candidates to generate from each prompt
+        evolver_strategy: EvolutionStrategy = "best",
         rm_device=None,
         prompt_fn=py_prompt,
         evol_prompt_fn=py_prompt_evolve,
@@ -280,6 +281,7 @@ class EvolverModel(HFModel):
         super().__init__(model_name, num_gpus=num_gpus, prompt_fn=prompt_fn)
         self.rm = OutcomeRewardModel(rm_name, device=rm_device)
         self.evolver_e = evolver_e
+        self.evolver_n = evolver_n
         self.evol_prompt_fn = evol_prompt_fn
         self.evolver_strategy = evolver_strategy
 
@@ -296,6 +298,11 @@ class EvolverModel(HFModel):
 
     def generate_with_info(self, prompts: List[Prompt], **kwargs) -> List[Completion]:
         state = [{"pool": []} for _ in prompts]
+
+        # warn if temperature=0.0 and self.evolver_n > 1
+        if self.evolver_n > 1 and kwargs.get("temperature", 0.0) == 0.0:
+            print(
+                "WARNING: temperature=0.0 and evolver_n > 1 may result in duplicate completions")
 
         for _ in tqdm(range(self.evolver_e), desc="Evolver iterations"):
             evolve_prompts = []
@@ -315,10 +322,10 @@ class EvolverModel(HFModel):
                 else:
                     to_evolve = None
 
-                evolve_prompts.append(self.evol_prompt_fn(prompt, to_evolve))
+                evolve_prompts.append(self.evolve_prompt(prompt, to_evolve))
+                og_prompts.append(prompt)
 
-            completions = super().generate_with_info(
-                [p for p in evolve_prompts if p is not None], **kwargs)
+            completions = super().generate_with_info(evolve_prompts, **kwargs)
 
             for j, (completion, og_prompt) in enumerate(zip(completions, og_prompts)):
                 to_score = og_prompt + completion.code
