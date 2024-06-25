@@ -140,7 +140,7 @@ class HFModel(BaseModel):
             tensor_parallel_size=num_gpus,
             enforce_eager=True,
             dtype=autodetect_dtype_str(),
-            max_model_len=8192 if "deepseek" in model_lower else 16384,
+            max_model_len=8192 if "deepseek" in model_lower or "llama" in model_lower else 16384,
             gpu_memory_utilization=1.0 if "deepseek" in model_lower else 0.9,
             trust_remote_code=True,
         )
