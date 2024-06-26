@@ -26,7 +26,8 @@ def predicted_passing(model, kind, code) -> bool:
 
 
 def main(args):
-    ds = datasets.load_dataset("bigcode/humanevalpack", "python", split="test", trust_remote_code=True)
+    ds = datasets.load_dataset(
+        "bigcode/humanevalpack", "python", split="test", trust_remote_code=True)
     bug_types = set(ds["bug_type"])
 
     model = model_factory(args.model_kind, args.model)
@@ -58,10 +59,10 @@ def main(args):
         update(c, None)
         update(b, ex["bug_type"])
 
-    print(f"TP: {tp}")
-    print(f"FP: {fp}")
-    print(f"TN: {tn}")
+    print(f"TP: ({tp}) {tp / len(ds)}")
     print(f"FN: {fn}")
+    print(f"TN: ({sum(tn.values())}) {sum(tn.values()) / len(ds)} - {tn}")
+    print(f"FP: ({sum(fp.values())}) - {fp}")
     print(
         f"Accuracy: {(tp + sum(tn.values())) / (tp + sum(tn.values()) + sum(fp.values()) + fn)}")
     # per-bug type accuracy
