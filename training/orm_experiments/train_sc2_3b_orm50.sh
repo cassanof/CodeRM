@@ -4,10 +4,10 @@ export WANDB_PROJECT="coderm-orm"
 export WANDB_NAME="starcoder2_3b_orm50"
 pushd ../code-scorer/
 python3 -m torch.distributed.launch \
-  --nproc_per_node 8 \
+  --nproc_per_node 4 \
   train.py \
   --seq_len 4096 \
-  --batch_size 1 \
+  --batch_size 2 \
   --gradient_accumulation_steps 32 \
   --epochs 3 \
   --lr 1e-5 \
