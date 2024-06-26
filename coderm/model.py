@@ -70,6 +70,8 @@ def model_factory(
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt)
     elif kind == "few-shot":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb)
+    elif kind == "few-shot-cot":
+        return HFModel(name, num_gpus=num_gpus, prompt_fn=lambda q, c: py_prompt_2shot_lcb(q, c, cot=True))
     elif kind == "few-shot-chat":
         return HFModel(name, num_gpus=num_gpus, prompt_fn=py_prompt_2shot_lcb_chat, is_chat=True)
     elif kind == "openai":

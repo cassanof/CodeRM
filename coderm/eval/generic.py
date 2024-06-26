@@ -499,7 +499,14 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=str,
         default="base",
         help="Model kind",
-        choices=["base", "few-shot", "few-shot-chat", "openai", "evolver"]
+        choices=[
+            "base",
+            "few-shot",
+            "few-shot-chat",
+            "few-shot-cot",
+            "openai",
+            "evolver",
+        ]
     )
     parser.add_argument(
         "--evolver-e",
