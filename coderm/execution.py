@@ -26,8 +26,6 @@ if hasattr(sys, "set_int_max_str_digits"):
     sys.set_int_max_str_digits(0)
 if hasattr(sys, "setrecursionlimit"):
     sys.setrecursionlimit(10**6)
-import resource # limit memory to 4GB
-resource.setrlimit(resource.RLIMIT_AS, (4 * 1024**3, 4 * 1024**3))
 """
 
 IGNORE_WARNINGS = """
