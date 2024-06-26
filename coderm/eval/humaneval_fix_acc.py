@@ -43,12 +43,12 @@ def main(args):
         nonlocal fn
         pred = predicted_passing(model, args.model_kind, code)
         if pred:
-            if bug:
+            if bug is None:
                 tp += 1
             else:
                 fp[bug] += 1
         else:
-            if bug:
+            if bug is None:
                 fn += 1
             else:
                 tn[bug] += 1
