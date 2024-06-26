@@ -26,7 +26,7 @@ def predicted_passing(model, kind, code) -> bool:
 
 
 def main(args):
-    ds = datasets.load_dataset("bigcode/humanevalpack", "python", split="test")
+    ds = datasets.load_dataset("bigcode/humanevalpack", "python", split="test", trust_remote_code=True)
     bug_types = set(ds["bug_type"])
 
     model = model_factory(args.model_kind, args.model)
