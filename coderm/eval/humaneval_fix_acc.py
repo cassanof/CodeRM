@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+from tqdm import tqdm
 from coderm.model import OutcomeRewardModel
 import datasets
 
@@ -54,7 +55,7 @@ def main(args):
             else:
                 tn[bug] += 1
 
-    for ex in ds:
+    for ex in tqdm(ds, total=len(ds)):
         c, b = format_ex(ex)
         update(c, None)
         update(b, ex["bug_type"])
