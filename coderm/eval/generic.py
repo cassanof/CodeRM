@@ -122,7 +122,7 @@ class CompletionItem:
         if "time_limit" in self.item:
             return parse_time_limit(self.item["time_limit"], default=default)
         else: # use default with per-test timeout
-            return default * len(self.get_tests())
+            return default * len(self.get_tests()["inputs"])
 
     def get_starter_code(self) -> str:
         if self.starter_code_col is not None:
