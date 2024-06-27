@@ -1,4 +1,5 @@
 import datasets
+import os
 from transformers import AutoTokenizer
 from coderm.prompts import py_prompt
 import json
@@ -9,6 +10,7 @@ ORDER = ["EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"]
 
 
 def main(args):
+    proc_count = os.cpu_count() / 2
     sys.set_int_max_str_digits(0)
     train_dataset = datasets.load_dataset(
         "BAAI/TACO", split="train+test", trust_remote_code=True)
@@ -28,12 +30,13 @@ def main(args):
 
     # filter out long examples
     train_dataset = train_dataset.filter(
-        lambda x: len(tokenizer.encode(x["question"])) < args.max_tokens)
+        lambda x: len(tokenizer.encode(x["question"])) < args.max_tokens, num_proc=proc_count)
     print("After filtering for max length: ", len(train_dataset))
     if args.min_tests > 0:
         train_dataset = train_dataset.filter(
             lambda x: len(json.loads(x["input_output"])[
-                          "inputs"]) >= args.min_tests
+                          "inputs"]) >= args.min_tests,
+            num_proc=proc_count
         )
         print("After filtering for min tests: ", len(train_dataset))
 
