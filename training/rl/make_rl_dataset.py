@@ -10,7 +10,6 @@ ORDER = ["EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"]
 
 
 def main(args):
-    proc_count = os.cpu_count() / 2
     sys.set_int_max_str_digits(0)
     if args.min_tests > 0:
         train_dataset = datasets.load_dataset(
@@ -34,13 +33,12 @@ def main(args):
 
     # filter out long examples
     train_dataset = train_dataset.filter(
-        lambda x: len(tokenizer.encode(x["question"])) < args.max_tokens, num_proc=proc_count)
+        lambda x: len(tokenizer.encode(x["question"])) < args.max_tokens)
     print("After filtering for max length: ", len(train_dataset))
     if args.min_tests > 0:
         train_dataset = train_dataset.filter(
             lambda x: len(json.loads(x["input_output"])[
                           "inputs"]) >= args.min_tests,
-            num_proc=proc_count
         )
         print("After filtering for min tests: ", len(train_dataset))
 
