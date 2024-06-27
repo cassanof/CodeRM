@@ -1,0 +1,12 @@
+TP: (114) 0.6951219512195121
+FN: 50
+TN: (130) 0.7926829268292683 - {'excess logic': 28, 'operator misuse': 19, 'value misuse': 36, 'missing logic': 23, 'variable misuse': 17, 'function misuse': 7}
+FP: (34) - {'excess logic': 3, 'operator misuse': 6, 'value misuse': 8, 'missing logic': 10, 'variable misuse': 6, 'function misuse': 1}
+Accuracy: 0.7439024390243902
+--- Per-bug type accuracy ---
+excess logic: 0.9032258064516129
+operator misuse: 0.76
+value misuse: 0.8181818181818182
+missing logic: 0.696969696969697
+variable misuse: 0.7391304347826086
+function misuse: 0.875
