@@ -4,9 +4,9 @@
     "lm": {
       "model_path": "codegenning/generator-sc2-3b",
       "gen_kwargs": {
-        "max_tokens": 2048,
+        "max_tokens": 4096,
         "top_p": 0.95,
-        "temperature": 1.0
+        "temperature": 0.8
       }
     }
   },
@@ -26,7 +26,7 @@
     "learning_rate": 3e-6,
     "num_rounds": 10,
     "lr_scheduler_type": "constant",
-    "max_length": 4096,
+    "max_length": 8192,
     "logging_steps": 1,
     "warmup_ratio": 0.05,
     "reward_function": "tests"
