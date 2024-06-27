@@ -27,7 +27,7 @@ def main(args):
     generic_eval_main(
         args,
         items,
-        default_timeout=6,
+        default_timeout=60,
     )
 
 

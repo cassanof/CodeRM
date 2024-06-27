@@ -118,11 +118,10 @@ class CompletionItem:
             return self.item[self.difficulty_col]
         return None
 
-    def get_timeout(self, default=6) -> int:
+    def get_timeout(self, default=30) -> int:
         if "time_limit" in self.item:
             return parse_time_limit(self.item["time_limit"], default=default)
-        else: # use default with per-test timeout
-            return default * len(self.get_tests()["inputs"])
+        return default
 
     def get_starter_code(self) -> str:
         if self.starter_code_col is not None:
@@ -222,7 +221,7 @@ class EvaluationManager:
             dataset_name: str,
             exec_batch_size=os.cpu_count(),
             executor="http://127.0.0.1:8000",
-            timeout=6,
+            timeout=30,
     ):
         self.model = model
         self.max_tokens = max_tokens
@@ -401,7 +400,7 @@ class EvaluationManager:
 def generic_eval_main(
         args,
         base_items: List[CompletionItem],
-        default_timeout=6,
+        default_timeout=30,
 ):
     model = model_factory(
         args.model_kind,
