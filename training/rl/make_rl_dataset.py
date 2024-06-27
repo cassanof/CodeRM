@@ -12,8 +12,12 @@ ORDER = ["EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"]
 def main(args):
     proc_count = os.cpu_count() / 2
     sys.set_int_max_str_digits(0)
-    train_dataset = datasets.load_dataset(
-        "BAAI/TACO", split="train+test", trust_remote_code=True)
+    if args.min_tests > 0:
+        train_dataset = datasets.load_dataset(
+            args.train, split="train")
+    else:
+        train_dataset = datasets.load_dataset(
+            "BAAI/TACO", split="train+test", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
 
     # dedup by question
@@ -79,7 +83,7 @@ def main(args):
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
         train_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"]})
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
 
     for ex in test_dataset:
         post = ""
@@ -87,7 +91,7 @@ def main(args):
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
         test_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"]})
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
 
     ds = {
         "train": datasets.Dataset.from_list(train_fmt),
