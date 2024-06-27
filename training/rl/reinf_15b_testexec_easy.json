@@ -2,7 +2,7 @@
   "task": "reinf",
   "model_squad": {
     "lm": {
-      "model_path": "codegenning/taco-rl-tests5-easy",
+      "model_path": "codegenning/taco-rl-tests10-easy",
       "gen_kwargs": {
         "max_tokens": 2048,
         "top_p": 0.95,
@@ -19,10 +19,10 @@
     "online": true,
     "reward_normalization": "gaussian",
     "kl_coef": 0.005,
-    "global_batch_size": 128,
+    "global_batch_size": 64,
     "per_device_train_batch_size": 2,
     "num_train_epochs": 1,
-    "gradient_accumulation_steps": 4,
+    "gradient_accumulation_steps": 2,
     "learning_rate": 3e-6,
     "num_rounds": 10,
     "lr_scheduler_type": "constant",
