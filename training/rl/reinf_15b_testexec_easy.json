@@ -2,7 +2,7 @@
   "task": "reinf",
   "model_squad": {
     "lm": {
-      "model_path": "codegenning/taco-rl-tests10-easy",
+      "model_path": "codegenning/generator-sc2-15b",
       "gen_kwargs": {
         "max_tokens": 2048,
         "top_p": 0.95,
@@ -10,7 +10,7 @@
       }
     }
   },
-  "dataset": "codegenning/taco-rl",
+  "dataset": "codegenning/taco-rl-tests10-easy",
   "save_strategy": "steps",
   "save_steps": 0.1,
   "save_final_model_output": true,
