@@ -171,7 +171,7 @@ def get_public_acc(items, n=None, k=1, perms=None) -> Optional[float]:
     return public_acc / perms
 
 
-def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=None) -> str:
+def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None) -> str:
     if file.is_dir():
         import datasets
         ds = datasets.load_from_disk(file)
@@ -186,12 +186,12 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
     pass_ks = get_pass_ks(items, k)
     mean_pass_k = round(np.mean(pass_ks) * 100, 4)
 
-    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=orm_n, k=k)
+    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=n, k=k)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
     orm_acc_public = round(orm_acc_public * 100,
                            4) if orm_acc_public is not None else "N/A"
 
-    ml_acc = get_ml_acc(items, n=public_n, k=k)
+    ml_acc = get_ml_acc(items, n=n, k=k)
     ml_acc = round(ml_acc * 100, 4) if ml_acc is not None else "N/A"
 
     public_acc = get_public_acc(items, n=public_n, k=k)
@@ -211,7 +211,7 @@ def main(args):
                 file=Path(file),
                 k=args.k,
                 orm_prod=args.orm_prod,
-                orm_n=args.orm_n,
+                n=args.n,
                 public_n=args.public_n
             )
         )
@@ -240,10 +240,10 @@ if __name__ == "__main__":
         help="Product of logprobs for ORM accuracy"
     )
     parser.add_argument(
-        "--orm-n",
+        "-n",
         type=int,
         default=None,
-        help="How many samples should be considered for ORM accuracy",
+        help="How many samples should be considered for accuracy calculations"
     )
     parser.add_argument(
         "--public-n",
