@@ -1,4 +1,4 @@
-from coderm.eval.generic import get_generic_argparser, make_items_from_ds, generic_eval_main
+from coderm.eval.generic import get_native_coderm_argparser, make_items_from_ds, generic_eval_main
 import json
 import datasets
 
@@ -22,6 +22,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = get_generic_argparser("cassanof/mbppplus_formatted")
+    parser = get_native_coderm_argparser("cassanof/mbppplus_formatted")
     args = parser.parse_args()
     main(args)
