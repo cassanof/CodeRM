@@ -48,19 +48,7 @@ def approximate_perms(n, max_n, max_perms=100):
     return perms
 
 
-def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[float], Optional[float]]:
-    """
-    Calculates the ORM accuracy, if the results contain ORM labels.
-
-    The prod parameter allows to take the product of the logprobs provided by the generator model.
-    Three cases are supported:
-    - None: original ORM scores are used
-    - "unnormalized": math.exp(cumulative_logprob) * orm_score is used
-    - "normalized": math.exp(cumulative_logprob / num_tokens) * orm_score is used
-
-    The n parameter allows to consider only the first N samples for ORM accuracy.
-    """
-
+def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_needed=None) -> Tuple[Optional[float], Optional[float]]:
     random.seed(42)
     if perms is None:
         perms = approximate_perms(n, len(items[0]["results"]))
@@ -80,10 +68,10 @@ def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[flo
             score_results = []
             score_results_with_public = []
             for result in results:
-                if "orm_1_score" not in result:
+                if label_needed and label_needed not in result:
                     return None, None  # No labels found
 
-                score = result["orm_1_score"]
+                score = score_fn(result)
 
                 # reshape score if needed
                 if prod == "unnormalized":
@@ -118,6 +106,28 @@ def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[flo
             public_acc = None
 
     return orm_acc / perms, public_acc / perms if public_acc is not None else None
+
+
+def get_ml_acc(items, n=None, k=1, perms=None) -> Optional[float]:
+    """
+    Calculates the ML accuracy, if the results contain cumulative_logprob labels.
+    """
+    return get_reward_acc(items, lambda x: x["cumulative_logprob"], None, n, k, perms, "cumulative_logprob")[0]
+
+
+def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[float], Optional[float]]:
+    """
+    Calculates the ORM accuracy, if the results contain ORM labels.
+
+    The prod parameter allows to take the product of the logprobs provided by the generator model.
+    Three cases are supported:
+    - None: original ORM scores are used
+    - "unnormalized": math.exp(cumulative_logprob) * orm_score is used
+    - "normalized": math.exp(cumulative_logprob / num_tokens) * orm_score is used
+
+    The n parameter allows to consider only the first N samples for ORM accuracy.
+    """
+    return get_reward_acc(items, lambda x: x["orm_1_score"], prod, n, k, perms, "orm_1_score")
 
 
 def get_public_acc(items, n=None, k=1, perms=None) -> Optional[float]:
@@ -181,16 +191,19 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, orm_n=None, public_n=Non
     orm_acc_public = round(orm_acc_public * 100,
                            4) if orm_acc_public is not None else "N/A"
 
+    ml_acc = get_ml_acc(items, n=public_n, k=k)
+    ml_acc = round(ml_acc * 100, 4) if ml_acc is not None else "N/A"
+
     public_acc = get_public_acc(items, n=public_n, k=k)
     public_acc = round(
         public_acc * 100, 4) if public_acc is not None else "N/A"
 
     name = file.stem.split(".json")[0]
-    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public}"
+    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc}"
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n}"
+    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n},ml@{k|n}"
     print(header)
     for file in args.inputs:
         print(
