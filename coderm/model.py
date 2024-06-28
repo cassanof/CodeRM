@@ -31,6 +31,9 @@ class Completion:
             d["orm_score"] = self.orm_score
 
         return d
+    
+    def __repr__(self) -> str:
+        return f"Completion({self.code}, {self.cumulative_logprob}, {self.num_tokens})"
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> "Completion":
