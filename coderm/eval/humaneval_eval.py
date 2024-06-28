@@ -1,9 +1,10 @@
 from coderm.eval.generic import get_native_coderm_argparser, make_items_from_ds, generic_eval_main
+from coderm.model import BaseModel
 import json
 import datasets
 
 
-def main(args):
+def main(args, model: BaseModel | None = None):
     dataset = datasets.load_dataset(args.dataset, split=args.split).to_list()
     items = make_items_from_ds(
         dataset,
@@ -17,6 +18,7 @@ def main(args):
     generic_eval_main(
         args,
         items,
+        model=model,
         default_timeout=120,  # lots of tests....
     )
 
