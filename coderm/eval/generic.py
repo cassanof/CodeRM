@@ -400,15 +400,18 @@ class EvaluationManager:
 def generic_eval_main(
         args,
         base_items: List[CompletionItem],
+        model: Optional[BaseModel] = None,
         default_timeout=30,
 ):
-    model = model_factory(
-        args.model_kind,
-        args.model,
-        num_gpus=args.num_gpus,
-        evolver_e=args.evolver_e,
-        rm=args.rm,
-    )
+    if model is None:
+        model = model_factory(
+            args.model_kind,
+            args.model,
+            num_gpus=args.num_gpus,
+            evolver_e=args.evolver_e,
+            rm=args.rm,
+        )
+
     items = maybe_partition_items(
         base_items, start_idx=args.start_idx, max_items=args.max_items)
     manager = EvaluationManager(
@@ -446,7 +449,7 @@ def generic_eval_main(
         manager.save_completions(items, args.output, fmt=args.output_format)
 
 
-def get_generic_argparser(dataset_default: str, split="test"):
+def get_generic_coderm_argparser(dataset_default: str, split: str = "test"):
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -484,6 +487,62 @@ def get_generic_argparser(dataset_default: str, split="test"):
         default=cpu_count,
         help="Total batch size for execution (defaults to os.cpu_count())"
     )
+    parser.add_argument(
+        "--executor",
+        type=str,
+        default="http://127.0.0.1:8000",
+        help="Server URL for executing the code"
+    )
+    parser.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="Don't execute the completions"
+    )
+    parser.add_argument(
+        "--exec-public",
+        action="store_true",
+        help="Executes public test cases separately. Adds a 'passing_public' key to the results."
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Output path to store the results. don't add extension"
+    )
+    parser.add_argument(
+        "--output-format",
+        type=str,
+        default="gzjson",
+        help="Output format. either 'gzjson' or 'datasets'",
+        choices=["gzjson", "datasets"]
+    )
+    parser.add_argument(
+        "--save-every-batch",
+        action="store_true",
+        help="Save completions every batch. Useful for long running processes"
+    )
+    parser.add_argument(
+        "--start-idx",
+        type=int,
+        default=None,
+        help="Start index for the dataset. Useful for parallel processing in combination with --max-items",
+    )
+    parser.add_argument(
+        "--max-items",
+        type=int,
+        default=None,
+        help="Max items to process. Useful for parallel processing in combination with --start-idx",
+    )
+    parser.add_argument(
+        "--random-sample",
+        type=int,
+        default=None,
+        help="Randomly (seed=42) sample this many examples from the dataset and evaluate. By default, None, so evaluates the entire dataset"
+    )
+    return parser
+
+def get_native_coderm_argparser(dataset_default: str, split="test"):
+    parser = get_generic_coderm_argparser(dataset_default, split)
     parser.add_argument(
         "--max-tokens",
         type=int,
@@ -539,57 +598,5 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=float,
         default=0.0,
         help="Temperature for sampling. Set to 0 for greedy decoding"
-    )
-    parser.add_argument(
-        "--random-sample",
-        type=int,
-        default=None,
-        help="Randomly (seed=42) sample this many examples from the dataset and evaluate. By default, None, so evaluates the entire dataset"
-    )
-    parser.add_argument(
-        "--executor",
-        type=str,
-        default="http://127.0.0.1:8000",
-        help="Server URL for executing the code"
-    )
-    parser.add_argument(
-        "--no-exec",
-        action="store_true",
-        help="Don't execute the completions"
-    )
-    parser.add_argument(
-        "--exec-public",
-        action="store_true",
-        help="Executes public test cases separately. Adds a 'passing_public' key to the results."
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        required=True,
-        help="Output path to store the results. don't add extension"
-    )
-    parser.add_argument(
-        "--output-format",
-        type=str,
-        default="gzjson",
-        help="Output format. either 'gzjson' or 'datasets'",
-        choices=["gzjson", "datasets"]
-    )
-    parser.add_argument(
-        "--save-every-batch",
-        action="store_true",
-        help="Save completions every batch. Useful for long running processes"
-    )
-    parser.add_argument(
-        "--start-idx",
-        type=int,
-        default=None,
-        help="Start index for the dataset. Useful for parallel processing in combination with --max-items",
-    )
-    parser.add_argument(
-        "--max-items",
-        type=int,
-        default=None,
-        help="Max items to process. Useful for parallel processing in combination with --start-idx",
     )
     return parser
