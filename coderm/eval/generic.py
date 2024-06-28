@@ -476,6 +476,8 @@ def get_generic_argparser(dataset_default: str, split="test"):
     cpu_count = os.cpu_count()
     if cpu_count is None:
         cpu_count = 1
+    else:
+        cpu_count = int(cpu_count * 0.8) # lower for stability
     parser.add_argument(
         "--exec-batch-size",
         type=int,
@@ -499,7 +501,14 @@ def get_generic_argparser(dataset_default: str, split="test"):
         type=str,
         default="base",
         help="Model kind",
-        choices=["base", "few-shot", "few-shot-chat", "openai", "evolver"]
+        choices=[
+            "base",
+            "few-shot",
+            "few-shot-chat",
+            "few-shot-cot",
+            "openai",
+            "evolver",
+        ]
     )
     parser.add_argument(
         "--evolver-e",

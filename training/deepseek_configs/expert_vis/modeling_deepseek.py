@@ -433,6 +433,13 @@ class MoEGate(nn.Module):
 
         ### select top-k experts
         if self.topk_method == "greedy":
+            topk_weight_sort, topk_idx_sort = torch.topk(
+                scores, k=self.top_k, dim=-1, sorted=True
+            )
+            with open('/tmp/stream', 'a') as f:
+                out = str(int(topk_idx_sort[0][0]))
+                print("out", out)
+                f.write(out + " ")
             topk_weight, topk_idx = torch.topk(
                 scores, k=self.top_k, dim=-1, sorted=False
             )
@@ -568,6 +575,7 @@ class DeepseekV2MoE(nn.Module):
         identity = hidden_states
         orig_shape = hidden_states.shape
         topk_idx, topk_weight, aux_loss = self.gate(hidden_states)
+        print("topk_idx", topk_idx)
         hidden_states = hidden_states.view(-1, hidden_states.shape[-1])
         flat_topk_idx = topk_idx.view(-1)
         if self.training:

@@ -1,13 +1,22 @@
 import datasets
+import os
 from transformers import AutoTokenizer
 from coderm.prompts import py_prompt
+import json
+import sys
+
 
 ORDER = ["EASY", "MEDIUM", "MEDIUM_HARD", "HARD", "VERY_HARD"]
 
 
 def main(args):
-    train_dataset = datasets.load_dataset(
-        "BAAI/TACO", split="train+test", trust_remote_code=True)
+    sys.set_int_max_str_digits(0)
+    if args.min_tests > 0:
+        train_dataset = datasets.load_dataset(
+            args.train, split="train")
+    else:
+        train_dataset = datasets.load_dataset(
+            "BAAI/TACO", split="train+test", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
 
     # dedup by question
@@ -26,6 +35,12 @@ def main(args):
     train_dataset = train_dataset.filter(
         lambda x: len(tokenizer.encode(x["question"])) < args.max_tokens)
     print("After filtering for max length: ", len(train_dataset))
+    if args.min_tests > 0:
+        train_dataset = train_dataset.filter(
+            lambda x: len(json.loads(x["input_output"])[
+                          "inputs"]) >= args.min_tests,
+        )
+        print("After filtering for min tests: ", len(train_dataset))
 
     test_dataset = datasets.load_dataset(
         args.test, split="test")
@@ -66,14 +81,15 @@ def main(args):
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
         train_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"]})
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
 
     for ex in test_dataset:
         post = ""
         if "starter_code" not in ex:
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
-        test_fmt.append({"prompt": p, "difficulty": ex["difficulty"]})
+        test_fmt.append(
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
 
     ds = {
         "train": datasets.Dataset.from_list(train_fmt),
@@ -94,6 +110,8 @@ if __name__ == "__main__":
     parser.add_argument("--tokenizer", type=str,
                         default="bigcode/starcoder2-15b")
     parser.add_argument("--push", type=str, default="codegenning/taco-rl")
+    parser.add_argument("--min-tests", type=int, default=0,
+                        help="Minimum number of tests -- by default ignores tests")
     parser.add_argument("--order", type=str, choices=["random", "curriculum"],
                         default="random")
     args = parser.parse_args()

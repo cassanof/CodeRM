@@ -56,8 +56,6 @@ def main(args):
         x["solutions"])}, num_proc=os.cpu_count())
     print("Original dataset size: ", len(ds))
 
-    print("After mean solution line length >= 3: ", len(ds))
-
     # need to have enough tests, at least 10
     ds = ds.filter(lambda x: len(json.loads(x["input_output"])[
                    "inputs"]) >= args.min_tests, num_proc=os.cpu_count())
