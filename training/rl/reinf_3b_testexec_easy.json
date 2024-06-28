@@ -1,5 +1,5 @@
 {
-  "task": "reinf",
+  "task": "dpo",
   "model_squad": {
     "lm": {
       "model_path": "codegenning/generator-sc2-3b",
@@ -17,9 +17,8 @@
   "save_location": "/mnt/efs/federicocassano/t_models/reinf_3b_testexec",
   "hyperparams": {
     "online": true,
-    "reward_normalization": "gaussian",
-    "kl_coef": 0.005,
     "global_batch_size": 64,
+    "num_prompt_rollouts": 100,
     "per_device_train_batch_size": 2,
     "gradient_accumulation_steps": 2,
     "learning_rate": 3e-6,
