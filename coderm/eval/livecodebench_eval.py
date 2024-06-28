@@ -1,10 +1,11 @@
 from coderm.eval.generic import get_native_coderm_argparser, make_items_from_ds, generic_eval_main
 from coderm.model import BaseModel
+from typing import Optional
 import json
 import datasets
 
 
-def main(args, model: BaseModel | None = None):
+def main(args, model: Optional[BaseModel] = None):
     dataset = datasets.load_dataset(args.dataset, split=args.split)
     # convert dataset to list
     dataset = dataset.to_list()
@@ -34,6 +35,7 @@ def main(args, model: BaseModel | None = None):
 
 
 if __name__ == "__main__":
-    parser = get_native_coderm_argparser("codegenning/livecodebench_lite_filtered")
+    parser = get_native_coderm_argparser(
+        "codegenning/livecodebench_lite_filtered")
     args = parser.parse_args()
     main(args)

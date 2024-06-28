@@ -1,10 +1,11 @@
+from typing import Optional
 from coderm.eval.generic import get_native_coderm_argparser, make_items_from_ds, generic_eval_main
 from coderm.model import BaseModel
 import json
 import datasets
 
 
-def main(args, model: BaseModel | None = None):
+def main(args, model: Optional[BaseModel] = None):
     dataset = datasets.load_dataset(args.dataset, split=args.split).to_list()
     items = make_items_from_ds(
         dataset,
