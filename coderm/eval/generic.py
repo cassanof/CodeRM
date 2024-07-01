@@ -90,6 +90,7 @@ class CompletionItem:
             public_tests_col: Optional[str] = None,
             starter_code_col: Optional[str] = None,
             difficulty_col: Optional[str] = None,
+            solutions_col: Optional[list[str]] = None,
     ):
         self.prompt_col = prompt_col
         self.starter_code_col = starter_code_col
@@ -98,6 +99,7 @@ class CompletionItem:
         self.item = item
         self.unique_name = unique_name
         self.difficulty_col = difficulty_col
+        self.solutions_col = solutions_col 
 
         self.completions: List[Completion] = []
         self.results: List[CompletionResult] = []
@@ -116,6 +118,11 @@ class CompletionItem:
     def get_difficulty(self) -> Optional[str]:
         if self.difficulty_col is not None:
             return self.item[self.difficulty_col]
+        return None
+
+    def get_solutions(self) -> Optional[list[str]]:
+        if self.solutions_col is not None:
+            return self.item[self.solutions_col]
         return None
 
     def get_timeout(self, default=30) -> int:
@@ -259,7 +266,7 @@ class EvaluationManager:
 
         for i, example in enumerate(items):
             indexed_prompts.extend(
-                [(i, self.model.format_prompt(example.get_prompt(), example.get_starter_code()))] * self.completion_limit)
+                [(i, self.model.format_prompt(example.get_prompt(), code=example.get_starter_code(), public_tests=example.get_public_tests(), tests=example.get_tests(), solutions=example.get_solutions()))] * self.completion_limit)
 
         chunks = chunkify(indexed_prompts, self.batch_size)
 

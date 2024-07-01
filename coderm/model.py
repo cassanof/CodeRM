@@ -98,7 +98,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def format_prompt(self, question: str, code="") -> Prompt:
+    def format_prompt(self, question: str, code: str = "", public_tests: Optional[dict[str, Any]] = None, tests: Optional[dict[str, Any]] = None, solutions: Optional[list[str]] = None) -> Prompt:
         pass
 
     def free_memory(self):
@@ -195,7 +195,7 @@ class HFModel(BaseModel):
             import ray
             ray.shutdown()
 
-    def format_prompt(self, question: str, code="") -> str:
+    def format_prompt(self, question: str, code: str = "", public_tests: Optional[dict[str, Any]] = None, tests: Optional[dict[str, Any]] = None, solutions: Optional[list[str]] = None) -> str:
         prompt = self.prompt_fn(question, code)
         if isinstance(prompt, list):  # Conversation
             prompt = self.tokenizer.apply_chat_template(
@@ -346,7 +346,7 @@ class EvolverModel(HFModel):
 
         return bests
 
-    def format_prompt(self, question: str, code="") -> str:
+    def format_prompt(self, question: str, code: str = "", public_tests: Optional[dict[str, Any]] = None, tests: Optional[dict[str, Any]] = None, solutions: Optional[list[str]] = None) -> str:
         return self.prompt_fn(question, code)  # not the evolve one!
 
 
@@ -416,7 +416,7 @@ class OpenAIChatModel(BaseModel):
 
         return completions  # type: ignore
 
-    def format_prompt(self, question: str, code="") -> Conversation:
+    def format_prompt(self, question: str, code: str = "", public_tests: Optional[dict[str, Any]] = None, tests: Optional[dict[str, Any]] = None, solutions: Optional[list[str]] = None) -> Conversation:
         return self.prompt_fn(question, code)
 
     def prefix_starter_code(self) -> bool:
