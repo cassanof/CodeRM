@@ -16,6 +16,24 @@ def pass_at_k(n: int, c: int, k: int) -> float:
         return 1.0
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
+def get_pass_ones(items, k) -> list[list[float]]:
+    n_comps = len(items[0]["results"])
+    assert k == 1
+    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
+    assert all(len(item["results"]) ==
+               n_comps for item in items), "All items should have the same number of completions"
+    pass_ks = []
+    for i in range(n_comps):
+        sub_pass_ks = []
+        for item in items:
+            correct = 0
+            if item["results"][i]["passing"]:
+                correct += 1
+            score = pass_at_k(1, correct, k)
+            sub_pass_ks.append(score)
+        pass_ks.append(sub_pass_ks)
+    return pass_ks
+
 
 def get_pass_ks(items, k):
     n_comps = len(items[0]["results"])
@@ -171,7 +189,7 @@ def get_public_acc(items, n=None, k=1, perms=None) -> Optional[float]:
     return public_acc / perms
 
 
-def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None) -> str:
+def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, get_std: bool = False) -> str:
     if file.is_dir():
         import datasets
         ds = datasets.load_from_disk(file)
@@ -183,8 +201,17 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None) -
 
     size = len(items)
 
-    pass_ks = get_pass_ks(items, k)
-    mean_pass_k = round(np.mean(pass_ks) * 100, 4)
+    if not get_std:
+        pass_ks = get_pass_ks(items, k)
+        mean_pass_k = round(np.mean(pass_ks) * 100, 4)
+        std_est = "N/A"
+    else:
+        assert k == 1
+        pass_ks_separate = get_pass_ones(items, k)
+        means = [np.mean(pass_ks) for pass_ks in pass_ks_separate]
+        n_comp = len(items[0]["results"])
+        std_est = round(np.std(means) / np.sqrt(n_comp) * 100, 4)
+        mean_pass_k = round(np.mean(means) * 100, 4)
 
     orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=n, k=k)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
@@ -199,11 +226,11 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None) -
         public_acc * 100, 4) if public_acc is not None else "N/A"
 
     name = file.stem.split(".json")[0]
-    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc}"
+    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc},{std_est}"
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n},ml@{k|n}"
+    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n},ml@{k|n},stdpass@1"
     print(header)
     for file in args.inputs:
         print(
@@ -212,7 +239,8 @@ def main(args):
                 k=args.k,
                 orm_prod=args.orm_prod,
                 n=args.n,
-                public_n=args.public_n
+                public_n=args.public_n,
+                get_std=args.get_std
             )
         )
 
@@ -250,6 +278,11 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="How many samples should be considered for public@n accuracy",
+    )
+    parser.add_argument(
+        "--get-std",
+        action="store_true",
+        help="Whether to compute std for pass@1 over n completions",
     )
     args = parser.parse_args()
     main(args)
