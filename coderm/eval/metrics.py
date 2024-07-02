@@ -2,7 +2,7 @@
 Takes in a result file and spits out the pass@k metrics.
 """
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import numpy as np
 import random
 from coderm.utils import gunzip_json_read
@@ -16,7 +16,7 @@ def pass_at_k(n: int, c: int, k: int) -> float:
         return 1.0
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
-def get_pass_ones(items, k) -> list[list[float]]:
+def get_pass_ones(items, k) -> List[List[float]]:
     n_comps = len(items[0]["results"])
     assert k == 1
     assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
