@@ -165,6 +165,7 @@ def make_items_from_ds(
         starter_code_col: Optional[str] = None,
         random_sample: Optional[int] = None,
         unique_name_col: Optional[str] = None,
+        solutions_col: Optional[str] = None,
 ) -> List[CompletionItem]:
     # these are replaced with "_" if used in unique_name
     bad_chars = ["\n", "\r", "\t", "/", " "]
@@ -201,6 +202,7 @@ def make_items_from_ds(
                 public_tests_col=public_tests_col,
                 starter_code_col=starter_code_col,
                 difficulty_col=difficulty_col,
+                solutions_col=solutions_col
             )
         )
 

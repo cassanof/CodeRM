@@ -16,6 +16,8 @@ def main(args, model: Optional[BaseModel] = None):
             dataset[i]["public_input_output"] = json.loads(
                 item["public_input_output"])
 
+    assert len(dataset)
+
     items = make_items_from_ds(
         dataset,
         "question",
@@ -25,6 +27,7 @@ def main(args, model: Optional[BaseModel] = None):
         difficulty_col="difficulty",
         random_sample=args.random_sample,
         unique_name_col="id",
+        solutions_col="solutions" if "solutions" in dataset[0] else None
     )
     generic_eval_main(
         args,
