@@ -11,7 +11,9 @@ def punctuation_join(lst: List[str]) -> str:
     for i, s in enumerate(lst):
         if i != 0:
             result += ", "
-        if s[-1] not in [".", "!", "?"]:
+        if len(s) == 0:
+            continue
+        elif s[-1] not in [".", "!", "?"]:
             result += s
         else:
             result += s[:-1]
@@ -76,6 +78,17 @@ def reasoning_steps_to_cot(code) -> str:
     return f"{cots}\n{new_lines}"
 
 
+def reasoning_steps_to_cot_orm(code) -> str:
+    # find first docstring
+    first_docstring = code.find('"""')
+    # find second docstring
+    second_docstring = code.find('"""', first_docstring + 3)
+    code_without_docstrings = "\n" + code[second_docstring + 3:].strip()
+    cotted = reasoning_steps_to_cot(code_without_docstrings)
+    reassembled = code[:second_docstring + 3] + "\n" + cotted
+    return reassembled
+
+
 def main(args):
     if Path(args.dataset).exists():
         dataset = datasets.load_from_disk(args.dataset)
@@ -86,6 +99,12 @@ def main(args):
         dataset = dataset.map(lambda x: {
             "reasoning_steps": [reasoning_steps_to_cot(step) for step in x["reasoning_steps"]]
         })
+        print(dataset[0]["reasoning_steps"])
+    elif args.dataset_kind == "orm":
+        dataset = dataset.map(lambda x: {
+            "content": reasoning_steps_to_cot_orm(x["content"])
+        })
+        print(dataset[0]["content"])
     else:
         raise NotImplementedError(
             f"Dataset kind {args.dataset_kind} not implemented.")
