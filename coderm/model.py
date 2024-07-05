@@ -31,7 +31,7 @@ class Completion:
             d["orm_score"] = self.orm_score
 
         return d
-    
+
     def __repr__(self) -> str:
         return f"Completion({self.code}, {self.cumulative_logprob}, {self.num_tokens})"
 
@@ -242,6 +242,8 @@ class OutcomeRewardModel(ClassificationModel):
 
         if self.device != "auto":
             self.model = self.model.to(self.device)
+        else:
+            self.device = "cuda"  # patch up for generation later
 
         self.model = self.model.eval()
         # figure out if it's a 2-label classification or regression model
