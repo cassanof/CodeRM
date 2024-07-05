@@ -221,17 +221,29 @@ class OutcomeRewardModel(ClassificationModel):
     def __init__(self, model_name: str, device=None, pos_idx=1):
         super().__init__(model_name)
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
         if device is None:
             device = detect_first_unused_device()
+
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name, add_eos_token=True)
+        extra_kwargs = {}
+        if self.device == "auto":
+            extra_kwargs["device_map"] = "auto"
+
         self.model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             torch_dtype=autodetect_dtype(),
             use_flash_attention_2=True,
             use_cache=False,
-        ).to(self.device).eval()
+            **extra_kwargs
+        )
+
+        if self.device != "auto":
+            self.model = self.model.to(self.device)
+
+        self.model = self.model.eval()
         # figure out if it's a 2-label classification or regression model
         if self.model.config.num_labels == 2:
             self.is_classification = True
