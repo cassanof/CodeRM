@@ -1,4 +1,5 @@
 #!/bin/bash
+# this script copies the RLXF training code inside the repo so that you can launch a scale-train join with it
 
 MODELS_PATH=${MODELS_PATH:-"$HOME/src/models/"}
 
