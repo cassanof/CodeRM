@@ -147,7 +147,12 @@ if __name__ == "__main__":
     parser.add_argument("--no-prefix-starter-code", action="store_true")
     parser.add_argument("--anti-congestion", action="store_true")
     parser.add_argument("--exec-public", action="store_true")
-    parser.add_argument("--exec-batch-size", type=int, default=os.cpu_count())
+    cpu_count = os.cpu_count()
+    if cpu_count is None:
+        cpu_count = 1
+    else:
+        cpu_count = int(cpu_count * 0.8) # lower for stability
+    parser.add_argument("--exec-batch-size", type=int, default=cpu_count)
     parser.add_argument(
         "--redo", type=str, choices=["failed", "timeout", "error", "all"], default="error")
     parser.add_argument("--executor", type=str,
