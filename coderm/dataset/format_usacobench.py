@@ -38,11 +38,13 @@ def main(args):
                       "input_output": jsonified, "question": ex["description"]})
     new_ds = datasets.Dataset.from_list(new_ds)
     print(new_ds)
+    new_ds.push_to_hub(args.push, private=True)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="./on_disk/usaco_v3")
+    parser.add_argument("--push", type=str, default="codegenning/usacobench_formatted")
     args = parser.parse_args()
     main(args)
