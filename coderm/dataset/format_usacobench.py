@@ -38,7 +38,7 @@ def main(args):
                       "input_output": jsonified, "question": ex["description"]})
     new_ds = datasets.Dataset.from_list(new_ds)
     print(new_ds)
-    new_ds.push_to_hub(args.push, private=True)
+    new_ds.push_to_hub(args.push, private=True, split="test")
 
 
 if __name__ == "__main__":
