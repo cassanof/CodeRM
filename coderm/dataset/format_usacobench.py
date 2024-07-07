@@ -22,17 +22,20 @@ def main(args):
             # find the two files (input and output) with the digit i in the filename
             id_files = [f for f in files if f.name.startswith(
                 f"{i}.") or f.name.endswith(f".{i}")]
-            assert len(id_files) == 2, f"Expected 2 files for test {
-                i}, got {id_files} - {files}"
+            assert len(id_files) == 2, f"Expected 2 files for test {i}," + \
+                f" got {id_files} - {files}"
             # output has "out", input has "in"
             output_file = [f for f in id_files if "o" in f.name.lower()]
             input_file = [f for f in id_files if "i" in f.name.lower()]
-            assert len(output_file) == 1, f"Expected 1 output file for test {i}, got {output_file} - {files}"
-            assert len(input_file) == 1, f"Expected 1 input file for test {i}, got {input_file} - {files}"
+            assert len(output_file) == 1, f"Expected 1 output file for test {i}," + \
+                f" got {output_file} - {files}"
+            assert len(input_file) == 1, f"Expected 1 input file for test {i}," + \
+                f" got {input_file} - {files}"
             tests["inputs"].append(input_file[0].read_text())
             tests["outputs"].append(output_file[0].read_text())
         jsonified = json.dumps(tests)
-        new_ds.append({"id": eid, "difficulty": difficulty, "input_output": jsonified, "question": ex["description"]})
+        new_ds.append({"id": eid, "difficulty": difficulty,
+                      "input_output": jsonified, "question": ex["description"]})
     new_ds = datasets.Dataset.from_list(new_ds)
     print(new_ds)
 
