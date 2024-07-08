@@ -53,7 +53,7 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def approximate_perms(n, max_n, max_perms=100, min_perms=10):
+def approximate_perms(n, max_n, max_perms=100, min_perms=25):
     # we average multiple random permutations for n > 1
     # we approximate the number of permutations required based on n and len(items[0]["results"])
     # the closer n is to len(items[0]["results"]), the less permutations are required
