@@ -16,6 +16,7 @@ def pass_at_k(n: int, c: int, k: int) -> float:
         return 1.0
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
+
 def get_pass_ones(items, k) -> List[List[float]]:
     n_comps = len(items[0]["results"])
     assert k == 1
@@ -52,14 +53,16 @@ def get_pass_ks(items, k):
     return pass_ks
 
 
-def approximate_perms(n, max_n, max_perms=100):
+def approximate_perms(n, max_n, max_perms=100, min_perms=10):
     # we average multiple random permutations for n > 1
     # we approximate the number of permutations required based on n and len(items[0]["results"])
     # the closer n is to len(items[0]["results"]), the less permutations are required
     max_perms = 100
     if n is None:
         n = max_n
+
     perms = int(max_perms * (1 - (n / max_n)) + 1)
+    perms = max(perms, min_perms)
     perms = min(perms, max_perms)
 
     return perms
