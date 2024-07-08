@@ -82,7 +82,8 @@ def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_ne
         for item in items:
             results = item["results"]
             if n is not None:
-                assert n > 0, "n parameter should be > 0"
+                assert 0 < n <= len(
+                    results), "n parameter should be 0 < n <= len(results)"
                 results = random.sample(results, n)
 
             score_results = []
