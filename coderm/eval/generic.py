@@ -189,7 +189,7 @@ def make_items_from_ds(
     for i, item in enumerate(dataset):
         unique_name = str(i)
         if unique_name_col is not None:
-            unique_name = item[unique_name_col]
+            unique_name = str(item[unique_name_col])
             for char in bad_chars:
                 unique_name = unique_name.replace(char, "_")
 
