@@ -57,11 +57,10 @@ def approximate_perms(n, max_n, max_perms=100):
     # we approximate the number of permutations required based on n and len(items[0]["results"])
     # the closer n is to len(items[0]["results"]), the less permutations are required
     max_perms = 100
-    if n is None or n == max_n:
-        perms = 1
-    else:
-        perms = int(max_perms * (1 - (n / max_n)) + 1)
-        perms = min(perms, max_perms)
+    if n is None:
+        n = max_n
+    perms = int(max_perms * (1 - (n / max_n)) + 1)
+    perms = min(perms, max_perms)
 
     return perms
 
