@@ -1,4 +1,5 @@
 import os
+import time
 from tqdm import tqdm
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
@@ -395,15 +396,23 @@ class OpenAIChatModel(BaseModel):
         threads = []
 
         def generate_completion(prompt, i):
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=prompt,
-                max_tokens=kwargs.get("max_tokens", 3076),
-                logprobs=True,
-                stop=kwargs.get("stop", []),
-                temperature=kwargs.get("temperature", 0.0),
-                top_p=kwargs.get("top_p", 1.0),
-            )
+            import openai
+            while True:
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model_name,
+                        messages=prompt,
+                        max_tokens=kwargs.get("max_tokens", 3076),
+                        logprobs=True,
+                        stop=kwargs.get("stop", []),
+                        temperature=kwargs.get("temperature", 0.0),
+                        top_p=kwargs.get("top_p", 1.0),
+                    )
+                except openai.RateLimitError as e:
+                    print("OpenAI API Rate limited, waiting 30s...", e)
+                    time.sleep(30)
+                    continue
+                break
             choice = response.choices[0]
             o = choice.message.content
             logprobs = choice.logprobs.content  # type: ignore
