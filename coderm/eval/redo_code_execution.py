@@ -56,7 +56,7 @@ def main(args):
     # json loads all tests
     for i, og_item in enumerate(dataset):
         try:
-            dataset[i][test_col] = json.loads(og_item["input_output"])
+            dataset[i][test_col] = json.loads(og_item[test_col])
             if "public_input_output" in og_item:
                 dataset[i]["public_input_output"] = json.loads(
                     og_item["public_input_output"])
