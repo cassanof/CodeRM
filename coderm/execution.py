@@ -204,7 +204,7 @@ def is_eq(a, b):
 """
 
 
-def exec_named_test(code, inps, outs, entrypoints: Union[str, list[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     if isinstance(entrypoints, str):
         entrypoints = [entrypoints] * len(inps)
     assert len(inps) == len(outs) == len(entrypoints)
@@ -265,7 +265,7 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
         inputs = tests["inputs"]
         outputs = tests["outputs"]
         if "fn_name" in tests:
-            name: Union[str, list[str]] = tests["fn_name"]
+            name: Union[str, List[str]] = tests["fn_name"]
             return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
         else:
             return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
@@ -306,7 +306,7 @@ def smart_exec_tests_queuebatched(
         codes,
         tests_per_code,
         executor="http://127.0.0.1:8000",
-        timeouts: list[float] = None,
+        timeouts: List[float] = None,
         workers=os.cpu_count(),
         use_tqdm=True
 ) -> List[Tuple[bool, str]]:
