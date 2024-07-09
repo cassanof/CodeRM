@@ -70,7 +70,7 @@ def main(args):
             "question",
             "input_output",
             public_tests_col="public_input_output",
-            starter_code_col="starter_code",
+            starter_code_col="starter_code" if "starter_code" in dataset[0] else None,
             difficulty_col="difficulty",
             random_sample=None,
             unique_name_col=None,
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     if cpu_count is None:
         cpu_count = 1
     else:
-        cpu_count = int(cpu_count * 0.8) # lower for stability
+        cpu_count = int(cpu_count * 0.8)  # lower for stability
     parser.add_argument("--exec-batch-size", type=int, default=cpu_count)
     parser.add_argument(
         "--redo", type=str, choices=["failed", "timeout", "error", "all"], default="error")
