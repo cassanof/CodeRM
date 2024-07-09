@@ -44,12 +44,24 @@ def main(args):
     dataset = datasets.load_dataset(args.dataset, split=args.split)
     # convert dataset to list
     dataset = dataset.to_list()
+    first_item = dataset[0]
+
+    # different cols to support different datasets
+    test_col = "input_output" if "input_output" in first_item else "test"
+    starter_code_col = "starter_code" if "starter_code" in first_item else None
+    id_col = "task_id" if "task_id" in first_item else "id"
+    difficulty_col = "difficulty" if "difficulty" in first_item else None
+    public_tests_col = "public_input_output" if "public_input_output" in first_item else None
+
     # json loads all tests
     for i, og_item in enumerate(dataset):
-        dataset[i]["input_output"] = json.loads(og_item["input_output"])
-        if "public_input_output" in og_item:
-            dataset[i]["public_input_output"] = json.loads(
-                og_item["public_input_output"])
+        try:
+            dataset[i][test_col] = json.loads(og_item["input_output"])
+            if "public_input_output" in og_item:
+                dataset[i]["public_input_output"] = json.loads(
+                    og_item["public_input_output"])
+        except json.JSONDecodeError:
+            continue
 
     manager = EvaluationManager(
         model=MockModel(not args.no_prefix_starter_code),
@@ -68,12 +80,12 @@ def main(args):
         return make_items_from_ds(
             dataset,
             "question",
-            "input_output",
-            public_tests_col="public_input_output",
-            starter_code_col="starter_code" if "starter_code" in dataset[0] else None,
-            difficulty_col="difficulty",
+            test_col,
+            public_tests_col=public_tests_col,
+            starter_code_col=starter_code_col,
+            difficulty_col=difficulty_col,
             random_sample=None,
-            unique_name_col=None,
+            unique_name_col=id_col,
         )
 
     og_items = make_items()
