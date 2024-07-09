@@ -103,7 +103,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", type=str,
-                        default="cassanof/taco_cleaned_all")
+                        default="codegenning/taco_cleaned_all")
     parser.add_argument("--test", type=str,
                         default="cassanof/livecodebench_lite_contaminated")
     parser.add_argument("--max-tokens", type=int, default=2048)
