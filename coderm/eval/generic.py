@@ -90,7 +90,7 @@ class CompletionItem:
             public_tests_col: Optional[str] = None,
             starter_code_col: Optional[str] = None,
             difficulty_col: Optional[str] = None,
-            solutions_col: Optional[list[str]] = None,
+            solutions_col: Optional[List[str]] = None,
     ):
         self.prompt_col = prompt_col
         self.starter_code_col = starter_code_col
@@ -120,7 +120,7 @@ class CompletionItem:
             return self.item[self.difficulty_col]
         return None
 
-    def get_solutions(self) -> Optional[list[str]]:
+    def get_solutions(self) -> Optional[List[str]]:
         if self.solutions_col is not None:
             return self.item[self.solutions_col]
         return None
