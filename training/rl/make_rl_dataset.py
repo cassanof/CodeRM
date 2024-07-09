@@ -2,6 +2,7 @@ import datasets
 import os
 from transformers import AutoTokenizer
 from coderm.prompts import py_prompt
+from IPython import embed
 import json
 import sys
 
@@ -81,7 +82,8 @@ def main(args):
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
         train_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None,
+             "solutions": ex["solutions"] if "solutions" in ex else None})
 
     for ex in test_dataset:
         post = ""
@@ -89,11 +91,12 @@ def main(args):
             post = "\n"
         p = py_prompt(ex["question"], ex["starter_code"]) + post
         test_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None})
+            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None,
+                "solutions": ex["solutions"] if "solutions" in ex else None})
 
     ds = {
         "train": datasets.Dataset.from_list(train_fmt),
-        "test": datasets.Dataset.from_list(test_fmt),
+        # "test": datasets.Dataset.from_list(test_fmt),
     }
     ds = datasets.DatasetDict(ds)
     ds.push_to_hub(args.push, private=True)
