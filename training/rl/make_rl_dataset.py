@@ -73,29 +73,33 @@ def main(args):
     # just shuffle test set
     test_dataset = test_dataset.shuffle()
 
-    train_fmt = []
-    test_fmt = []
+    def prep_ds(ds):
+        fmt = []
+        for ex in ds:
+            post = ""
+            starter = ex["starter_code"]
+            if starter is None or starter == "":
+                post = "\n"
+            q = ex["question"]
+            q = q.replace("\\", "\\\\")
+            p = py_prompt(q, starter) + post
+            fmt.append(
+                {
+                    "prompt": p,
+                    "difficulty": ex["difficulty"],
+                    "input_output": ex["input_output"] if args.min_tests > 0 else None,
+                    "solutions": ex["solutions"] if "solutions" in ex else None,
+                    "starter_code": starter,
+                }
+            )
+        return fmt
 
-    for ex in train_dataset:
-        post = ""
-        if "starter_code" not in ex:
-            post = "\n"
-        p = py_prompt(ex["question"], ex["starter_code"]) + post
-        train_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None,
-             "solutions": ex["solutions"] if "solutions" in ex else None})
-
-    for ex in test_dataset:
-        post = ""
-        if "starter_code" not in ex:
-            post = "\n"
-        p = py_prompt(ex["question"], ex["starter_code"]) + post
-        test_fmt.append(
-            {"prompt": p, "difficulty": ex["difficulty"], "input_output": ex["input_output"] if args.min_tests > 0 else None,
-                "solutions": ex["solutions"] if "solutions" in ex else None})
+    train_fmt = prep_ds(train_dataset)
+    test_fmt = prep_ds(test_dataset)
 
     ds = {
         "train": datasets.Dataset.from_list(train_fmt),
+        # TODO: bring back test
         # "test": datasets.Dataset.from_list(test_fmt),
     }
     ds = datasets.DatasetDict(ds)
