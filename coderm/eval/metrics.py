@@ -195,7 +195,7 @@ def get_public_acc(items, n=None, k=1, perms=None) -> Optional[float]:
 def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, get_std: bool = False) -> str:
     if file.is_dir():
         import datasets
-        ds = datasets.load_from_disk(file)
+        ds = datasets.load_from_disk(str(file))
         items = ds.to_list()
     else:
         obj = gunzip_json_read(file)
