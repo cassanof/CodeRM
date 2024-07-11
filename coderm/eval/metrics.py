@@ -68,13 +68,13 @@ def approximate_perms(n, max_n, max_perms=100, min_perms=25):
     return perms
 
 
-def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_needed=None) -> Tuple[Optional[float], Optional[float]]:
+def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_needed=None) -> Tuple[Optional[float], Optional[float], Optional[float], Optional[float]]:
     random.seed(42)
     if perms is None:
         perms = approximate_perms(n, len(items[0]["results"]))
 
-    orm_acc = 0
-    public_acc = 0
+    accs = []
+    public_accs = []
     for _ in range(perms):
         correct_pass = []
         correct_with_public_pass = []
@@ -120,13 +120,20 @@ def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_ne
                 correct_with_public_pass.append(
                     any(passing for _, passing in top_k_with_public))
 
-        orm_acc += np.mean(correct_pass)
+        accs.append(np.mean(correct_pass))
         if correct_with_public_pass:
-            public_acc += np.mean(correct_with_public_pass)
+            public_accs.append(np.mean(correct_with_public_pass))
         else:
-            public_acc = None
+            public_accs.append(None)
 
-    return orm_acc / perms, public_acc / perms if public_acc is not None else None
+    mean_acc = np.mean(accs)
+    mean_public_acc = np.mean(
+        public_accs) if public_accs[0] is not None else None
+    std_acc = np.std(accs)
+    std_public_acc = np.std(
+        public_accs) if public_accs[0] is not None else None
+
+    return mean_acc, mean_public_acc, std_acc, std_public_acc
 
 
 def get_ml_acc(items, n=None, k=1, perms=None) -> Optional[float]:
@@ -136,7 +143,7 @@ def get_ml_acc(items, n=None, k=1, perms=None) -> Optional[float]:
     return get_reward_acc(items, lambda x: x["cumulative_logprob"], None, n, k, perms, "cumulative_logprob")[0]
 
 
-def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[float], Optional[float]]:
+def get_orm_acc(items, prod=None, n=None, k=1, perms=None) -> Tuple[Optional[float], Optional[float], Optional[float], Optional[float]]:
     """
     Calculates the ORM accuracy, if the results contain ORM labels.
 
@@ -216,7 +223,7 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, g
         std_est = round(np.std(means) / np.sqrt(n_comp) * 100, 4)
         mean_pass_k = round(np.mean(means) * 100, 4)
 
-    orm_acc, orm_acc_public = get_orm_acc(items, prod=orm_prod, n=n, k=k)
+    orm_acc, orm_acc_public, _, _ = get_orm_acc(items, prod=orm_prod, n=n, k=k)
     orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
     orm_acc_public = round(orm_acc_public * 100,
                            4) if orm_acc_public is not None else "N/A"
