@@ -33,7 +33,7 @@ for rm in "${RMS[@]}"; do
     echo "Running RM $rm on input file $input_file - writing to $outfile"
     if [ "$rm" == "codegenning/orm-llama3-70b-v0" ]; then
       echo "running llama model"
-      CUDA_VISIBLE_DEVICES=$MULTI_GPU python3 ./coderm/eval/run_orm.py --model "$rm" --input "$input_file_no_gz" --output "$outfile" --device "auto"
+      CUDA_VISIBLE_DEVICES=$MULTI_GPU python3 ./coderm/eval/run_orm.py --model "$rm" --input "$input_file" --output "$outfile" --device "auto"
     else
       echo "running starcoder model"
       CUDA_VISIBLE_DEVICES=$SINGLE_GPU python3 ./coderm/eval/run_orm.py --model "$rm" --input "$input_file" --output "$outfile"
