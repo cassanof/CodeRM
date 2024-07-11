@@ -24,13 +24,16 @@ pushd ../
 OUTDIR="./results/rm_grid"
 mkdir -p $OUTDIR
 
+# calculate number of runs
+num_runs=$((${#RMS[@]} * ${#INPUT_FILES[@]}))
+cur_iter=0
 for rm in "${RMS[@]}"; do
   for input_file in "${INPUT_FILES[@]}"; do
     # input without .json.gz
     in_trim=${input_file%.json.gz}
     rm_base=${rm#codegenning/orm-}
     outfile="$OUTDIR/${in_trim}_${rm_base}.json.gz"
-    echo "Running RM $rm on input file $input_file - writing to $outfile"
+    echo "Running RM $rm on input file $input_file - writing to $outfile ($cur_iter/$num_runs)"
     if [ "$rm" == "codegenning/orm-llama3-70b-v0" ]; then
       echo "running llama model"
       CUDA_VISIBLE_DEVICES=$MULTI_GPU python3 ./coderm/eval/run_orm.py --model "$rm" --input "$input_file" --output "$outfile" --device "auto"
@@ -38,6 +41,7 @@ for rm in "${RMS[@]}"; do
       echo "running starcoder model"
       CUDA_VISIBLE_DEVICES=$SINGLE_GPU python3 ./coderm/eval/run_orm.py --model "$rm" --input "$input_file" --output "$outfile"
     fi
+    cur_iter=$((cur_iter + 1))
   done
 done
 popd
