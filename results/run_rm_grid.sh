@@ -31,9 +31,11 @@ for rm in "${RMS[@]}"; do
     in_trim=${input_file%.json.gz}
     rm_base=${rm#codegenning/orm-}
     if [ "$rm" == "codegenning/orm-llama3-70b-v0" ]; then
-      CUDA_VISIBLE_DEVICES=$MULTI_GPU python3 ./coderm/eval/run_orm.py --model $rm --input $input_file_no_gz --output "$OUTDIR/${in_trim}_${rm_base}.json.gz" --device "auto"
+      echo "running llama model"
+      CUDA_VISIBLE_DEVICES=$MULTI_GPU python3 ./coderm/eval/run_orm.py --model $rm --input "$input_file_no_gz" --output "$OUTDIR/${in_trim}_${rm_base}.json.gz" --device "auto"
     else
-      CUDA_VISIBLE_DEVICES=$SINGLE_GPU python3 ./coderm/eval/run_orm.py --model $rm --input_file $input_file --output "$OUTDIR/${in_trim}_${rm_base}.json.gz"
+      echo "running starcoder model"
+      CUDA_VISIBLE_DEVICES=$SINGLE_GPU python3 ./coderm/eval/run_orm.py --model $rm --input "$input_file" --output "$OUTDIR/${in_trim}_${rm_base}.json.gz"
     fi
   done
 done
