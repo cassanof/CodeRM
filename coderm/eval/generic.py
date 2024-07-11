@@ -1,10 +1,8 @@
 from typing import Any, Dict, List, Optional, Tuple
-import time
-from coderm.code_exec_server.code_exec_reqs import check_executor_alive
 import shutil
 from pathlib import Path
 from tqdm import tqdm
-from coderm.execution import parse_time_limit, smart_exec_tests, smart_exec_tests_queuebatched
+from coderm.execution import parse_time_limit, smart_exec_tests_queuebatched
 from coderm.prompts import Prompt
 from coderm.utils import chunkify, gunzip_json_write, gunzip_json_read, container_restart
 from coderm.model import BaseModel, Completion, EvolverModel
