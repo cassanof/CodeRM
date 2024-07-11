@@ -30,7 +30,7 @@ cur_iter=0
 for rm in "${RMS[@]}"; do
   for input_file in "${INPUT_FILES[@]}"; do
     # input without .json.gz
-    in_trim=${input_file%.json.gz}
+    in_trim=$(basename "${input_file%.json.gz}")
     rm_base=${rm#codegenning/orm-}
     outfile="$OUTDIR/${in_trim}_${rm_base}.json.gz"
     echo "Running RM $rm on input file $input_file - writing to $outfile ($cur_iter/$num_runs)"
