@@ -306,7 +306,7 @@ def smart_exec_tests_queuebatched(
         codes,
         tests_per_code,
         executor="http://127.0.0.1:8000",
-        timeouts: List[float] = None,
+        timeouts: List[float] = [],
         workers=os.cpu_count(),
         use_tqdm=True
 ) -> List[Tuple[bool, str]]:
@@ -316,8 +316,11 @@ def smart_exec_tests_queuebatched(
 
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
 
-    if timeouts is None:
+    if len(timeouts) == 0:
         timeouts = [30] * len(codes)
+
+    assert len(timeouts) == len(codes) == len(tests_per_code), \
+        f"Length mismatch in inputs: timeouts({len(timeouts)}), codes({len(codes)}), tests_per_code({len(tests_per_code)})"
 
     lock = threading.Lock()
 

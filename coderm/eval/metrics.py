@@ -90,7 +90,7 @@ def get_reward_acc(items, score_fn, prod=None, n=None, k=1, perms=None, label_ne
             score_results_with_public = []
             for result in results:
                 if label_needed and label_needed not in result:
-                    return None, None  # No labels found
+                    return None, None, None, None  # No labels found
 
                 score = score_fn(result)
 
