@@ -13,7 +13,7 @@ python3 -m torch.distributed.launch \
   --lr 1e-5 \
   --weight_decay 0.01 \
   --save_dir "./model_starcoder2_7b_orm50" \
-  --dataset "codegenning/orm_dataset_raw50" \
+  --dataset "codegenning/orm_dataset_raw50_dedup" \
   --eval_dataset "codegenning/orm_eval_dataset" \
   --model "codegenning/generator-sc2-7b" \
   --deepspeed "./deepspeed_cfgs/no_offload.json" \
