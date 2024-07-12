@@ -23,7 +23,7 @@
       "global_batch_size": 256,
       "per_device_train_batch_size": 8,
       "num_train_epochs": 1,
-      "num_prompt_rollouts": 25,
+      "num_prompt_rollouts": 50,
       "gradient_accumulation_steps": 2,
       "learning_rate": 3e-6,
       "max_length": 8129,
@@ -36,6 +36,6 @@
     {
       "group": "dpo",
       "project": "code_rl",
-      "name": "online_dpo_sc2_15b_orm_15b_roll25"
+      "name": "online_dpo_sc2_15b_orm_15b_roll50"
     }
   }
