@@ -1,0 +1,41 @@
+{
+    "task": "dpo",
+    "model_squad": {
+    "lm": {
+    "model_path": "codegenning/generator-sc2-15b",
+    "gen_kwargs":
+    {
+    "max_tokens": 4096,
+    "top_p": 0.95,
+    "temperature": 1.0
+    }
+    },
+    "reward": {"model_path": "codegenning/orm-sc2-15b-v0", "is_training": false, "pos_idx": 1, "num_labels": 2}
+    },
+    "dataset": "codegenning/taco-rl",
+    "save_strategy": "steps",
+    "save_steps": 0.1,
+    "save_final_model_output": true,
+    "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_15b",
+    "hyperparams":
+    {
+      "online": true,
+      "global_batch_size": 256,
+      "per_device_train_batch_size": 8,
+      "num_train_epochs": 1,
+      "num_prompt_rollouts": 25,
+      "gradient_accumulation_steps": 2,
+      "learning_rate": 3e-6,
+      "max_length": 8129,
+      "logging_steps": 1,
+      "dpo_beta": 0.04,
+      "warmup_ratio": 0.05,
+      "lr_scheduler_type": "cosine"
+    },
+    "wandb":
+    {
+      "group": "dpo",
+      "project": "code_rl",
+      "name": "online_dpo_sc2_15b_orm_15b_roll25"
+    }
+  }
