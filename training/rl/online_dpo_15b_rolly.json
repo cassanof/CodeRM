@@ -20,13 +20,13 @@
   "save_strategy": "steps",
   "save_steps": 0.1,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_15b",
+  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_70b_rolly10",
   "hyperparams": {
     "online": true,
     "global_batch_size": 256,
     "per_device_train_batch_size": 8,
     "num_train_epochs": 1,
-    "num_prompt_rollouts": 50,
+    "num_prompt_rollouts": 10,
     "gradient_accumulation_steps": 2,
     "learning_rate": 3e-6,
     "max_length": 4096,
@@ -38,6 +38,6 @@
   "wandb": {
     "group": "dpo",
     "project": "code_rl",
-    "name": "online_dpo_sc2_15b_orm_15b_roll50"
+    "name": "online_dpo_sc2_15b_orm_70b_roll10"
   }
 }
