@@ -2,7 +2,7 @@
   "task": "dpo",
   "model_squad": {
     "lm": {
-      "model_path": "codegenning/generator-sc2-15b",
+      "model_path": "codegenning/generator-sc2-3b",
       "gen_kwargs": {
         "max_tokens": 2048,
         "top_p": 0.95,
@@ -20,24 +20,25 @@
   "save_strategy": "steps",
   "save_steps": 0.1,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_70b_rolly10",
+  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_3b_orm_70b_rolly10",
   "hyperparams": {
     "online": true,
     "global_batch_size": 256,
-    "per_device_train_batch_size": 1,
+    "per_device_train_batch_size": 8,
     "num_train_epochs": 1,
-    "num_prompt_rollouts": 10,
-    "gradient_accumulation_steps": 16,
+    "num_prompt_rollouts": 4,
+    "gradient_accumulation_steps": 2,
     "learning_rate": 3e-6,
     "max_length": 4096,
     "logging_steps": 1,
     "dpo_beta": 0.04,
+    "reward_batch_size": 1,
     "warmup_ratio": 0.05,
     "lr_scheduler_type": "cosine"
   },
   "wandb": {
     "group": "dpo",
     "project": "code_rl",
-    "name": "online_dpo_sc2_15b_orm_70b_roll10"
+    "name": "online_dpo_sc2_3b_orm_3b_roll10"
   }
 }
