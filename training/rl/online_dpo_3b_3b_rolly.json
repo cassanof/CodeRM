@@ -10,7 +10,7 @@
       }
     },
     "reward": {
-      "model_path": "codegenning/orm-llama3-70b-v0",
+      "model_path": "codegenning/orm-sc2-3b-v0",
       "is_training": false,
       "pos_idx": 1,
       "num_labels": 2
@@ -20,7 +20,7 @@
   "save_strategy": "steps",
   "save_steps": 0.1,
   "save_final_model_output": true,
-  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_3b_orm_70b_rolly10",
+  "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_3b_orm_3b_rolly10",
   "hyperparams": {
     "online": true,
     "global_batch_size": 256,
