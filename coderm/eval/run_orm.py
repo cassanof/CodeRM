@@ -11,7 +11,7 @@ def main(args):
     path = Path(args.input)
     obj = None
     if path.is_dir():
-        completions = datasets.load_from_disk(str(path)).tolist()
+        completions = datasets.load_from_disk(str(path)).to_list()
     else:
         obj = gunzip_json_read(Path(args.input))
         assert obj is not None, "Could not read completions from " + \
