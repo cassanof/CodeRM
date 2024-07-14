@@ -11,7 +11,7 @@ def main(args):
     path = Path(args.input)
     obj = None
     if path.is_dir():
-        completions = datasets.load_from_disk(path).tolist()
+        completions = datasets.load_from_disk(str(path)).tolist()
     else:
         obj = gunzip_json_read(Path(args.input))
         assert obj is not None, "Could not read completions from " + \
@@ -50,7 +50,7 @@ def main(args):
 
     if path.is_dir():
         ds = datasets.Dataset.from_list(completions)
-        ds.save_to_disk(Path(args.output))
+        ds.save_to_disk(args.output)
     else:
         assert obj is not None
         obj["orm_model"] = str(args.model)
