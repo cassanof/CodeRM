@@ -1,10 +1,6 @@
 {
   "task": "dpo",
-  "model_squad": {
-    "lm": {
-      "model_path": "codegenning/generator-sc2-3b"
-    }
-  },
+  "base": "codegenning/generator-sc2-3b",
   "dataset": "codegenning/orm_dataset_raw50_dpo",
   "save_strategy": "steps",
   "save_steps": 0.1,
