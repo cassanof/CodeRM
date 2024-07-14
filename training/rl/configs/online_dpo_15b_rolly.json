@@ -23,6 +23,7 @@
   "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_70b_rolly10",
   "hyperparams": {
     "online": true,
+    "async_rollout_position": "after-backward",
     "global_batch_size": 256,
     "per_device_train_batch_size": 1,
     "per_device_eval_batch_size": 1,
