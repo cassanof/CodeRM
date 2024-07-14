@@ -1,4 +1,5 @@
 from pathlib import Path
+import datasets
 from tqdm import tqdm
 from coderm.model import OutcomeRewardModel
 from coderm.prompts import py_prompt
@@ -7,15 +8,20 @@ from coderm.utils import chunkify, gunzip_json_read, gunzip_json_write
 
 
 def main(args):
-    obj = gunzip_json_read(Path(args.input))
-    assert obj is not None, "Could not read completions from " + \
-        f"{args.input}"
+    path = Path(args.input)
+    obj = None
+    if path.is_dir():
+        completions = datasets.load_from_disk(path).tolist()
+    else:
+        obj = gunzip_json_read(Path(args.input))
+        assert obj is not None, "Could not read completions from " + \
+            f"{args.input}"
 
-    if ("gpt-" in obj["model"] or "chat" in obj["model"]) and not args.no_prefix_starter:
-        print("Warning: Looks like the model is chat based but --no-prefix-starter is not set. " +
-              "This might cause incorrect results. Please set --no-prefix-starter if the model is chat based.")
+        if ("gpt-" in obj["model"] or "chat" in obj["model"]) and not args.no_prefix_starter:
+            print("Warning: Looks like the model is chat based but --no-prefix-starter is not set. " +
+                  "This might cause incorrect results. Please set --no-prefix-starter if the model is chat based.")
+        completions = obj["items"]
 
-    completions = obj["items"]
     model = OutcomeRewardModel(args.model, device=args.device)
     for c in tqdm(completions, desc="Processing completions"):
         chunks = chunkify(list(enumerate(c["results"])), args.batch_size)
@@ -42,11 +48,15 @@ def main(args):
                 c["results"][i]["orm_0_score"] = negative
                 c["results"][i]["orm_1_score"] = positive
 
-    obj["orm_model"] = str(args.model)
-    obj["strip_comments"] = args.strip_comments
-    obj["prefix_starter"] = not args.no_prefix_starter
-
-    gunzip_json_write(Path(args.output), obj)
+    if path.is_dir():
+        ds = datasets.Dataset.from_list(completions)
+        ds.save_to_disk(Path(args.output))
+    else:
+        assert obj is not None
+        obj["orm_model"] = str(args.model)
+        obj["strip_comments"] = args.strip_comments
+        obj["prefix_starter"] = not args.no_prefix_starter
+        gunzip_json_write(Path(args.output), obj)
 
 
 if __name__ == "__main__":
