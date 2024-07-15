@@ -5,7 +5,6 @@ from tqdm import tqdm
 import queue
 import re
 from coderm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
-from coderm.utils import cached
 
 
 SOL_DEPS = """import sys
@@ -192,7 +191,6 @@ def is_eq(a, b):
 """
 
 
-@cached
 def instrument_exec_tests(inps, outs, entrypoints: Union[str, List[str]]):
     tests = EQ_INSTRUMENTATION
     for inp, out, entrypoint in zip(inps, outs, entrypoints):
