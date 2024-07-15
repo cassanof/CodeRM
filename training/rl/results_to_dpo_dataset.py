@@ -1,6 +1,37 @@
+from typing import Optional, Tuple
 from coderm.prompts import py_prompt
 import random
 import datasets
+
+
+def exec_selection(results) -> Tuple[Optional[str], Optional[str]]:
+    chosen = None
+    rejected = None
+    for r in results:
+        code = r["code"]
+        if r["passing"]:
+            chosen = code
+        else:
+            rejected = code
+    return chosen, rejected
+
+
+def score_selection(results) -> Tuple[Optional[str], Optional[str]]:
+    chosen = None
+    rejected = None
+    chosen_score = -1
+    rejected_score = 1
+    for r in results:
+        code = r["code"]
+        score = r["orm_1_score"]
+        if score > chosen_score:
+            chosen = code
+            chosen_score = score
+        if score < rejected_score:
+            rejected = code
+            rejected_score = score
+    assert chosen != rejected, "Chosen and rejected are the same"
+    return chosen, rejected
 
 
 def main(args):
@@ -18,15 +49,13 @@ def main(args):
     used_nat = 0
     used_synth = 0
     for ex in ds:
-        chosen = None
-        rejected = None
-
-        for r in ex["results"]:
-            code = r["code"]
-            if r["passing"]:
-                chosen = code
-            else:
-                rejected = code
+        results = ex["results"][:args.n]
+        if args.selection == "exec":
+            chosen, rejected = exec_selection(results)
+        elif args.selection == "score":
+            chosen, rejected = score_selection(results)
+        else:
+            raise ValueError(f"Unknown selection method: {args.selection}")
 
         if chosen is None:
             # attempt to get a natural solution
@@ -68,6 +97,10 @@ if __name__ == "__main__":
     parser.add_argument("--natural", type=str, required=False,
                         help="Input dataset with natural chosens")
     parser.add_argument("--natural_col", type=str, default="reasoning_steps")
+    parser.add_argument("--selection", type=str,
+                        choices=["exec", "score"], default="exec")
+    parser.add_argument("-n", type=int, default=99999,
+                        help="Max number of samples per example to use")
     parser.add_argument("--push", type=str, required=True,
                         help="Push dataset path for the ORM")
     parser.add_argument("--push-split", type=str, default="train",
