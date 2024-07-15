@@ -1,4 +1,5 @@
 from typing import Any, List, Optional, TypeVar
+from functools import wraps
 from pathlib import Path
 import json
 import re
@@ -57,3 +58,16 @@ def markdown_codeblock_extract(response: str) -> str:
 
 def strip_python_comments(code: str) -> str:
     return re.sub(r"#.*", "", code)
+
+# cached decorator
+def cached(func):
+    cache = {}
+
+    @wraps(func)
+    def wrapper(*args):
+        if args in cache:
+            return cache[args]
+        result = func(*args)
+        cache[args] = result
+        return result
+    return wrapper

@@ -1,11 +1,11 @@
 from typing import List, Optional, Tuple, Union
 import os
 import threading
-import multiprocessing
 from tqdm import tqdm
 import queue
 import re
 from coderm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
+from coderm.utils import cached
 
 
 SOL_DEPS = """import sys
@@ -192,15 +192,8 @@ def is_eq(a, b):
 """
 
 
-def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    if isinstance(entrypoints, str):
-        entrypoints = [entrypoints] * len(inps)
-    assert len(inps) == len(outs) == len(entrypoints)
-
-    if "class Solution:" in code:
-        entrypoints = [f"Solution().{e}" for e in entrypoints]
-
-    instru = SOL_DEPS + code
+@cached
+def instrument_exec_tests(inps, outs, entrypoints: Union[str, List[str]]):
     tests = EQ_INSTRUMENTATION
     for inp, out, entrypoint in zip(inps, outs, entrypoints):
         args = ""
@@ -210,7 +203,19 @@ def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], execut
         tests += f"assert is_eq({entrypoint}({args}), {out!r})\n"
 
     tests += "print('___SENTINEL___')\n"
+    return tests
 
+
+def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+    if isinstance(entrypoints, str):
+        entrypoints = [entrypoints] * len(inps)
+    assert len(inps) == len(outs) == len(entrypoints)
+
+    if "class Solution:" in code:
+        entrypoints = [f"Solution().{e}" for e in entrypoints]
+
+    instru = SOL_DEPS + code
+    tests = instrument_exec_tests(inps, outs, entrypoints)
     passing, outs = exec_test(executor, instru, tests,
                               timeout=timeout, timeout_on_client=False)
     if passing:
@@ -257,6 +262,7 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
             return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
         else:
             return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
+
 
 def smart_exec_tests_queuebatched(
         codes,
