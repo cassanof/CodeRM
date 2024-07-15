@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple, Union
 import os
 import threading
+import multiprocessing
 from tqdm import tqdm
 import queue
 import re
@@ -199,8 +200,8 @@ def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], execut
     if "class Solution:" in code:
         entrypoints = [f"Solution().{e}" for e in entrypoints]
 
-    instru = SOL_DEPS + code + EQ_INSTRUMENTATION
-    tests = ""
+    instru = SOL_DEPS + code
+    tests = EQ_INSTRUMENTATION
     for inp, out, entrypoint in zip(inps, outs, entrypoints):
         args = ""
         for arg in inp:

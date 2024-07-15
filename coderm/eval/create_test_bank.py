@@ -1,7 +1,10 @@
 import json
+from tqdm import tqdm
 from coderm.execution import smart_exec_tests_queuebatched
 from coderm import execution
 import datasets
+import hashlib
+import gzip
 
 
 def main(args):
@@ -19,9 +22,7 @@ def main(args):
 
     ids_special = []
     id_to_testout = {}
-    id_to_test = {}
     for i in range(len(input_tests)):
-        id_to_test[i] = input_tests[i]
         id_to_testout[i] = None
         ids_special.append(f"_START_{i}_END_")
 
@@ -39,6 +40,18 @@ def main(args):
 
     smart_exec_tests_queuebatched(ids_special, input_tests)
 
+    bank = []
+    for i, test in tqdm(id_to_testout.items(), total=len(id_to_testout)):
+        assert test is not None
+        hashed = hashlib.md5(test.encode()).hexdigest()
+        test = test
+        bank.append({"test": test, "hash": hashed})
+
+    bank = datasets.Dataset.from_list(bank)
+    if args.push:
+        bank.push_to_hub(args.output, private=True)
+    else:
+        bank.save_to_disk(args.output)
 
 
 if __name__ == "__main__":
@@ -46,7 +59,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str,
                         default="codegenning/livecodebench_lite_filtered")
-    parser.add_argument("--push", type=str, required=True)
+    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--push", action="store_true")
     parser.add_argument("--split", type=str, default="test")
     parser.add_argument("--dataset-format", type=str,
                         choices=["lcb"], default="lcb")
