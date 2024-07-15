@@ -128,11 +128,12 @@ EXIT_RE = re.compile(r"exit\(.*\)")
 QUIT_RE = re.compile(r"quit\(.*\)")
 
 
-def instrument_io_code(code: str, inputs: List[str]) -> str:
+def instrument_io_code(code: str, inputs: List[str]) -> Tuple[str, str]:
     imports = re.findall(FROM_IMPORT_ALL_RE, code)
     code = re.sub(FROM_IMPORT_ALL_RE, "", code)
 
-    # transform exits into returns
+    # transform exits into returns. this is a bit of a hack, but in general, the model should not
+    # use exits anyways.
     code = re.sub(SYS_EXIT_RE, "return", code)
     code = re.sub(EXIT_RE, "return", code)
     code = re.sub(QUIT_RE, "return", code)
@@ -143,21 +144,20 @@ def instrument_io_code(code: str, inputs: List[str]) -> str:
     for imp in imports:
         code_closed = imp + "\n" + code_closed
 
-    instru = SOL_DEPS + IGNORE_WARNINGS + code_closed + "\n\n"
-    inputs_str = "__inputs__ = " + str(inputs) + "\n"
-    instru += inputs_str
-    instru += "for __inp__ in __inputs__:\n"  # NOTE: sys is imported in SOL_DEPS
-    instru += "    import io\n"
-    instru += "    sys.stdin = io.TextIOWrapper(io.BytesIO(__inp__.encode()), encoding='utf8')\n"
-    instru += "    __run_prog__()\n"
-    instru += "    print(\"___SENTINEL___\")\n"
-    return instru
+    instru = SOL_DEPS + IGNORE_WARNINGS + code_closed
+    tests_str = "__inputs__ = " + str(inputs) + "\n"
+    tests_str += "for __inp__ in __inputs__:\n"  # NOTE: sys is imported in SOL_DEPS
+    tests_str += "    import io\n"
+    tests_str += "    sys.stdin = io.TextIOWrapper(io.BytesIO(__inp__.encode()), encoding='utf8')\n"
+    tests_str += "    __run_prog__()\n"
+    tests_str += "    print(\"___SENTINEL___\")\n"
+    return instru, tests_str
 
 
 def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    instru = instrument_io_code(code, inps)
+    instru_code, instru_tests = instrument_io_code(code, inps)
     passing, outputs = exec_test(
-        executor, instru, "", timeout=timeout, timeout_on_client=False)
+        executor, instru_code, instru_tests, timeout=timeout, timeout_on_client=False)
     if not passing:
         return False, f"errored with {outputs!r}\n"
 
