@@ -191,19 +191,6 @@ def is_eq(a, b):
 """
 
 
-def instrument_exec_tests(inps, outs, entrypoints: Union[str, List[str]]):
-    tests = EQ_INSTRUMENTATION
-    for inp, out, entrypoint in zip(inps, outs, entrypoints):
-        args = ""
-        for arg in inp:
-            args += f"{arg!r}, "
-        args = args.rstrip(", ")
-        tests += f"assert is_eq({entrypoint}({args}), {out!r})\n"
-
-    tests += "print('___SENTINEL___')\n"
-    return tests
-
-
 def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     if isinstance(entrypoints, str):
         entrypoints = [entrypoints] * len(inps)
@@ -213,7 +200,16 @@ def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], execut
         entrypoints = [f"Solution().{e}" for e in entrypoints]
 
     instru = SOL_DEPS + code
-    tests = instrument_exec_tests(inps, outs, entrypoints)
+    tests = EQ_INSTRUMENTATION
+    for inp, out, entrypoint in zip(inps, outs, entrypoints):
+        args = ""
+        for arg in inp:
+            args += f"{arg!r}, "
+        args = args.rstrip(", ")
+        tests += f"assert is_eq({entrypoint}({args}), {out!r})\n"
+
+    tests += "print('___SENTINEL___')\n"
+
     passing, outs = exec_test(executor, instru, tests,
                               timeout=timeout, timeout_on_client=False)
     if passing:
@@ -260,7 +256,6 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
             return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
         else:
             return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
-
 
 def smart_exec_tests_queuebatched(
         codes,
