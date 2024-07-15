@@ -25,10 +25,10 @@ def score_selection(results) -> Tuple[Optional[str], Optional[str]]:
     for r in results:
         code = r["code"]
         score = r["orm_1_score"]
-        if score > chosen_score:
+        if score >= chosen_score:
             chosen = code
             chosen_score = score
-        if score < rejected_score:
+        if score <= rejected_score:
             rejected = code
             rejected_score = score
     assert chosen != rejected, "Chosen and rejected are the same"
