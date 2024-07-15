@@ -1,23 +1,25 @@
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 from coderm.prompts import py_prompt
 import random
 import datasets
 from tqdm import tqdm
 
 
-def exec_selection(results) -> Tuple[Optional[str], Optional[str]]:
+def exec_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
     chosen = None
     rejected = None
+    rejected_error = None
     for r in results:
         code = r["code"]
         if r["passing"]:
             chosen = code
         else:
             rejected = code
-    return chosen, rejected
+            rejected_error = r["output"]
+    return chosen, rejected, None, rejected_error
 
 
-def score_selection(results) -> Tuple[Optional[str], Optional[str]]:
+def score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
     chosen = None
     rejected = None
     chosen_score = -1
@@ -32,7 +34,7 @@ def score_selection(results) -> Tuple[Optional[str], Optional[str]]:
             rejected = code
             rejected_score = score
     assert chosen != rejected, "Chosen and rejected are the same"
-    return chosen, rejected
+    return chosen, rejected, chosen_score, rejected_score
 
 
 def main(args):
@@ -52,9 +54,11 @@ def main(args):
     for ex in tqdm(ds, total=len(ds)):
         results = ex["results"][:args.n]
         if args.selection == "exec":
-            chosen, rejected = exec_selection(results)
+            chosen, rejected, chosen_info, rejected_info = exec_selection(
+                results)
         elif args.selection == "score":
-            chosen, rejected = score_selection(results)
+            chosen, rejected, chosen_info, rejected_info = score_selection(
+                results)
         else:
             raise ValueError(f"Unknown selection method: {args.selection}")
 
@@ -78,6 +82,8 @@ def main(args):
             "prompt": prompt,
             "text_chosen": chosen,
             "text_rejected": rejected,
+            "chosen_info": chosen_info,
+            "rejected_info": rejected_info,
         }
         new_ds.append(defs)
 
