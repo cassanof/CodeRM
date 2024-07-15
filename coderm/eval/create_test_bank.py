@@ -38,8 +38,7 @@ def main(args):
     execution.exec_test = patched_exec_test
 
     smart_exec_tests_queuebatched(ids_special, input_tests)
-    print("Done.")
-    print(id_to_testout[0])
+
 
 
 if __name__ == "__main__":
@@ -47,6 +46,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str,
                         default="codegenning/livecodebench_lite_filtered")
+    parser.add_argument("--push", type=str, required=True)
     parser.add_argument("--split", type=str, default="test")
     parser.add_argument("--dataset-format", type=str,
                         choices=["lcb"], default="lcb")

@@ -174,19 +174,6 @@ def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000"
     return not bool(feedback), feedback
 
 
-def exec_io_test_vanilla(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    instrus = [SOL_DEPS + code for _ in inps]
-    for (instru, inp, out) in zip(instrus, inps, outs):
-        passing, outputs = exec_test(
-            executor, instru, "", timeout=timeout, stdin=inp, timeout_on_client=False)
-        if not passing:
-            return False,  f"[{inp!r}] errored with {outputs!r}\n"
-        elif not compare_io(outputs, out):
-            return False, f"[{inp!r}] expected {out!r} but got {outputs!r}\n"
-
-    return True, ""
-
-
 EQ_INSTRUMENTATION = """
 def is_eq(a, b):
     if a == b:
@@ -269,38 +256,6 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
             return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
         else:
             return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
-
-
-def smart_exec_tests_batched(codes, tests_per_code, executor="http://127.0.0.1:8000", timeouts=None) -> List[Tuple[bool, str]]:
-    results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
-    threads = []
-
-    if timeouts is None:
-        timeouts = [30] * len(codes)
-
-    def exec_test_fn(i, code, tests, timeout):
-        results[i] = smart_exec_tests(
-            code, tests, executor=executor, timeout=timeout)
-
-    for i, (code, tests, timeout) in enumerate(zip(codes, tests_per_code, timeouts)):
-        t = threading.Thread(target=exec_test_fn,
-                             args=(i, code, tests, timeout))
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
-
-    results_new = []
-    for r in results:
-        if r is None:
-            results_new.append(
-                (False, "Failed to execute program. Thread error."))
-        else:
-            results_new.append(r)
-
-    return results_new
-
 
 def smart_exec_tests_queuebatched(
         codes,
