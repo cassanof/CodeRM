@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 from coderm.prompts import py_prompt
 import random
 import datasets
+from tqdm import tqdm
 
 
 def exec_selection(results) -> Tuple[Optional[str], Optional[str]]:
@@ -48,7 +49,7 @@ def main(args):
     new_ds = []
     used_nat = 0
     used_synth = 0
-    for ex in ds:
+    for ex in tqdm(ds, total=len(ds)):
         results = ex["results"][:args.n]
         if args.selection == "exec":
             chosen, rejected = exec_selection(results)
