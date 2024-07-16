@@ -4,7 +4,7 @@ import threading
 from tqdm import tqdm
 import queue
 import re
-from coderm.code_exec_server.code_exec_reqs import exec_test, exec_test_batched
+from coderm.code_exec_server.code_exec_reqs import exec_test
 
 
 SOL_DEPS = """import sys
@@ -105,21 +105,6 @@ def compare_io(actual, expected, debug=False) -> bool:
         print("fallback comparison")
     return False
 
-
-def exec_io_test_batched(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
-    instrus = [SOL_DEPS + IGNORE_WARNINGS + code for _ in inps]
-    res = exec_test_batched(executor, instrus, [
-                            ""] * len(instrus), timeout=timeout, stdins=inps, timeout_on_client=False)
-    feedback = ""
-    for i, (out, (passing, outs)) in enumerate(zip(outs, res)):
-        if not passing:
-            feedback = f"[{i}] errored with {outs!r}\n"
-            break
-        elif not compare_io(outs, out):
-            feedback = f"[{i}] expected {out!r} but got {outs!r}\n"
-            break
-
-    return not bool(feedback), feedback
 
 
 FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
@@ -233,18 +218,13 @@ def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout
         return False, f"errored with {outs!r}"
 
 
-def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, batched_io=False) -> Tuple[bool, str]:
+def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
     """
     Supports various test formats:
         - simple I/O tests that use stdin and stdout
         - named tests that use assert statements
         - stringified tests that use a custom format
     """
-
-    if batched_io:
-        exec_io_test_fn = exec_io_test_batched
-    else:
-        exec_io_test_fn = exec_io_test_instrumented
 
     if isinstance(tests, str):
         return exec_test_stringified(code, tests, executor=executor, timeout=timeout)
@@ -255,7 +235,7 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
             name: Union[str, List[str]] = tests["fn_name"]
             return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
         else:
-            return exec_io_test_fn(code, inputs, outputs, executor=executor, timeout=timeout)
+            return exec_io_test_instrumented(code, inputs, outputs, executor=executor, timeout=timeout)
 
 def smart_exec_tests_queuebatched(
         codes,
