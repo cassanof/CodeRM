@@ -106,7 +106,6 @@ def compare_io(actual, expected, debug=False) -> bool:
     return False
 
 
-
 FROM_IMPORT_ALL_RE = re.compile(r"from\s+\S+\s+import\s+\*")
 SYS_EXIT_RE = re.compile(r"sys.exit\(.*\)")
 EXIT_RE = re.compile(r"exit\(.*\)")
@@ -139,10 +138,16 @@ def instrument_io_code(code: str, inputs: List[str]) -> Tuple[str, str]:
     return instru, tests_str
 
 
-def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def exec_io_test_instrumented(code, inps, outs, executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
     instru_code, instru_tests = instrument_io_code(code, inps)
     passing, outputs = exec_test(
-        executor, instru_code, instru_tests, timeout=timeout, timeout_on_client=False)
+        executor,
+        instru_code,
+        instru_tests,
+        timeout=timeout,
+        timeout_on_client=False,
+        testhash_repo=testbank,
+    )
     if not passing:
         return False, f"errored with {outputs!r}\n"
 
@@ -176,7 +181,7 @@ def is_eq(a, b):
 """
 
 
-def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
     if isinstance(entrypoints, str):
         entrypoints = [entrypoints] * len(inps)
     assert len(inps) == len(outs) == len(entrypoints)
@@ -195,8 +200,14 @@ def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], execut
 
     tests += "print('___SENTINEL___')\n"
 
-    passing, outs = exec_test(executor, instru, tests,
-                              timeout=timeout, timeout_on_client=False)
+    passing, outs = exec_test(
+        executor,
+        instru,
+        tests,
+        timeout=timeout,
+        timeout_on_client=False,
+        testhash_repo=testbank,
+    )
     if passing:
         if "___SENTINEL___" not in outs:
             return False, "missing ___SENTINEL___ in output"
@@ -205,11 +216,17 @@ def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], execut
         return False, f"errored with {outs!r}"
 
 
-def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
     instru = SOL_DEPS + code
     tests = tests + "\n\n\nprint('___SENTINEL___')\n"
-    passing, outs = exec_test(executor, instru, tests,
-                              timeout=timeout, timeout_on_client=False)
+    passing, outs = exec_test(
+        executor,
+        instru,
+        tests,
+        timeout=timeout,
+        timeout_on_client=False,
+        testhash_repo=testbank,
+    )
     if passing:
         if "___SENTINEL___" not in outs:
             return False, "missing ___SENTINEL___ in output"
@@ -218,7 +235,7 @@ def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout
         return False, f"errored with {outs!r}"
 
 
-def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30) -> Tuple[bool, str]:
+def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
     """
     Supports various test formats:
         - simple I/O tests that use stdin and stdout
@@ -227,23 +244,25 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30) 
     """
 
     if isinstance(tests, str):
-        return exec_test_stringified(code, tests, executor=executor, timeout=timeout)
+        return exec_test_stringified(code, tests, executor=executor, timeout=timeout, testbank=testbank)
     else:
         inputs = tests["inputs"]
         outputs = tests["outputs"]
         if "fn_name" in tests:
             name: Union[str, List[str]] = tests["fn_name"]
-            return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout)
+            return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout, testbank=testbank)
         else:
-            return exec_io_test_instrumented(code, inputs, outputs, executor=executor, timeout=timeout)
+            return exec_io_test_instrumented(code, inputs, outputs, executor=executor, timeout=timeout, testbank=testbank)
+
 
 def smart_exec_tests_queuebatched(
         codes,
         tests_per_code,
         executor="http://127.0.0.1:8000",
-        timeouts: List[float] = [],
+        timeouts: List[int] = [],
         workers=os.cpu_count(),
-        use_tqdm=True
+        use_tqdm=True,
+        testbank=None,
 ) -> List[Tuple[bool, str]]:
     if workers is None:
         print("WARNING: couldn't get number of workers, defaulting to 1")
@@ -267,7 +286,12 @@ def smart_exec_tests_queuebatched(
 
             i, code, tests, timeout = item
             results[i] = smart_exec_tests(
-                code, tests, executor=executor, timeout=timeout)
+                code,
+                tests,
+                executor=executor,
+                timeout=timeout,
+                testbank=testbank
+            )
             q.task_done()
 
             if pbar is not None:

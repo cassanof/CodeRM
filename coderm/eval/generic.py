@@ -97,7 +97,7 @@ class CompletionItem:
         self.item = item
         self.unique_name = unique_name
         self.difficulty_col = difficulty_col
-        self.solutions_col = solutions_col 
+        self.solutions_col = solutions_col
 
         self.completions: List[Completion] = []
         self.results: List[CompletionResult] = []
@@ -229,6 +229,7 @@ class EvaluationManager:
             exec_batch_size=os.cpu_count(),
             executor="http://127.0.0.1:8000",
             timeout=30,
+            testbank_name=None,
     ):
         self.model = model
         self.max_tokens = max_tokens
@@ -237,6 +238,7 @@ class EvaluationManager:
         self.completion_limit = completion_limit
         self.batch_size = batch_size
         self.dataset_name = dataset_name
+        self.testbank_name = testbank_name
         self.exec_batch_size = exec_batch_size if exec_batch_size is not None else 1
         self.executor = executor
         self.timeout = timeout
@@ -307,6 +309,7 @@ class EvaluationManager:
                 executor=self.executor,
                 workers=self.exec_batch_size,
                 use_tqdm=use_tqdm,
+                testbank=self.testbank_name,
             )
             return results
 
@@ -431,6 +434,7 @@ def generic_eval_main(
         batch_size=args.batch_size,
         exec_batch_size=args.exec_batch_size,
         timeout=default_timeout,
+        testbank_name=args.testbank,
     )
 
     save_every_batch = None
@@ -466,6 +470,12 @@ def get_generic_coderm_argparser(dataset_default: str, split: str = "test"):
         help="Dataset name"
     )
     parser.add_argument(
+        "--testbank",
+        type=str,
+        default=None,
+        help="Testbank name, which is a detaset of hash -> test that gets sent to the server for caching purposes"
+    )
+    parser.add_argument(
         "--split",
         type=str,
         default=split,
@@ -487,7 +497,7 @@ def get_generic_coderm_argparser(dataset_default: str, split: str = "test"):
     if cpu_count is None:
         cpu_count = 1
     else:
-        cpu_count = int(cpu_count * 0.8) # lower for stability
+        cpu_count = int(cpu_count * 0.8)  # lower for stability
     parser.add_argument(
         "--exec-batch-size",
         type=int,
@@ -547,6 +557,7 @@ def get_generic_coderm_argparser(dataset_default: str, split: str = "test"):
         help="Randomly (seed=42) sample this many examples from the dataset and evaluate. By default, None, so evaluates the entire dataset"
     )
     return parser
+
 
 def get_native_coderm_argparser(dataset_default: str, split="test"):
     parser = get_generic_coderm_argparser(dataset_default, split)
