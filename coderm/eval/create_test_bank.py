@@ -30,7 +30,6 @@ def main(args):
     def patched_exec_test(server, code, test, *args, **kwargs):
         # extract id
         t_id = int(code.split("_START_")[1].split("_END_")[0])
-        print(t_id)
         # put testout in id_to_testout
         assert test != ""
         id_to_testout[t_id] = test
