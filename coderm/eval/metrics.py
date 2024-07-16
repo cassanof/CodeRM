@@ -210,33 +210,35 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, g
         items = obj["items"]
 
     size = len(items)
+    try:
+        if not get_std:
+            pass_ks = get_pass_ks(items, k)
+            mean_pass_k = round(np.mean(pass_ks) * 100, 4)
+            std_est = "N/A"
+        else:
+            assert k == 1
+            pass_ks_separate = get_pass_ones(items, k)
+            means = [np.mean(pass_ks) for pass_ks in pass_ks_separate]
+            n_comp = len(items[0]["results"])
+            std_est = round(np.std(means) / np.sqrt(n_comp) * 100, 4)
+            mean_pass_k = round(np.mean(means) * 100, 4)
 
-    if not get_std:
-        pass_ks = get_pass_ks(items, k)
-        mean_pass_k = round(np.mean(pass_ks) * 100, 4)
-        std_est = "N/A"
-    else:
-        assert k == 1
-        pass_ks_separate = get_pass_ones(items, k)
-        means = [np.mean(pass_ks) for pass_ks in pass_ks_separate]
-        n_comp = len(items[0]["results"])
-        std_est = round(np.std(means) / np.sqrt(n_comp) * 100, 4)
-        mean_pass_k = round(np.mean(means) * 100, 4)
+        orm_acc, orm_acc_public, _, _ = get_orm_acc(
+            items, prod=orm_prod, n=n, k=k)
+        orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
+        orm_acc_public = round(orm_acc_public * 100,
+                               4) if orm_acc_public is not None else "N/A"
 
-    orm_acc, orm_acc_public, _, _ = get_orm_acc(items, prod=orm_prod, n=n, k=k)
-    orm_acc = round(orm_acc * 100, 4) if orm_acc is not None else "N/A"
-    orm_acc_public = round(orm_acc_public * 100,
-                           4) if orm_acc_public is not None else "N/A"
+        ml_acc = get_ml_acc(items, n=n, k=k)
+        ml_acc = round(ml_acc * 100, 4) if ml_acc is not None else "N/A"
 
-    ml_acc = get_ml_acc(items, n=n, k=k)
-    ml_acc = round(ml_acc * 100, 4) if ml_acc is not None else "N/A"
-
-    public_acc = get_public_acc(items, n=public_n, k=k)
-    public_acc = round(
-        public_acc * 100, 4) if public_acc is not None else "N/A"
-
-    name = file.stem.split(".json")[0]
-    return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc},{std_est}"
+        public_acc = get_public_acc(items, n=public_n, k=k)
+        public_acc = round(
+            public_acc * 100, 4) if public_acc is not None else "N/A"
+        name = file.stem.split(".json")[0]
+        return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc},{std_est}"
+    except Exception as e:
+        return f"{file.stem},ERROR,{e.__class__.__name__}"
 
 
 def main(args):
