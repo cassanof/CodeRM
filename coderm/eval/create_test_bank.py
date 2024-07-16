@@ -44,12 +44,11 @@ def main(args):
     for i, test in tqdm(id_to_testout.items(), total=len(id_to_testout)):
         assert test is not None
         hashed = hashlib.md5(test.encode()).hexdigest()
-        test = test
         bank.append({"test": test, "hash": hashed})
 
     bank = datasets.Dataset.from_list(bank)
     if args.push:
-        bank.push_to_hub(args.output, private=True)
+        bank.push_to_hub(args.output, private=False)
     else:
         bank.save_to_disk(args.output)
 
