@@ -74,6 +74,7 @@ def main(args):
         dataset_name=args.dataset,
         completion_limit=1,
         timeout=args.timeout,
+        testbank_name=args.testbank,
     )
 
     def make_items():
@@ -152,6 +153,8 @@ if __name__ == "__main__":
                         help="Path to the input completion file")
     parser.add_argument("--dataset", type=str, required=True,
                         help="Path to the eval dataset")
+    parser.add_argument("--testbank", type=str, default=None,
+                        help="Path to the testbank to use, if any")
     parser.add_argument("--split", type=str, default="train",
                         help="Dataset split to use")
     parser.add_argument("--output", type=str, required=True,
