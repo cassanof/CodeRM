@@ -35,6 +35,6 @@
     {
       "group": "dpo",
       "project": "code_rl",
-      "name": "online_dpo_sc2_7b_orm_7b_constant"
+      "name": "online_dpo_sc2_15b_orm_15b"
     }
   }
