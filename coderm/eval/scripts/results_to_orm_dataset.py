@@ -1,5 +1,5 @@
-from codeprm.prompts import py_prompt
-from codeprm.utils import strip_python_comments
+from coderm.prompts import py_prompt
+from coderm.utils import strip_python_comments
 import random
 import datasets
 
