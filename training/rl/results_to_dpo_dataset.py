@@ -19,7 +19,7 @@ def exec_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any]
     return chosen, rejected, None, rejected_error
 
 
-def score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
+def best_worst_score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
     chosen = None
     rejected = None
     chosen_score = -1
@@ -33,6 +33,25 @@ def score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any
         if score <= rejected_score:
             rejected = code
             rejected_score = score
+    assert chosen != rejected, "Chosen and rejected are the same"
+    return chosen, rejected, chosen_score, rejected_score
+
+
+def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
+    chosen = None
+    chosen_score = -1
+    chosen_i = -1
+    for i, r in enumerate(results):
+        code = r["code"]
+        score = r["orm_1_score"]
+        if score >= chosen_score:
+            chosen = code
+            chosen_score = score
+            chosen_i = i
+    results = results[:chosen_i] + results[chosen_i+1:]
+    rej_obj = random.choice(results)
+    rejected = rej_obj["code"]
+    rejected_score = rej_obj["orm_1_score"]
     assert chosen != rejected, "Chosen and rejected are the same"
     return chosen, rejected, chosen_score, rejected_score
 
@@ -56,8 +75,11 @@ def main(args):
         if args.selection == "exec":
             chosen, rejected, chosen_info, rejected_info = exec_selection(
                 results)
-        elif args.selection == "score":
-            chosen, rejected, chosen_info, rejected_info = score_selection(
+        elif args.selection == "best-worst-score":
+            chosen, rejected, chosen_info, rejected_info = best_worst_score_selection(
+                results)
+        elif args.selection == "best-random-score":
+            chosen, rejected, chosen_info, rejected_info = best_random_score_selection(
                 results)
         else:
             raise ValueError(f"Unknown selection method: {args.selection}")
@@ -105,7 +127,7 @@ if __name__ == "__main__":
                         help="Input dataset with natural chosens")
     parser.add_argument("--natural_col", type=str, default="reasoning_steps")
     parser.add_argument("--selection", type=str,
-                        choices=["exec", "score"], default="exec")
+                        choices=["exec", "best-worst-score", "best-random-score"], default="exec")
     parser.add_argument("-n", type=int, default=99999,
                         help="Max number of samples per example to use")
     parser.add_argument("--push", type=str, required=True,
