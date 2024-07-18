@@ -40,16 +40,13 @@ def best_worst_score_selection(results) -> Tuple[Optional[str], Optional[str], O
 def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
     chosen = None
     chosen_score = -1
-    chosen_i = -1
-    for i, r in enumerate(results):
+    for r in results:
         code = r["code"]
         score = r["orm_1_score"]
         if score >= chosen_score:
             chosen = code
             chosen_score = score
-            chosen_i = i
-    results = results[:chosen_i] + results[chosen_i+1:]
-    rej_obj = random.choice(results)
+    rej_obj = random.choice([r for r in results if r["code"] != chosen])
     rejected = rej_obj["code"]
     rejected_score = rej_obj["orm_1_score"]
     assert chosen != rejected, "Chosen and rejected are the same"
