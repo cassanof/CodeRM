@@ -1,5 +1,5 @@
-from coderm.prompts import py_prompt
-from coderm.utils import strip_python_comments
+from codeprm.prompts import py_prompt
+from codeprm.utils import strip_python_comments
 import random
 import datasets
 
@@ -60,9 +60,22 @@ def main(args):
     print(f"Failing examples: {sum(ex['score'] == 0 for ex in new_ds)}")
     print()
 
-    final_ds = datasets.Dataset.from_list(new_ds)
+    # balance the dataset
+    passing_examples = [ex for ex in new_ds if ex['score'] == 1]
+    failing_examples = [ex for ex in new_ds if ex['score'] == 0]
+    min_examples = min(len(passing_examples), len(failing_examples))
+
+    balanced_ds = random.sample(
+        passing_examples, min_examples) + random.sample(failing_examples, min_examples)
+    random.shuffle(balanced_ds)
+    print(f"Total examples in balanced dataset: {len(balanced_ds)}")
+    print("Passing examples in balanced dataset: " +
+          f"{sum(ex['score'] == 1 for ex in balanced_ds)}")
+    print("Failing examples in balanced dataset: " +
+          f"{sum(ex['score'] == 0 for ex in balanced_ds)}")
+
+    final_ds = datasets.Dataset.from_list(balanced_ds)
     final_ds.push_to_hub(args.push, private=True, split=args.push_split)
-    print(f"IMORTANT: Remember to dedup the dataset and then balance it before training the model")
 
 
 if __name__ == "__main__":
@@ -78,6 +91,5 @@ if __name__ == "__main__":
                         help="Max number of examples per class")
     parser.add_argument("--strip-comments", action="store_true",
                         help="Strip comments from the code")
-    # parser.add_argument("--subsample-timeouts", type=int, default=0.25, help="Subsample timeouts. By default we include only 25% of the timeouts")
     args = parser.parse_args()
     main(args)
