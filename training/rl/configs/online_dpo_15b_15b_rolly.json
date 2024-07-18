@@ -23,11 +23,11 @@
   "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_15b_rolly10",
   "hyperparams": {
     "online": true,
-    "async_rollout_position": "before-xf",
     "global_batch_size": 256,
     "per_device_train_batch_size": 1,
     "per_device_eval_batch_size": 1,
-    "num_train_epochs": 1,
+    "num_train_epochs": 3,
+    "online_strategy": "best-random",
     "num_prompt_rollouts": 10,
     "gradient_accumulation_steps": 16,
     "learning_rate": 3e-6,
