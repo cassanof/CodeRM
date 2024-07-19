@@ -1,0 +1,38 @@
+{
+  "task": "reinf",
+  "model_squad": {
+    "lm": {
+      "model_path": "codegenning/generator-sc2-15b",
+      "gen_kwargs": {
+        "max_tokens": 4096,
+        "top_p": 0.95,
+        "temperature": 0.8
+      }
+    }
+  },
+  "dataset": "codegenning/taco-rl-tests10-easy",
+  "save_strategy": "steps",
+  "save_steps": 0.1,
+  "save_final_model_output": true,
+  "save_location": "/mnt/efs/federicocassano/t_models/reinf_15b_testexec",
+  "hyperparams": {
+    "online": true,
+    "reward_normalization": "gaussian",
+    "kl_coef": 0.005,
+    "global_batch_size": 64,
+    "per_device_train_batch_size": 2,
+    "gradient_accumulation_steps": 2,
+    "learning_rate": 3e-6,
+    "num_rounds": 10,
+    "lr_scheduler_type": "constant",
+    "max_length": 8192,
+    "logging_steps": 1,
+    "warmup_ratio": 0.05,
+    "reward_function": "tests"
+  },
+  "wandb": {
+    "group": "reinf",
+    "project": "code_rl",
+    "name": "sc2_15b_reinf_testexec_easy"
+  }
+}

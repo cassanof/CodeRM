@@ -1,0 +1,39 @@
+{
+  "task": "reinf",
+  "model_squad": {
+    "lm": {
+      "model_path": "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068",
+      "gen_kwargs":
+      {
+        "max_tokens": 4096,
+        "top_p": 0.95,
+        "temperature": 1.3
+      }
+    },
+    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/model_starcoder2_7b_orm50_mse/checkpoint-1782", "is_training": false}
+  },
+  "dataset": "codegenning/taco-rl",
+  "save_strategy": "steps",
+  "save_steps": 0.2,
+  "save_final_model_output": true,
+  "hyperparams":
+  {
+    "online": true,
+    "kl_coef": 0.005,
+    "reward_normalization": "oo",
+    "global_batch_size": 128,
+    "per_device_train_batch_size": 16,
+    "num_train_epochs": 1,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 5e-6,
+    "max_length": 8129,
+    "logging_steps": 1,
+    "warmup_ratio": 0.05
+  },
+  "wandb":
+  {
+    "group": "ppo",
+    "project": "code_rl",
+    "name": "sc2_7b_orm_7b_mse"
+  }
+}

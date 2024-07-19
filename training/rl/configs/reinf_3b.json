@@ -1,0 +1,42 @@
+{
+  "task": "reinf",
+  "model_squad": {
+    "lm": {
+      "model_path": "codegenning/generator-sc2-3b",
+      "gen_kwargs":
+      {
+        "max_tokens": 2048,
+        "top_p": 0.95,
+        "temperature": 1.0
+      }
+    },
+    "reward": {"model_path": "codegenning/orm-sc2-3b-v0", "is_training": false, "pos_idx": 1, "num_labels": 2}
+  },
+  "dataset": "codegenning/taco-rl-easier",
+  "save_strategy": "steps",
+  "save_steps": 0.1,
+  "save_final_model_output": true,
+  "save_location": "/mnt/efs/federicocassano/t_models/reinf_sc_3b_orm_3b_1",
+  "hyperparams":
+  {
+    "online": true,
+    "kl_coef": 0.005,
+    "reward_normalization": "gaussian",
+    "global_batch_size": 256,
+    "per_device_train_batch_size": 4,
+    "num_rounds": 10,
+    "num_train_epochs": 1,
+    "gradient_accumulation_steps": 4,
+    "learning_rate": 6e-6,
+    "lr_scheduler_type": "linear",
+    "max_length": 4096,
+    "logging_steps": 1,
+    "warmup_ratio": 0.05
+  },
+  "wandb":
+  {
+    "group": "reinf",
+    "project": "code_rl",
+    "name": "sc2_3b_orm_3b_reinf"
+  }
+}

@@ -1,0 +1,40 @@
+{
+    "task": "dpo",
+    "model_squad": {
+    "lm": {
+    "model_path": "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068",
+    "gen_kwargs":
+    {
+    "max_tokens": 4096,
+    "top_p": 0.95,
+    "temperature": 1.0
+    }
+    },
+    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/model_starcoder2_7b_orm50_og/checkpoint-1782", "is_training": false, "pos_idx": 1, "num_labels": 2}
+    },
+    "dataset": "codegenning/taco-rl",
+    "save_strategy": "steps",
+    "save_steps": 0.2,
+    "save_final_model_output": true,
+    "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_7b_orm_7b_9",
+    "hyperparams":
+    {
+      "online": true,
+      "global_batch_size": 256,
+      "per_device_train_batch_size": 4,
+      "num_train_epochs": 1,
+      "gradient_accumulation_steps": 4,
+      "learning_rate": 3e-6,
+      "max_length": 8129,
+      "logging_steps": 1,
+      "dpo_beta": 0.04,
+      "warmup_ratio": 0.05,
+      "lr_scheduler_type": "constant"
+    },
+    "wandb":
+    {
+      "group": "dpo",
+      "project": "code_rl",
+      "name": "online_dpo_sc2_7b_orm_7b_constant"
+    }
+  }

@@ -1,0 +1,40 @@
+{
+  "task": "reinf",
+  "model_squad": {
+    "lm": {
+      "model_path": "/mnt/efs/federicocassano/t_models/generator-sc2-15b",
+      "gen_kwargs":
+      {
+        "max_tokens": 4096,
+        "top_p": 0.95,
+        "temperature": 1.3
+      }
+    },
+    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/15b_orm", "is_training": false, "pos_idx": 1, "num_labels": 2}
+  },
+  "dataset": "codegenning/taco-rl",
+  "save_strategy": "steps",
+  "save_steps": 0.2,
+  "save_final_model_output": true,
+  "save_location": "/mnt/efs/federicocassano/t_models/reinf_sc_15b_orm_15b_2",
+  "hyperparams":
+  {
+    "online": true,
+    "reward_normalization": "gaussian",
+    "global_batch_size": 256,
+    "per_device_train_batch_size": 1,
+    "num_train_epochs": 1,
+    "gradient_accumulation_steps": 16,
+    "learning_rate": 6e-6,
+    "lr_scheduler_type": "linear",
+    "max_length": 8129,
+    "logging_steps": 1,
+    "warmup_ratio": 0.05
+  },
+  "wandb":
+  {
+    "group": "rloo",
+    "project": "code_rl",
+    "name": "sc2_15b_orm_15b_reinf"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "task": "reinf",
+  "model_squad": {
+    "lm": {
+      "model_path": "/mnt/efs/federicocassano/codeprm/training/finetuning-harness/model_starcoder2_7b_generator/checkpoint-1068",
+      "gen_kwargs":
+      {
+        "max_tokens": 4096,
+        "top_p": 0.95,
+        "temperature": 1.0
+      }
+    },
+    "reward": {"model_path": "/mnt/efs/federicocassano/codeprm/training/code-scorer/model_starcoder2_7b_orm50_og/checkpoint-1782", "is_training": false, "pos_idx": 1, "num_labels": 2}
+  },
+  "dataset": "codegenning/taco-rl",
+  "save_strategy": "steps",
+  "save_steps": 0.2,
+  "save_final_model_output": true,
+  "save_location": "/mnt/efs/federicocassano/t_models/rloo_sc_7b_orm_7b_3",
+  "hyperparams":
+  {
+    "online": true,
+    "reward_normalization": "oo",
+    "global_batch_size": 256,
+    "per_device_train_batch_size": 1,
+    "num_train_epochs": 1,
+    "gradient_accumulation_steps": 16,
+    "learning_rate": 3e-6,
+    "lr_scheduler_type": "linear",
+    "max_length": 8129,
+    "logging_steps": 1,
+    "warmup_ratio": 0.05
+  },
+  "wandb":
+  {
+    "group": "rloo",
+    "project": "code_rl",
+    "name": "sc2_7b_orm_7b_rloo_lower_lr"
+  }
+}
