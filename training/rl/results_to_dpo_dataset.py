@@ -46,7 +46,11 @@ def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], 
         if score >= chosen_score:
             chosen = code
             chosen_score = score
-    rej_obj = random.choice([r for r in results if r["code"] != chosen])
+    noteq = [r for r in results if r["code"] != chosen]
+    if len(noteq) == 0:
+        print("WARNING: No rejected samples")
+        return None, None, None, None
+    rej_obj = random.choice(noteq)
     rejected = rej_obj["code"]
     rejected_score = rej_obj["orm_1_score"]
     assert chosen != rejected, "Chosen and rejected are the same"
