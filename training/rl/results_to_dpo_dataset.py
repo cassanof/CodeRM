@@ -47,7 +47,7 @@ def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], 
             chosen = code
             chosen_score = score
     noteq = [r for r in results if r["code"] != chosen]
-    if len(noteq) == 0:
+    if len(noteq) == 0 or (chosen and chosen.strip() == ""):
         print("WARNING: No rejected samples")
         return None, None, None, None
     rej_obj = random.choice(noteq)
