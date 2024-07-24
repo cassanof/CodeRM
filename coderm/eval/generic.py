@@ -106,20 +106,22 @@ class CompletionItem:
         return self.item[self.prompt_col]
 
     def get_tests(self) -> Any:  # TODO: proper types
-        return self.item[self.tests_col]
+        if self.tests_col is not None and self.tests_col in self.item:
+            return self.item[self.tests_col]
+        return None
 
     def get_public_tests(self) -> Any:
-        if self.public_tests_col is not None:
+        if self.public_tests_col is not None and self.public_tests_col in self.item:
             return self.item[self.public_tests_col]
         return None
 
     def get_difficulty(self) -> Optional[str]:
-        if self.difficulty_col is not None:
+        if self.difficulty_col is not None and self.difficulty_col in self.item:
             return self.item[self.difficulty_col]
         return None
 
     def get_solutions(self) -> Optional[List[str]]:
-        if self.solutions_col is not None:
+        if self.solutions_col is not None and self.solutions_col in self.item:
             return self.item[self.solutions_col]
         return None
 
