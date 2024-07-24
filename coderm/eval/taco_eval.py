@@ -10,8 +10,9 @@ def main(args,  model: Optional[BaseModel] = None):
     # convert dataset to list
     dataset = dataset.to_list()
     # json loads all tests
-    for i, item in enumerate(dataset):
-        dataset[i]["input_output"] = json.loads(item["input_output"])
+    if not args.no_exec:
+        for i, item in enumerate(dataset):
+            dataset[i]["input_output"] = json.loads(item["input_output"])
 
     items = make_items_from_ds(
         dataset,

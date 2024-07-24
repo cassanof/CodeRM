@@ -1126,7 +1126,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str,
-                        default="Qwen/CodeQwen1.5-7B-Chat")
+                        default="bigcode/starcoder2-15b")
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--num-gpus", type=int, default=1)
     parser.add_argument("--dataset", type=str,
