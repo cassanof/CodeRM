@@ -1,4 +1,5 @@
 import json
+from coderm.prompts import py_prompt
 from tqdm import tqdm
 from coderm.execution import smart_exec_tests_queuebatched
 from coderm import execution
@@ -12,11 +13,15 @@ def main(args):
     dataset = dataset.to_list()
 
     input_tests = []
+    codes = []
     if args.dataset_format == "lcb":
         for i, item in enumerate(dataset):
             input_tests.append(json.loads(item["input_output"]))
+            p = py_prompt(item["question"], item["starter_code"])
+            codes.append(p)
             if "public_input_output" in item:
                 input_tests.append(json.loads(item["public_input_output"]))
+                codes.append(p)
     else:
         raise NotImplementedError
 
@@ -24,12 +29,12 @@ def main(args):
     id_to_testout = {}
     for i in range(len(input_tests)):
         id_to_testout[i] = None
-        ids_special.append(f"_START_{i}_END_")
+        ids_special.append(codes[i] + f"\n__START__{i}__END__")
 
     # monkey-patch exec_test in code_exec_server
     def patched_exec_test(server, code, test, *args, **kwargs):
         # extract id
-        t_id = int(code.split("_START_")[1].split("_END_")[0])
+        t_id = int(code.split("__START__")[1].split("__END__")[0])
         # put testout in id_to_testout
         assert test != ""
         id_to_testout[t_id] = test
@@ -37,7 +42,7 @@ def main(args):
 
     execution.exec_test = patched_exec_test
 
-    smart_exec_tests_queuebatched(ids_special, input_tests)
+    smart_exec_tests_queuebatched(ids_special, input_tests, workers=1)
 
     bank = []
     for i, test in tqdm(id_to_testout.items(), total=len(id_to_testout)):
