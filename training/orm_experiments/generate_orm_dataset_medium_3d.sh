@@ -57,7 +57,7 @@ for ((i=0; i<NUM_GPUS; i++)); do
   
   echo "Processing chunk $i: start_idx=$START_IDX, max_items=$MAX_ITEMS"
   CUDA_VISIBLE_DEVICES=$i python3 coderm/eval/taco_eval.py \
-    --dataset cassanof/taco_cleaned_all \
+    --dataset codegenning/taco_cleaned_all \
     --split train \
     --model "codegenning/generator-sc2-15b" \
     --completion-limit $NUM_COMPS \

@@ -16,7 +16,7 @@
     "save_strategy": "steps",
     "save_steps": 0.1,
     "save_final_model_output": true,
-    "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_15b",
+    "save_location": "/mnt/efs/federicocassano/t_models/online_dpo_sc_15b_orm_15b_rerun_e3",
     "hyperparams":
     {
       "online": true,
@@ -35,6 +35,6 @@
     {
       "group": "dpo",
       "project": "code_rl",
-      "name": "online_dpo_sc2_15b_orm_15b"
+      "name": "online_dpo_sc2_15b_orm_15b_rerun_e3"
     }
   }

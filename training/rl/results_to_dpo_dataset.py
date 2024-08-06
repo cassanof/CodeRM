@@ -37,6 +37,21 @@ def best_worst_score_selection(results) -> Tuple[Optional[str], Optional[str], O
     return chosen, rejected, chosen_score, rejected_score
 
 
+def random_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
+    chosen = None
+    rejected = None
+    max_tries = 100
+    while chosen == rejected and max_tries > 0:
+        chosen = random.choice(results)["code"]
+        rejected = random.choice(results)["code"]
+        max_tries -= 1
+
+    if chosen is None or rejected is None:
+        print("WARNING: No different samples")
+
+    return chosen, rejected, None, None
+
+
 def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], Optional[Any], Optional[Any]]:
     chosen = None
     chosen_score = -1
@@ -46,7 +61,11 @@ def best_random_score_selection(results) -> Tuple[Optional[str], Optional[str], 
         if score >= chosen_score:
             chosen = code
             chosen_score = score
-    rej_obj = random.choice([r for r in results if r["code"] != chosen])
+    noteq = [r for r in results if r["code"] != chosen]
+    if len(noteq) == 0 or (chosen and chosen.strip() == ""):
+        print("WARNING: No rejected samples")
+        return None, None, None, None
+    rej_obj = random.choice(noteq)
     rejected = rej_obj["code"]
     rejected_score = rej_obj["orm_1_score"]
     assert chosen != rejected, "Chosen and rejected are the same"
@@ -77,6 +96,9 @@ def main(args):
                 results)
         elif args.selection == "best-random-score":
             chosen, rejected, chosen_info, rejected_info = best_random_score_selection(
+                results)
+        elif args.selection == "random":
+            chosen, rejected, chosen_info, rejected_info = random_selection(
                 results)
         else:
             raise ValueError(f"Unknown selection method: {args.selection}")
@@ -124,7 +146,7 @@ if __name__ == "__main__":
                         help="Input dataset with natural chosens")
     parser.add_argument("--natural_col", type=str, default="reasoning_steps")
     parser.add_argument("--selection", type=str,
-                        choices=["exec", "best-worst-score", "best-random-score"], default="exec")
+                        choices=["exec",  "random", "best-worst-score", "best-random-score"], default="exec")
     parser.add_argument("-n", type=int, default=99999,
                         help="Max number of samples per example to use")
     parser.add_argument("--push", type=str, required=True,

@@ -49,7 +49,8 @@ def main(args):
     # different cols to support different datasets
     test_col = "input_output" if "input_output" in first_item else "test"
     starter_code_col = "starter_code" if "starter_code" in first_item else None
-    id_col = "task_id" if "task_id" in first_item else "id"
+    id_col = "task_id" if "task_id" in first_item else None
+    id_col = "id" if "id" in first_item else id_col
     difficulty_col = "difficulty" if "difficulty" in first_item else None
     public_tests_col = "public_input_output" if "public_input_output" in first_item else None
 
