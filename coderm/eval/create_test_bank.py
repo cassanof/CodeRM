@@ -9,12 +9,22 @@ import gzip
 
 
 def main(args):
-    dataset = datasets.load_dataset(args.dataset, split=args.split)
-    dataset = dataset.to_list()
+    splits = []
+    if args.split == "both":
+        splits = ["train", "test"]
+    elif args.split == "train":
+        splits = ["train"]
+    else:
+        splits = ["test"]
+    
 
     input_tests = []
     codes = []
-    if args.dataset_format == "lcb":
+
+    for split in splits:
+        dataset = datasets.load_dataset(args.dataset, split=split)
+        dataset = dataset.to_list()
+
         for i, item in enumerate(dataset):
             input_tests.append(json.loads(item["input_output"]))
             p = py_prompt(item["question"], item["starter_code"])
@@ -22,8 +32,6 @@ def main(args):
             if "public_input_output" in item:
                 input_tests.append(json.loads(item["public_input_output"]))
                 codes.append(p)
-    else:
-        raise NotImplementedError
 
     ids_special = []
     id_to_testout = {}
@@ -60,12 +68,16 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str,
-                        default="codegenning/livecodebench_lite_filtered")
+    parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--push", action="store_true")
-    parser.add_argument("--split", type=str, default="test")
-    parser.add_argument("--dataset-format", type=str,
-                        choices=["lcb"], default="lcb")
+    parser.add_argument(
+        "--split",
+        type=str,
+        choices=["train", "test", "both"],
+        required=True,
+        help="Split of the dataset to evaluate/generate from"
+    )
     args = parser.parse_args()
     main(args)
+
