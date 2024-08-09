@@ -181,12 +181,15 @@ def is_eq(a, b):
 """
 
 
-def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
+def exec_named_test(code, inps, outs, entrypoints: Union[str, List[str]], executor="http://127.0.0.1:8000", timeout: int = 30, has_Solution: Optional[bool] = None, testbank: Optional[str] = None) -> Tuple[bool, str]:
     if isinstance(entrypoints, str):
         entrypoints = [entrypoints] * len(inps)
     assert len(inps) == len(outs) == len(entrypoints)
 
-    if "class Solution:" in code:
+    if has_Solution is None:
+        has_Solution = "class Solution:" in code
+
+    if has_Solution:
         entrypoints = [f"Solution().{e}" for e in entrypoints]
 
     instru = SOL_DEPS + code
@@ -235,7 +238,7 @@ def exec_test_stringified(code, tests, executor="http://127.0.0.1:8000", timeout
         return False, f"errored with {outs!r}"
 
 
-def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, testbank=None) -> Tuple[bool, str]:
+def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, has_Solution: Optional[bool] = None, testbank: Optional[str] = None) -> Tuple[bool, str]:
     """
     Supports various test formats:
         - simple I/O tests that use stdin and stdout
@@ -250,7 +253,7 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
         outputs = tests["outputs"]
         if "fn_name" in tests:
             name: Union[str, List[str]] = tests["fn_name"]
-            return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout, testbank=testbank)
+            return exec_named_test(code, inputs, outputs, name, executor=executor, timeout=timeout, has_Solution=has_Solution, testbank=testbank)
         else:
             return exec_io_test_instrumented(code, inputs, outputs, executor=executor, timeout=timeout, testbank=testbank)
 
@@ -260,6 +263,7 @@ def smart_exec_tests_queuebatched(
         tests_per_code,
         executor="http://127.0.0.1:8000",
         timeouts: List[int] = [],
+        has_Solution_per_code: Optional[list[bool]] = None,
         workers=os.cpu_count(),
         use_tqdm=True,
         testbank=None,
@@ -267,6 +271,8 @@ def smart_exec_tests_queuebatched(
     if workers is None:
         print("WARNING: couldn't get number of workers, defaulting to 1")
         workers = 1
+    if has_Solution_per_code is None:
+        has_Solution_per_code = [None] * len(codes)
 
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
 
@@ -284,12 +290,13 @@ def smart_exec_tests_queuebatched(
             if item is None:
                 break  # closed!
 
-            i, code, tests, timeout = item
+            i, code, tests, timeout, has_Solution = item
             results[i] = smart_exec_tests(
                 code,
                 tests,
                 executor=executor,
                 timeout=timeout,
+                has_Solution=has_Solution,
                 testbank=testbank
             )
             q.task_done()
@@ -299,8 +306,8 @@ def smart_exec_tests_queuebatched(
                     pbar.update(1)
 
     q = queue.Queue()
-    for i, (code, tests, timeout) in enumerate(zip(codes, tests_per_code, timeouts)):
-        q.put((i, code, tests, timeout))
+    for i, (code, tests, timeout, has_Solution) in enumerate(zip(codes, tests_per_code, timeouts, has_Solution_per_code)):
+        q.put((i, code, tests, timeout, has_Solution))
 
     if use_tqdm:
         pbar = tqdm(total=len(codes), desc="Executing tests")

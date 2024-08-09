@@ -23,6 +23,7 @@ def main(args):
 
     for split in splits:
         dataset = datasets.load_dataset(args.dataset, split=split)
+        assert isinstance(dataset, datasets.Dataset)
         dataset = dataset.to_list()
 
         for i, item in enumerate(dataset):
