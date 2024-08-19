@@ -263,7 +263,7 @@ def smart_exec_tests_queuebatched(
         tests_per_code,
         executor="http://127.0.0.1:8000",
         timeouts: List[int] = [],
-        has_Solution_per_code: Optional[list[bool]] = None,
+        has_Solution_per_code: Optional[list[Optional[bool]]] = None,
         workers=os.cpu_count(),
         use_tqdm=True,
         testbank=None,
