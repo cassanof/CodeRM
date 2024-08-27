@@ -2,7 +2,7 @@
 Takes in a result file and spits out the pass@k metrics.
 """
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any
 import numpy as np
 import random
 from coderm.utils import gunzip_json_read
@@ -12,17 +12,20 @@ def pass_at_k(n: int, c: int, k: int) -> float:
     """
     Calculates 1 - comb(n - c, k) / comb(n, k).
     """
+    if c == 0:
+        if k > n:
+            print(f"Warning: filling {k - n} entries with unsuccessful")
+        return 0.0
     if n - c < k:
         return 1.0
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
 
-def get_pass_ones(items, k) -> List[List[float]]:
+def get_separate_pass_rates(items) -> List[List[float]]:
     n_comps = len(items[0]["results"])
-    assert k == 1
-    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
-    assert all(len(item["results"]) ==
-               n_comps for item in items), "All items should have the same number of completions"
+    assert n_comps >= 1, f"Completion limit {n_comps} is less than 1"
+    assert all(len(item["results"]) == n_comps for item in items), "n_comps must match for all items"
+
     pass_ks = []
     for i in range(n_comps):
         sub_pass_ks = []
@@ -30,17 +33,17 @@ def get_pass_ones(items, k) -> List[List[float]]:
             correct = 0
             if item["results"][i]["passing"]:
                 correct += 1
-            score = pass_at_k(1, correct, k)
-            sub_pass_ks.append(score)
+            sub_pass_ks.append(correct / n_comps)
         pass_ks.append(sub_pass_ks)
     return pass_ks
 
+def get_min_num_completions(items: list[dict[str, Any]]) -> int:
+    return min(get_num_completions_per_problem(items))
 
-def get_pass_ks(items, k):
-    n_comps = len(items[0]["results"])
-    assert n_comps >= k, f"Completion limit {n_comps} is less than k {k}"
-    assert all(len(item["results"]) ==
-               n_comps for item in items), "All items should have the same number of completions"
+def get_pass_ks(items, k) -> list[float]:
+    min_n_comps = get_min_num_completions(items)
+    # assert min_n_comps >= k, f"Minimum completion limit {min_n_comps} is less than k {k}"
+
     pass_ks = []
     for item in items:
         correct = 0
@@ -48,7 +51,45 @@ def get_pass_ks(items, k):
             if result["passing"]:
                 correct += 1
 
-        score = pass_at_k(n_comps, correct, k)
+        score = pass_at_k(len(item["results"]), correct, k)
+        pass_ks.append(score)
+    return pass_ks
+
+def get_num_completions_per_problem(items: list[dict[str, Any]]) -> list[int]:
+    nc = []
+    for item in items:
+        nc.append(len(item["results"]))
+    return nc
+
+def get_num_pass_public_per_problem(items: list[dict[str, Any]]) -> Optional[list[int]]:
+    nc = []
+    for item in items:
+        c = 0
+        for res in item["results"]:
+            if res.get("passing_public", None) is None:
+                return None
+            c += res["passing_public"]
+        nc.append(c)
+    return nc
+
+def get_pass_ks_given_public(items: list[dict[str, Any]], k: int) -> Optional[list[float]]:
+    pass_ks = []
+    for item in items:
+        n = 0
+        correct = 0
+        for result in item["results"]:
+            if result.get("passing_public", None) is None:
+                return None
+            if result["passing_public"]:
+                n += 1
+            if result["passing"]:
+                if not result["passing_public"]:
+                    print("Warning: passes private but does not pass public")
+                else:
+                    correct += 1
+
+        assert n >= correct
+        score = pass_at_k(n, correct, k)
         pass_ks.append(score)
     return pass_ks
 
@@ -217,11 +258,19 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, g
             std_est = "N/A"
         else:
             assert k == 1
-            pass_ks_separate = get_pass_ones(items, k)
+            # list of list of floats, shape (num_completions, num_problems)
+            pass_ks_separate = get_separate_pass_rates(items)
+
             means = [np.mean(pass_ks) for pass_ks in pass_ks_separate]
             n_comp = len(items[0]["results"])
+            assert all(len(item["results"]) == n_comp for item in items)
+
             std_est = round(np.std(means) / np.sqrt(n_comp) * 100, 4)
             mean_pass_k = round(np.mean(means) * 100, 4)
+
+        pass_ks_given_public = get_pass_ks_given_public(items, k)
+        given_public = round(np.mean(pass_ks_given_public) * 100, 
+                             4) if pass_ks_given_public is not None else "N/A"
 
         orm_acc, orm_acc_public, _, _ = get_orm_acc(
             items, prod=orm_prod, n=n, k=k)
@@ -236,13 +285,14 @@ def per_file_metrics(file: Path, k: int, orm_prod=None, n=None, public_n=None, g
         public_acc = round(
             public_acc * 100, 4) if public_acc is not None else "N/A"
         name = file.stem.split(".json")[0]
-        return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc},{std_est}"
+        return f"{name},{size},{len(items[0]['results'])},{k},{mean_pass_k},{orm_acc},{public_acc},{orm_acc_public},{ml_acc},{std_est},{given_public}"
     except Exception as e:
+        print(repr(e))
         return f"{file.stem},ERROR,{e.__class__.__name__}"
 
 
 def main(args):
-    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n},ml@{k|n},stdpass@1"
+    header = "name,dataset size,n,k,avg pass@k,orm@{k|n},public@{k|n},orm+public@{k|n},ml@{k|n},stdpass@1,given_public"
     print(header)
     for file in args.inputs:
         print(

@@ -27,11 +27,21 @@ def main(args):
         dataset = dataset.to_list()
 
         for i, item in enumerate(dataset):
-            input_tests.append(json.loads(item["input_output"]))
+            input_output = json.loads(item["input_output"])
+            if input_output.get("exec_string", None) is not None:
+                input_tests.append(input_output["exec_string"])
+            else:
+                input_tests.append(input_output)
+
             p = py_prompt(item["question"], item["starter_code"])
             codes.append(p)
             if "public_input_output" in item:
-                input_tests.append(json.loads(item["public_input_output"]))
+                public_input_output = json.loads(item["public_input_output"])
+                if public_input_output.get("exec_string", None) is not None:
+                    input_tests.append(public_input_output["exec_string"])
+                else:
+                    input_tests.append(public_input_output)
+
                 codes.append(p)
 
     ids_special = []
@@ -54,10 +64,13 @@ def main(args):
     smart_exec_tests_queuebatched(ids_special, input_tests, workers=1)
 
     bank = []
+    already_hash = set()
     for i, test in tqdm(id_to_testout.items(), total=len(id_to_testout)):
         assert test is not None
         hashed = hashlib.md5(test.encode()).hexdigest()
+        assert hashed not in already_hash, "Hash collision; check"
         bank.append({"test": test, "hash": hashed})
+        already_hash.add(hashed)
 
     bank = datasets.Dataset.from_list(bank)
     if args.push:
