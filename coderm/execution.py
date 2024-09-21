@@ -1,10 +1,14 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any
 import os
 import threading
 from tqdm import tqdm
 import queue
 import re
+import random
+import time
+from math import pow 
 from coderm.code_exec_server.code_exec_reqs import exec_test
+import multiprocessing
 
 
 SOL_DEPS = """import sys
@@ -33,6 +37,11 @@ import warnings
 warnings.filterwarnings("ignore")
 """
 
+START_TIME_FACTOR = 15
+EXPONENT = (1)
+CLOSE_THRESHOLD = 0.001
+WAIT_TIME_PER_LOOP = 0.5
+MAX_STALL_LOOPS = (60 * 15) / WAIT_TIME_PER_LOOP
 
 def compare_io(actual, expected, debug=False) -> bool:
     if isinstance(expected, list):  # this can happen apparently
@@ -258,16 +267,146 @@ def smart_exec_tests(code, tests, executor="http://127.0.0.1:8000", timeout=30, 
             return exec_io_test_instrumented(code, inputs, outputs, executor=executor, timeout=timeout, testbank=testbank)
 
 
+def smart_exec_tests_queuebatched_with_mp(
+    codes: list[str],
+    tests_per_code: list[Union[dict[str, Any], str]],
+    executor: str = "http://127.0.0.1:8000",
+    timeouts: Optional[List[int]] = None,
+    has_Solution_per_code: Optional[list[Optional[bool]]] = None,
+    num_workers: int = os.cpu_count(),
+    total_num_concurrent: int = 1000,
+    use_tqdm: bool = True,
+    testbank: Optional[str] = None,
+    return_none: bool = False
+) -> List[Tuple[bool, str]]:
+    if timeouts is None or len(timeouts) == 0:
+        timeouts = [30] * len(codes)
+    if has_Solution_per_code is None:
+        has_Solution_per_code = [None] * len(codes)
+
+    assert len(timeouts) == len(codes) == len(tests_per_code), \
+        f"Length mismatch in inputs: timeouts({len(timeouts)}), codes({len(codes)}), tests_per_code({len(tests_per_code)})"
+
+    num_threads = [total_num_concurrent // num_workers] * num_workers
+    for i in range(total_num_concurrent % num_workers):
+        num_threads[i] += 1
+    
+    print(len(num_threads), "AAAAA\n\nAAAA", num_threads)
+
+    codes_per_process = [[] for _ in range(num_workers)]
+    tests_per_process = [[] for _ in range(num_workers)]
+    timeouts_per_process = [[] for _ in range(num_workers)]
+    has_Solution_per_processes = [[] for _ in range(num_workers)]
+    orig_idxs_per_process = [[] for _ in range(num_workers)]
+
+    for i in range(len(codes)):
+        codes_per_process[i % num_workers].append(codes[i])
+        tests_per_process[i % num_workers].append(tests_per_code[i])
+        timeouts_per_process[i % num_workers].append(timeouts[i])
+        has_Solution_per_processes[i % num_workers].append(has_Solution_per_code[i])
+        orig_idxs_per_process[i % num_workers].append(i)
+    
+    final_results = [None] * len(codes)
+    with multiprocessing.Manager() as manager:
+        with tqdm(total=len(codes)) as pbar:
+            iter_tracker = manager.list([0] * num_workers)
+            return_list = manager.list([None] * num_workers)
+            curr_finished = 0
+            processes: list[multiprocessing.Process] = []
+            for i in range(num_workers):
+                processes.append(
+                    multiprocessing.Process(
+                        target=smart_exec_tests_queuebatched,
+                        args=(
+                            codes_per_process[i],
+                            tests_per_process[i],
+                            executor,
+                            timeouts_per_process[i],
+                            has_Solution_per_processes[i],
+                            num_threads[i],
+                            False,
+                            testbank,
+                            i,
+                            iter_tracker,
+                            return_list,
+                        )
+                    )
+                )
+            # Start all processes
+            for process in processes:
+                process.start()
+
+            num_iter_same = 0
+            is_hanging = False
+            # Wait for all processes to finish
+            while any(process.is_alive() for process in processes):
+                new_sum = sum(iter_tracker)
+                if new_sum == curr_finished:
+                    num_iter_same += 1
+                else:
+                    num_iter_same = 0
+                if num_iter_same > MAX_STALL_LOOPS and (len(codes) - curr_finished) / len(codes) <= CLOSE_THRESHOLD:
+                    is_hanging = True
+                    print("uhhhhh... hanging? So jumping to joins.")
+                    break
+                pbar.update(new_sum - curr_finished)
+                assert new_sum >= curr_finished
+                curr_finished = new_sum
+                time.sleep(0.5)  # Sleep briefly to avoid excessive CPU usage
+
+            print("Probably finished")
+
+        if is_hanging:
+            print("Forcefully terminating processes.")
+            for process in processes:
+                process.terminate()
+
+        # Ensure all processes have finished
+        for process in processes:
+            process.join()
+        # Final update to curr_finished
+        assert all(l is not None for l in return_list)
+        final_sum = sum(len(l) for l in return_list)
+        assert final_sum == len(codes)
+        pbar.update(final_sum - curr_finished)
+
+        for orig_idxs, proc_outputs in zip(orig_idxs_per_process, return_list):
+            assert isinstance(proc_outputs, list)
+            for orig_idx, proc_output in zip(orig_idxs, proc_outputs):
+                if proc_output is None and not return_none:
+                    final_results[orig_idx] = (False, "Process hanging error.")
+                else:
+                    final_results[orig_idx] = proc_output
+
+    assert all(res is not None for res in final_results)
+    return final_results
+  
+
 def smart_exec_tests_queuebatched(
         codes,
         tests_per_code,
         executor="http://127.0.0.1:8000",
-        timeouts: List[int] = [],
+        timeouts: Optional[List[int]] = None,
         has_Solution_per_code: Optional[list[Optional[bool]]] = None,
         workers=os.cpu_count(),
         use_tqdm=True,
         testbank=None,
+        process_idx: Optional[int] = None,
+        iter_tracker: Optional[list[int]] = None,
+        return_list: Optional[list[Any]] = None,
 ) -> List[Tuple[bool, str]]:
+    if timeouts is None:
+        timeouts = []
+    if len(timeouts) == 0:
+        timeouts = [30] * len(codes)
+    assert len(timeouts) == len(codes) == len(tests_per_code), \
+        f"Length mismatch in inputs: timeouts({len(timeouts)}), codes({len(codes)}), tests_per_code({len(tests_per_code)})"
+
+    assert (iter_tracker is None) == (process_idx is None) == (return_list is None)
+    is_in_subprocess = iter_tracker is not None
+    if is_in_subprocess:
+        assert not use_tqdm
+
     if workers is None:
         print("WARNING: couldn't get number of workers, defaulting to 1")
         workers = 1
@@ -275,16 +414,13 @@ def smart_exec_tests_queuebatched(
         has_Solution_per_code = [None] * len(codes)
 
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
-
-    if len(timeouts) == 0:
-        timeouts = [30] * len(codes)
-
-    assert len(timeouts) == len(codes) == len(tests_per_code), \
-        f"Length mismatch in inputs: timeouts({len(timeouts)}), codes({len(codes)}), tests_per_code({len(tests_per_code)})"
+    return_list[process_idx] = results
 
     lock = threading.Lock()
 
-    def worker(q: queue.Queue, pbar: Optional[tqdm]):
+    def worker(q: queue.Queue, pbar: Optional[tqdm], i: int):
+        sleep_time = random.random() * pow(i, EXPONENT) * START_TIME_FACTOR
+        time.sleep(sleep_time)
         while True:
             item = q.get()
             if item is None:
@@ -301,9 +437,13 @@ def smart_exec_tests_queuebatched(
             )
             q.task_done()
 
-            if pbar is not None:
-                with lock:
-                    pbar.update(1)
+            with lock:
+                if is_in_subprocess:
+                    iter_tracker[process_idx] += 1
+                    return_list[process_idx] = results
+
+                if pbar is not None:
+                        pbar.update(1)
 
     q = queue.Queue()
     for i, (code, tests, timeout, has_Solution) in enumerate(zip(codes, tests_per_code, timeouts, has_Solution_per_code)):
@@ -315,8 +455,8 @@ def smart_exec_tests_queuebatched(
         pbar = None
 
     threads = []
-    for _ in range(workers):
-        t = threading.Thread(target=worker, args=(q, pbar))
+    for i in range(workers):
+        t = threading.Thread(target=worker, args=(q, pbar, i))
         t.start()
         threads.append(t)
 
@@ -335,8 +475,12 @@ def smart_exec_tests_queuebatched(
         if r is None:
             results_new.append(
                 (False, "Failed to execute program. Thread error."))
+            assert False
         else:
             results_new.append(r)
+    
+    if is_in_subprocess:
+        return_list[process_idx] = results_new
 
     return results_new
 
