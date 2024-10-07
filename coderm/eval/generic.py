@@ -46,12 +46,14 @@ class CompletionResult:
             passing: bool,
             output: str,
             passing_public: Optional[bool] = None,
-            output_public: Optional[str] = None
+            output_public: Optional[str] = None,
+            score: Optional[float] = None,
     ):
         self.passing = passing
         self.output = output
         self.passing_public = passing_public
         self.output_public = output_public
+        self.score = score
 
     def to_dict(self) -> Dict[str, Any]:
         d = {
@@ -63,6 +65,8 @@ class CompletionResult:
             d["passing_public"] = self.passing_public
         if self.output_public is not None:
             d["output_public"] = self.output_public
+        if self.score is not None:
+            d["score"] = self.score
 
         return d
 
@@ -75,6 +79,7 @@ class CompletionResult:
             d["output"],
             passing_public=d.get("passing_public"),
             output_public=d.get("output_public"),
+            score=d.get("score"),
         )
 
 

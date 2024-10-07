@@ -9,6 +9,7 @@ import time
 from math import pow 
 from coderm.code_exec_server.code_exec_reqs import exec_test
 import multiprocessing
+from multiprocessing.managers import ListProxy
 
 
 SOL_DEPS = """import sys
@@ -392,8 +393,8 @@ def smart_exec_tests_queuebatched(
         use_tqdm=True,
         testbank=None,
         process_idx: Optional[int] = None,
-        iter_tracker: Optional[list[int]] = None,
-        return_list: Optional[list[Any]] = None,
+        iter_tracker: Optional[ListProxy] = None,
+        return_list: Optional[ListProxy] = None,
 ) -> List[Tuple[bool, str]]:
     if timeouts is None:
         timeouts = []
@@ -414,7 +415,10 @@ def smart_exec_tests_queuebatched(
         has_Solution_per_code = [None] * len(codes)
 
     results: List[Optional[Tuple[bool, str]]] = [None] * len(codes)
-    return_list[process_idx] = results
+    if is_in_subprocess:
+        assert isinstance(return_list, ListProxy)
+        assert isinstance(process_idx, int)
+        return_list[process_idx] = results
 
     lock = threading.Lock()
 

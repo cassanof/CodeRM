@@ -27,14 +27,26 @@ def main(args):
         dataset = dataset.to_list()
 
         for i, item in enumerate(dataset):
+            num_added = 1
             input_output = json.loads(item["input_output"])
             if input_output.get("exec_string", None) is not None:
+                if args.individual_tests:
+                    print("Warning: individual tests cannot separate exec_string test")
                 input_tests.append(input_output["exec_string"])
             else:
+                if args.individual_tests:
+                    assert len(input_output["inputs"]) == len(input_output["outputs"])
+                    for single_input, single_output in zip(input_output["inputs"], input_output["outputs"]):
+                        new_dict = {"inputs": [single_input], "outputs": [single_output]}
+                        if "fn_name" in input_output:
+                            new_dict["fn_name"] = input_output["fn_name"]
+                        input_tests.append(new_dict)
+                        num_added += 1
+
                 input_tests.append(input_output)
 
             p = py_prompt(item["question"], item["starter_code"])
-            codes.append(p)
+            codes.extend([p] * num_added)
             if "public_input_output" in item:
                 public_input_output = json.loads(item["public_input_output"])
                 if public_input_output.get("exec_string", None) is not None:
@@ -65,12 +77,16 @@ def main(args):
 
     bank = []
     already_hash = set()
+    already_test = set()
+
     for i, test in tqdm(id_to_testout.items(), total=len(id_to_testout)):
         assert test is not None
         hashed = hashlib.md5(test.encode()).hexdigest()
-        assert hashed not in already_hash, "Hash collision; check"
-        bank.append({"test": test, "hash": hashed})
-        already_hash.add(hashed)
+        if test not in already_test:
+            assert hashed not in already_hash, "Hash collision; check"
+            bank.append({"test": test, "hash": hashed})
+            already_hash.add(hashed)
+            already_test.add(test)
 
     bank = datasets.Dataset.from_list(bank)
     if args.push:
@@ -85,6 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--push", action="store_true")
+    parser.add_argument("--individual-tests", action="store_true")
     parser.add_argument(
         "--split",
         type=str,
